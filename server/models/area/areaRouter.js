@@ -6,9 +6,9 @@ const errorHandler = require('../../middleware/errorHandler');
 module.exports = areaRouter;
 
 areaRouter
-.get('',areaController.getObtener)
-.get('/:IdArea',areaController.getBuscarById)
-.post('/',areaController.postAgregar)
-.put('/:IdArea',areaController.putModificar)
-.put('/:IdArea/DarBaja',areaController.putDarBaja)
-.put('/:IdArea/DarAlta',areaController.putDarAlta);
+.get('',errorHandler(areaController.getObtener))
+.get('/:IdArea',errorHandler(areaController.getBuscarById))
+.post('/',errorHandler(areaController.postAgregar))
+.put('/:IdArea',errorHandler(areaController.putModificar))
+.put('/:IdArea/DarBaja',errorHandler(areaController.putDarBaja))
+.put('/:IdArea/DarAlta',errorHandler(areaController.putDarAlta));

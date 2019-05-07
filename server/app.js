@@ -39,8 +39,8 @@ app.use(function(req, res, next) {
 //Routing
 app.use('/api',mainRoute);
 app.use("*",(req,res)=>{
-    return res.status(404).send("La ruta indicada no se encuentra estipulada");
-})
+    return res.status(404).send(msgHanlder.sendError('La ruta indicada no se encuentra estipulada'));
+});
 
 //Errors
 app.use((err,req,res,next)=>{

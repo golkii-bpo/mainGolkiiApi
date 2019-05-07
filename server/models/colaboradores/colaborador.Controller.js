@@ -5,7 +5,6 @@ const msgHandler = require('../../helpers/MessageToolHandler');
 const lodash = require('lodash');
 
 module.exports = {
-    
     /**
      * Método que nos permite obtener todos los Colaboradores activos
      * de la base de datos
@@ -42,7 +41,7 @@ module.exports = {
      */
     postAgregar: async (req,res) => {
         const _data = req.body;
-        const {error,value} = await colaboradorServices.validarColaborador(_data);
+        const {error,value} = await colaboradorServices.valdarAgregarColaborador(_data);
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
         const _Cargos = [];
@@ -52,9 +51,10 @@ module.exports = {
                 _Cargos.push(item.IdCargo);
             });
         }
-        const _permisos = await cargoModel.find({_id:{$in:_Cargos}}).select({Permisos:true,_id:false});
-        console.log(_permisos);
-        
+        let _cargoMdl = await cargoModel.find({_id:{$in:_Cargos}}).select({Permisos:true,_id:false});
+        _cargoMdl.forEach(item=> {
+            if(item.hasOwnProperty('Permisos'))
+        });
 
         //Se obtienen los permisos que tiene el cargo
         // const _cargoPermisos = (await cargoModel.findOne({_id:value.Cargo},{Permisos:true,_id:false})).toObject();
@@ -70,8 +70,8 @@ module.exports = {
         //     value.Permisos = cargoPermisos;
         // }
 
-        const _result = await colaboradorModel.create(value);
-        return res.json(msgHandler.sendValue(_result));
+        // const _result = await colaboradorModel.create(value);
+        return res.json(msgHandler.sendValue(null));
     },
 
     /**

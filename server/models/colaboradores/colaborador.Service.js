@@ -33,6 +33,7 @@ const JoiColaborador = joi.object().keys({
     Estado: joi.boolean()
 })
 
+
 class colaboradorService extends general {
     /**
      * Método que permite validar el modelo de datos para un Colaborador
@@ -41,7 +42,7 @@ class colaboradorService extends general {
      * @returns {error:'Mensaje de Error',value: 'informacion'}
      * @memberof colaboradorService
      */
-    async validarColaborador(data){
+    async valdarAgregarColaborador(data) {
         const{error,value} = joi.validate(data,JoiColaborador);
         if(error) return {error};
         if(!await cargoSrv.validarCargos(value.Cargo)) return msgHandler.Send().doNotExist('Cargo');

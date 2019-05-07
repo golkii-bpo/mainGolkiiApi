@@ -191,18 +191,15 @@ module.exports = {
         //primero se elimina el permiso del Cargo
         Task.update(cargoMdl,{_id:idCargo},{$pull:{'Permisos': {'IdPermiso':idPermiso}}});
         //se eliminan los permisos de los colaboradores
-        Task.update(colMdl,{Cargo:idCargo},{$pull:{'Permisos': {'_id':idPermiso}}});
+        Task.update(colMdl,{Cargo:{IdCargo:idCargo}},{$pull:{'Permisos': {'_id':idPermiso}}});
 
         await Task
         .run({useMongoose: true})
         .then((data) => {
-            return res.json(msgHandler.sendValue('El Permiso se ha agregado correctamente'));
+            return res.json(msgHandler.sendValue('El Permiso se ha eliminado correctamente'));
         }).catch((err)=>{
             return res.status(400).json(err.message);
         });
-
-        const _result = await cargoMdl.updateOne({_id: idCargo},{$pull:{'Permisos': {'_id':idPermiso}}});
-        return res.json(_result);
     },
 
     /**

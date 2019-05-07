@@ -126,6 +126,8 @@ class cargoService extends general {
 
     validarCargos(Cargos){
         if(!Array.isArray(Cargos)) return false;
+
+        //Hay que mejorar este proceso
         let _data = Cargos.map(item=>{
             let cargo = cargoModel.findById(item.IdCargo);
             return cargo? true:false

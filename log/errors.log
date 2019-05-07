@@ -116,3 +116,10 @@
 {"message":"Cast to ObjectId failed for value \"{ IdCargo: '5ccc66e7c42b2461be3b5b79' }\" at path \"_id\" for model \"Cargo\"","name":"CastError","stringValue":"\"{ IdCargo: '5ccc66e7c42b2461be3b5b79' }\"","kind":"ObjectId","value":{"IdCargo":"5ccc66e7c42b2461be3b5b79"},"path":"_id","level":"error"}
 {"level":"error"}
 {"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}

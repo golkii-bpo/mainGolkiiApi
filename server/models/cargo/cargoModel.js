@@ -9,12 +9,10 @@ const FuncionesSchema = new Schema({
     },
     Estado: {
         type: Boolean,
-        required: true,
         default: true
     },
     FechaModificacion: {
         type: Date,
-        required: true,
         default: Date.now()
     }
 });
