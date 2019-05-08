@@ -191,7 +191,7 @@ module.exports = {
         //primero se elimina el permiso del Cargo
         Task.update(cargoMdl,{_id:idCargo},{$pull:{'Permisos': {'IdPermiso':idPermiso}}});
         //se eliminan los permisos de los colaboradores
-        Task.update(colMdl,{Cargo:{IdCargo:idCargo}},{$pull:{'Permisos': {'_id':idPermiso}}});
+        Task.update(colMdl,{Cargo:{IdCargo:idCargo}},{$pull:{'Permisos': {'IdPermiso':idPermiso}}});
 
         await Task
         .run({useMongoose: true})

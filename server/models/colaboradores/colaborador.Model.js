@@ -158,7 +158,6 @@ const ColaboradoresSchema = new Schema({
 });
 
 ColaboradoresSchema.post('save', function(error, doc, next) {
-    console.log(error);
     if (error.name === 'MongoError' && error.code === 11000){
         if(RegExp(/Cedula/).test(error.errmsg)) next(new Error('La cedula del colaborador ya se encuentra registradad'));
     };

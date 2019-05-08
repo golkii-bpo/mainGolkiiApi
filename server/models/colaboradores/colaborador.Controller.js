@@ -14,7 +14,7 @@ module.exports = {
      * @returns
      */
     getObtener: async (req,res) => {
-        const _result = await colaboradorModel.find({Estado: true});
+        const _result = await colaboradorModel.find({Estado: true}).lean(true);
         return res.json(_result);
     },
     
@@ -27,7 +27,7 @@ module.exports = {
      * @returns
      */
     getObtenerAll: async (req,res) => {
-        const _result = await colaboradorModel.find();
+        const _result = await colaboradorModel.find().lean(true);
         return res.json(_result);
     },
 
@@ -52,34 +52,25 @@ module.exports = {
             });
         }
         
+        //Se buscan todos los permisos de los cargos
         const 
             _dataPermisos = [],
             _permisosCargos = await cargoModel.find({_id:{$in:_Cargos}}).select({Permisos:true,_id:false}).lean(true);
-        
+        //Se les da el formato correcto
         _permisosCargos.forEach(item=> {
             if(item.hasOwnProperty('Permisos')) if(Array.from(item.Permisos).length != 0) {
-                _dataPermisos.push(...item.Permisos);
+                _dataPermisos.push(...item.Permisos.map(_permisos=> {return {IdPermiso:_permisos.IdPermiso,IsFrom:'Cargo'}}));
             }
         });
 
-        console.log(_dataPermisos);
+        if(_dataPermisos.length != 0){
+            value.Permisos = _dataPermisos;
+        } else {
+            value.Permisos = [];
+        }
 
-        //Se obtienen los permisos que tiene el cargo
-        // const _cargoPermisos = (await cargoModel.findOne({_id:value.Cargo},{Permisos:true,_id:false})).toObject();
-        // var cargoPermisos = [];
-        // if(_cargoPermisos.hasOwnProperty('Permisos'))
-        // {
-        //     cargoPermisos = _cargoPermisos.Permisos.map(item => {
-        //         return {IdPermiso: item.IdPermiso,IsFrom:'Cargo',FechaModificación:Date.now()}
-        //     })
-        // }
-        // //Se agregar los datos a Permisos si es que existen datos
-        // if(Array.isArray(cargoPermisos) && Array.from(cargoPermisos).length != 0){
-        //     value.Permisos = cargoPermisos;
-        // }
-
-        // const _result = await colaboradorModel.create(value);
-        return res.json(msgHandler.sendValue(null));
+        const _result = await colaboradorModel.create(value);
+        return res.json(msgHandler.sendValue(_result));
     },
 
     /**
