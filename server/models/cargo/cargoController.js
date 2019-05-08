@@ -4,10 +4,12 @@ const
     cargoSrv = require('./cargoService'),
     colMdl = require('../colaboradores/colaborador.Model');
     msgHandler = require('../../helpers/MessageToolHandler'),
-    Fawn = require('fawn');
+    Fawn = require('fawn'),
+    ObjectId = require('mongoose/lib/types/objectid');
 
     Fawn.init(db,'golkii_api');
     const Task = Fawn.Task();
+    console.log(colMdl);
 
 module.exports = {
     
@@ -153,16 +155,16 @@ module.exports = {
 
         if(!req.params.hasOwnProperty('idCargo')) return res.status(400).json(msgHandler.Send().missingIdProperty('idCargo'));
         const 
-            idCargo = req.params.idCargo,
+            _idCargo = req.params.idCargo,
             _permiso = req.body;
         
-        if(!cargoSrv.validarObjectId(idCargo)) return res.status(400).json(msgHandler.Send().errorIdObject('idCargo'))
-        const {error,value} = await cargoSrv.validarPermisoSingle(idCargo,_permiso);
+        if(!cargoSrv.validarObjectId(_idCargo)) return res.status(400).json(msgHandler.Send().errorIdObject('idCargo'))
+        const {error,value} = await cargoSrv.validarPermisoSingle(_idCargo,_permiso);
 
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
-        Task.update(cargoMdl,{_id:idCargo},{$push:{'Permisos':_permiso}});
-        Task.update(colMdl,{Cargo:{IdCargo:idCargo}},{$push:{'Permisos':_permiso}});
+        Task.update(cargoMdl,{_id:_idCargo},{$push:{'Permisos':_permiso}});
+        Task.update(colMdl,{'Cargo.IdCargo':_idCargo},{$push:{'Permisos':_permiso}});
 
         await Task
         .run({useMongoose: true})
@@ -189,13 +191,14 @@ module.exports = {
         if(!cargoSrv.validarObjectId(idPermiso)) return res.status(400).json(msgHandler.Send().missingIdProperty('idPermiso'));
         
         //primero se elimina el permiso del Cargo
-        Task.update(cargoMdl,{_id:idCargo},{$pull:{'Permisos': {'IdPermiso':idPermiso}}});
-        //se eliminan los permisos de los colaboradores
-        Task.update(colMdl,{Cargo:{IdCargo:idCargo}},{$pull:{'Permisos': {'IdPermiso':idPermiso}}});
+        Task
+        .update(cargoMdl,{'_id':idCargo},{$pull:{'Permisos':{'IdPermiso':idPermiso}}})
+        .update(colMdl,{'Cargo.IdCargo':idCargo},{$pull:{'Permisos': {'IdPermiso':idPermiso}}},{safe:true})
 
         await Task
         .run({useMongoose: true})
         .then((data) => {
+            console.log(data);
             return res.json(msgHandler.sendValue('El Permiso se ha eliminado correctamente'));
         }).catch((err)=>{
             return res.status(400).json(err.message);
