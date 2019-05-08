@@ -51,10 +51,18 @@ module.exports = {
                 _Cargos.push(item.IdCargo);
             });
         }
-        let _cargoMdl = await cargoModel.find({_id:{$in:_Cargos}}).select({Permisos:true,_id:false});
-        _cargoMdl.forEach(item=> {
-            if(item.hasOwnProperty('Permisos'))
+        
+        const 
+            _dataPermisos = [],
+            _permisosCargos = await cargoModel.find({_id:{$in:_Cargos}}).select({Permisos:true,_id:false}).lean(true);
+        
+        _permisosCargos.forEach(item=> {
+            if(item.hasOwnProperty('Permisos')) if(Array.from(item.Permisos).length != 0) {
+                _dataPermisos.push(...item.Permisos);
+            }
         });
+
+        console.log(_dataPermisos);
 
         //Se obtienen los permisos que tiene el cargo
         // const _cargoPermisos = (await cargoModel.findOne({_id:value.Cargo},{Permisos:true,_id:false})).toObject();
