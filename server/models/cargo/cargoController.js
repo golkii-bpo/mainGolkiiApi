@@ -162,6 +162,7 @@ module.exports = {
 
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
+        //FIXME: Validar que funciona
         Task.update(cargoMdl,
             {
                 _id:_idCargo
@@ -208,6 +209,7 @@ module.exports = {
         if(!cargoSrv.validarObjectId(idCargo)) return res.status(400).json(msgHandler.Send().missingIdProperty('idCargo'));
         if(!cargoSrv.validarObjectId(idPermiso)) return res.status(400).json(msgHandler.Send().missingIdProperty('idPermiso'));
         
+        //FIXME: Hay un error que no actualiza los permisos de los colaboradores
         Task
         .update(cargoMdl,{'_id':idCargo},{$pull:{'Permisos':{'IdPermiso':idPermiso}}})
         .update(
