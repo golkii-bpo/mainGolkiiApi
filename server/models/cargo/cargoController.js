@@ -161,6 +161,7 @@ module.exports = {
         const {error,value} = await cargoSrv.validarPermisoSingle(_idCargo,_permiso);
 
         if(error) return res.status(400).json(msgHandler.sendError(error));
+        
 
         Task.update(cargoMdl,
             {
@@ -171,22 +172,22 @@ module.exports = {
 
         Task.update(colMdl,
             {
-                'Cargo.IdCargo':_idCargo,
+                'Cargo.IdCargo':new ObjectId(_idCargo.toString()),
                 'Cargo.Estado':true,
-                'Permisos':{
-                    $ne:{
-                        'IdPermiso':_permiso.IdPermiso
-                    }
-                }
+                'Permisos':{IdPermiso:{$ne:_permiso.IdPermiso}}
             },{
                 $push:{
-                    'Permisos':_permiso
+                    Permisos:{
+                        IdPermiso: new ObjectId(_permiso.IdPermiso.toString()),
+                        IsFrom:'Cargo'
+                    }
                 }
             });
 
         await Task
         .run({useMongoose: true})
         .then((data) => {
+            console.log(data);
             return res.json(msgHandler.sendValue('El Permiso se ha agregado correctamente'));
         }).catch((err)=>{
             return res.status(400).json(err.message);
@@ -213,14 +214,13 @@ module.exports = {
         .update(
             colMdl,
             {
-                'Cargo':{
-                    'IdCargo':idCargo
-                }
+                'Cargo.IdCargo':new ObjectId(idCargo.toString()),
+                'Cargo.Estado':true //Aqui se hizo el ultimo cambio. Esto por si no funciona la query
             },{
                 $pull:{
-                    'Permisos': {
-                        'IdPermiso':idPermiso,
-                        'IsFrom':'Cargo'
+                    Permisos: {
+                        IdPermiso:new ObjectId(idPermiso),
+                        IsFrom:'Cargo'
                     }
                 }
             },
@@ -251,15 +251,13 @@ module.exports = {
         const idCargo = req.params.idCargo;
         if(!cargoSrv.validarObjectId(idCargo)) return res.status(400).json(msgHandler.Send().errorIdObject('idCargo'))
 
-        
-        //FIXME: Se tiene que cambiar ya que si el cargo es desactivado se tienen que desactivar los permisos tambien
         //TODO: En vez de eliminar los permisos se pueden desactivar - Pero esto es otro aproach
         
         const cargoPermisos = [];
         Array.from(await cargoMdl
         .find({_id:new ObjectId(idCargo)})
         .select({Permisos:true,_id:false})
-        .lean())
+        .lean(true))
         .forEach(_data => {
             if(_data.hasOwnProperty('Permisos') && Array.isArray(_data.Permisos))  if(Array.from(_data.Permisos).length != 0) {
                 cargoPermisos.push(..._data.Permisos.map(t => {return t.IdPermiso}));
@@ -293,7 +291,6 @@ module.exports = {
         Task
             .run({useMongoose: true})
             .then((data)=> {
-                console.log(data);
                 return res.json(msgHandler.sendValue('Se ha dado de baja correctamente'));
             })
             .catch((err)=> {
@@ -308,6 +305,7 @@ module.exports = {
      * @returns
      */
     putDarAlta: async (req,res) => {
+        //TODO: Buscar todos los permisos y habilitarlos. Unicamente para este controlador
         if(!req.params.hasOwnProperty('idCargo')) return res.status(400).json(msgHandler.Send().missingIdProperty('idPermiso'));
         const idCargo = req.params.idCargo;
         if(!cargoSrv.validarObjectId(idCargo)) return res.status(400).json(msgHandler.Send().errorIdObject('idPermiso'))

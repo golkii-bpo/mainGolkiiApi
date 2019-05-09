@@ -1,12 +1,13 @@
-const db = require('mongoose');
-const Path = require("path");
-const Chalk = require('chalk');
-const Winston = require('winston');
-const Log = Winston.createLogger({
-    transports:[
-        new Winston.transports.File({filename:Path.join(__dirname,"../log/db.log")})
-    ]
-});
+const 
+    db = require('mongoose'),
+    Path = require("path"),
+    Chalk = require('chalk'),
+    Winston = require('winston'),
+    Log = Winston.createLogger({
+        transports:[
+            new Winston.transports.File({filename:Path.join(__dirname,"../log/db.log")})
+        ]
+    });
 
 const Options = { 
     useCreateIndex: true,
@@ -21,21 +22,25 @@ module.exports = {
      *
      * @param {Cadena de Conexion para mongodb} MongoUri
      */
-
-     //TODO: Cuando este en produccion se tiene que almacenar en los logs en cambio cuando sea prueba tiene que imprimir el error
-    connect: (MongoUri) => {
+    connect: (MongoUri,env) => {
         db.connect(MongoUri,Options);
 
         db.connection.on('connected',()=>{
             console.log('Base de datos: '+Chalk.bgGreen(Chalk.black('Conectada')));
         });
         db.connection.on('disconnected', (err) =>{
-            console.log(err);
-            console.log('Base de datos: '+Chalk.yellow('Desconectada'));
+            if(env == 'development'){
+                console.log('Base de datos: '+Chalk.yellow('Desconectada'));
+            } else {
+                Log.error(err);
+            }
         });
         db.connection.on('error', function(err){
-            Log.error(err);
-            console.log(`Base de datos: ${Chalk.red(err)} error`);
+            if(env == 'development'){
+                console.log(`Base de datos: ${Chalk.red(err)} error`);
+            } else {
+                Log.error(err);
+            }
         });
     }
 }

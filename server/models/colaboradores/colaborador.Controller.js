@@ -46,7 +46,9 @@ module.exports = {
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
         let Cargos = colaboradorServices.cargosUnicos(value.Cargo).map(_idCargo => {return new objectId(_idCargo)});
-        value.Cargo = Cargos;
+        value.Cargo = Cargos.map(_iC=> {
+            return {IdCargo:_iC,Estado:true}
+        });
 
         //Se buscan todos los permisos de los cargos y estos permisos se hacen unicos
         let 

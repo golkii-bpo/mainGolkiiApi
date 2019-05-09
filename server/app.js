@@ -19,7 +19,7 @@ const msgHanlder = require('./helpers/MessageToolHandler');
 const app = express();
 
 //inicialización de la base de datos
-database.connect(config.get('MONGO_URI'));
+database.connect(config.get('MONGO_URI'),app.get('env'));
 
 //Asignación de variables
 const PORT = config.PORT;
