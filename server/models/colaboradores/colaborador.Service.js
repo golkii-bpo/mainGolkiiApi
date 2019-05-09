@@ -66,8 +66,7 @@ class colaboradorService extends general {
     cargosUnicos(data){
         const _Cargos = [];
         //Se obtienen los permisos que tiene el cargo
-        //FIXME: En vez de devolver un empty array se tiene que devolver un error
-        if(!Array.isArray(data)) return []; 
+        if(!Array.isArray(data))throw new Error('La variable proporcionada tiene que ser un Array');
         if(Array.from(data).length == 0) return []
 
         data.forEach(item => {

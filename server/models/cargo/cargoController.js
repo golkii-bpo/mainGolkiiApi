@@ -162,8 +162,6 @@ module.exports = {
 
         if(error) return res.status(400).json(msgHandler.sendError(error));
         
-
-        //FIXME: Validar que funciona
         Task.update(cargoMdl,
             {
                 _id:_idCargo
@@ -210,14 +208,13 @@ module.exports = {
         if(!cargoSrv.validarObjectId(idCargo)) return res.status(400).json(msgHandler.Send().missingIdProperty('idCargo'));
         if(!cargoSrv.validarObjectId(idPermiso)) return res.status(400).json(msgHandler.Send().missingIdProperty('idPermiso'));
         
-        //FIXME: Hay un error que no actualiza los permisos de los colaboradores
         Task
         .update(cargoMdl,{'_id':idCargo},{$pull:{'Permisos':{'IdPermiso':idPermiso}}})
         .update(
             colMdl,
             {
                 'Cargo.IdCargo':new ObjectId(idCargo.toString()),
-                'Cargo.Estado':true //Aqui se hizo el ultimo cambio. Esto por si no funciona la query
+                'Cargo.Estado':true //ultimo cambio
             },{
                 $pull:{
                     Permisos: {
@@ -311,12 +308,56 @@ module.exports = {
         if(!req.params.hasOwnProperty('idCargo')) return res.status(400).json(msgHandler.Send().missingIdProperty('idPermiso'));
         const idCargo = req.params.idCargo;
         if(!cargoSrv.validarObjectId(idCargo)) return res.status(400).json(msgHandler.Send().errorIdObject('idPermiso'))
-        
-        let Cargo = await cargoMdl.findById(idCargo);
-        Cargo.set({
-            Estado:true
-        })
 
-        res.json(await Cargo.save());
+        let permisos = [...new Set(await cargoMdl.aggregate([
+            {$match:{'_id':new ObjectId(idCargo)}},
+            {$unwind:'$Permisos'},
+            {$replaceRoot :{'newRoot':'$Permisos'}},
+            {
+                $addFields: {
+                    IdPermiso: { $toString: "$IdPermiso" }
+                }
+            },
+            {$project:{"IdPermiso":1,"_id":0}}
+        ]))].map(item =>
+            {
+                return {
+                    IdPermiso:new ObjectId(item.IdPermiso.toString()),
+                    IsFrom:'Cargo'
+                }
+            }
+        );
+
+        Task
+        .update(cargoMdl,{_id:idCargo},{$set:{Estado:true}})
+        .update(
+            colMdl,
+            {
+                'Cargo.IdCargo':new ObjectId(idCargo),
+                'Cargo.Estado':false
+            },
+            {
+                $push:{
+                    'Permisos':{
+                        $each:permisos
+                    }
+                },
+                $set:{
+                    'Cargo.$.Estado':true
+                }
+            }
+        );
+
+        Task
+        .run({useMongoose: true})
+        .then((data)=> {
+            console.log(data);
+            return res.json(msgHandler.sendValue('Se ha dado de alta correctamente'));
+        }).catch((err)=>{
+            return res.status(400).json(err);
+        });
+
+        res.json(null);
+        // res.json(await Cargo.save());
     }
 }

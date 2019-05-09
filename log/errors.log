@@ -140,3 +140,9 @@
 {"level":"error"}
 {"level":"error"}
 {"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"ok":0,"errmsg":"unknown operator: $im","code":2,"codeName":"BadValue","name":"MongoError","level":"error"}
+{"ok":0,"errmsg":"$in needs an array","code":2,"codeName":"BadValue","name":"MongoError","level":"error"}
+{"ok":0,"errmsg":"unknown top level operator: $_id","code":2,"codeName":"BadValue","name":"MongoError","level":"error"}
