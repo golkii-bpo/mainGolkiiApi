@@ -21,6 +21,8 @@ module.exports = {
      *
      * @param {Cadena de Conexion para mongodb} MongoUri
      */
+
+     //TODO: Cuando este en produccion se tiene que almacenar en los logs en cambio cuando sea prueba tiene que imprimir el error
     connect: (MongoUri) => {
         db.connect(MongoUri,Options);
 

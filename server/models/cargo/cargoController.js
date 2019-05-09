@@ -8,8 +8,7 @@ const
     ObjectId = require('mongoose/lib/types/objectid');
 
     Fawn.init(db,'golkii_api');
-    const Task = Fawn.Task();
-    console.log(colMdl);
+    const Task = Fawn.Task(); 
 
 module.exports = {
     
@@ -163,8 +162,27 @@ module.exports = {
 
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
-        Task.update(cargoMdl,{_id:_idCargo},{$push:{'Permisos':_permiso}});
-        Task.update(colMdl,{'Cargo.IdCargo':_idCargo},{$push:{'Permisos':_permiso}});
+        Task.update(cargoMdl,
+            {
+                _id:_idCargo
+            },{
+                $push:{'Permisos':_permiso}
+            });
+
+        Task.update(colMdl,
+            {
+                'Cargo.IdCargo':_idCargo,
+                'Cargo.Estado':true,
+                'Permisos':{
+                    $ne:{
+                        'IdPermiso':_permiso.IdPermiso
+                    }
+                }
+            },{
+                $push:{
+                    'Permisos':_permiso
+                }
+            });
 
         await Task
         .run({useMongoose: true})
@@ -177,7 +195,7 @@ module.exports = {
 
     /**
      * Método que permite eliminar un permiso en especifico de un cargo en especifico
-     *
+     *  
      * @param {*} req
      * @param {*} res
      */
@@ -190,10 +208,25 @@ module.exports = {
         if(!cargoSrv.validarObjectId(idCargo)) return res.status(400).json(msgHandler.Send().missingIdProperty('idCargo'));
         if(!cargoSrv.validarObjectId(idPermiso)) return res.status(400).json(msgHandler.Send().missingIdProperty('idPermiso'));
         
-        //primero se elimina el permiso del Cargo
         Task
         .update(cargoMdl,{'_id':idCargo},{$pull:{'Permisos':{'IdPermiso':idPermiso}}})
-        .update(colMdl,{'Cargo.IdCargo':idCargo},{$pull:{'Permisos': {'IdPermiso':idPermiso}}},{safe:true})
+        .update(
+            colMdl,
+            {
+                'Cargo':{
+                    'IdCargo':idCargo
+                }
+            },{
+                $pull:{
+                    'Permisos': {
+                        'IdPermiso':idPermiso,
+                        'IsFrom':'Cargo'
+                    }
+                }
+            },
+            {
+                safe:true
+            })
 
         await Task
         .run({useMongoose: true})
@@ -201,7 +234,7 @@ module.exports = {
             console.log(data);
             return res.json(msgHandler.sendValue('El Permiso se ha eliminado correctamente'));
         }).catch((err)=>{
-            return res.status(400).json(err.message);
+            return res.status(401).json(err);
         });
     },
 
@@ -217,12 +250,55 @@ module.exports = {
         if(!req.params.hasOwnProperty('idCargo')) return res.status(400).json(msgHandler.Send().missingIdProperty('idCargo'));
         const idCargo = req.params.idCargo;
         if(!cargoSrv.validarObjectId(idCargo)) return res.status(400).json(msgHandler.Send().errorIdObject('idCargo'))
+
         
-        let Cargo = await cargoMdl.findById(idCargo);
-        Cargo.set({
-            Estado:false
-        })
-        return res.json(await Cargo.save());
+        //FIXME: Se tiene que cambiar ya que si el cargo es desactivado se tienen que desactivar los permisos tambien
+        //TODO: En vez de eliminar los permisos se pueden desactivar - Pero esto es otro aproach
+        
+        const cargoPermisos = [];
+        Array.from(await cargoMdl
+        .find({_id:new ObjectId(idCargo)})
+        .select({Permisos:true,_id:false})
+        .lean())
+        .forEach(_data => {
+            if(_data.hasOwnProperty('Permisos') && Array.isArray(_data.Permisos))  if(Array.from(_data.Permisos).length != 0) {
+                cargoPermisos.push(..._data.Permisos.map(t => {return t.IdPermiso}));
+            } 
+        });
+
+        Task
+            .update(
+                cargoMdl,
+                {'_id':new ObjectId(idCargo)},
+                {$set:{Estado:false}}
+            )
+            .update(
+                colMdl,
+                {'Cargo.IdCargo': new ObjectId(idCargo)},
+                {
+                    $pull:{
+                        'Permisos':{
+                            'IdPermiso':{
+                                $in:cargoPermisos
+                            },
+                            'IsFrom':'Cargo'
+                        }
+                    },
+                    $set:{
+                        'Cargo.$.Estado':false
+                    }
+                }
+            )
+        
+        Task
+            .run({useMongoose: true})
+            .then((data)=> {
+                console.log(data);
+                return res.json(msgHandler.sendValue('Se ha dado de baja correctamente'));
+            })
+            .catch((err)=> {
+                return res.status(401).json(msgHandler.sendError(err))
+            });
     },
     /**
      * Da de alta a un cargo en especifico

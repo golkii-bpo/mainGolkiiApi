@@ -1,8 +1,9 @@
-const colaboradorServices = require('./colaborador.Service');
-const colaboradorModel = require('./colaborador.Model');
-const cargoModel = require('../cargo/cargoModel');
-const msgHandler = require('../../helpers/MessageToolHandler');
-const lodash = require('lodash');
+const 
+    colaboradorServices = require('./colaborador.Service'),
+    colaboradorModel = require('./colaborador.Model'),
+    cargoModel = require('../cargo/cargoModel'),
+    msgHandler = require('../../helpers/MessageToolHandler'),
+    objectId = require('mongoose/lib/types/objectid');
 
 module.exports = {
     /**
@@ -44,29 +45,18 @@ module.exports = {
         const {error,value} = await colaboradorServices.valdarAgregarColaborador(_data);
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
-        const _Cargos = [];
-        //Se obtienen los permisos que tiene el cargo
-        if(Array.isArray(value.Cargo)) if(Array.from(value.Cargo).length != 0){
-            Array.from(value.Cargo).forEach(item => {
-                _Cargos.push(item.IdCargo);
-            });
-        }
-        
-        //Se buscan todos los permisos de los cargos
-        const 
-            _dataPermisos = [],
-            _permisosCargos = await cargoModel.find({_id:{$in:_Cargos}}).select({Permisos:true,_id:false}).lean(true);
-        //Se les da el formato correcto
-        _permisosCargos.forEach(item=> {
-            if(item.hasOwnProperty('Permisos')) if(Array.from(item.Permisos).length != 0) {
-                _dataPermisos.push(...item.Permisos.map(_permisos=> {return {IdPermiso:_permisos.IdPermiso,IsFrom:'Cargo'}}));
-            }
-        });
+        let Cargos = colaboradorServices.cargosUnicos(value.Cargo).map(_idCargo => {return new objectId(_idCargo)});
+        value.Cargo = Cargos;
 
-        if(_dataPermisos.length != 0){
+        //Se buscan todos los permisos de los cargos y estos permisos se hacen unicos
+        let 
+            _cargosPermisos = await cargoModel.find({_id:{$in:Cargos},Estado:true}).select({Permisos:true,_id:false}).lean(true),
+            _permisosUnicos = colaboradorServices.permisosUnicos(_cargosPermisos),
+            _dataPermisos = [...[..._permisosUnicos].map(_IdPermiso=> {return {IdPermiso:new objectId(_IdPermiso),IsFrom:'Cargo'}})];
+
+        
+        if(Array.from(_dataPermisos).length != 0){
             value.Permisos = _dataPermisos;
-        } else {
-            value.Permisos = [];
         }
 
         const _result = await colaboradorModel.create(value);

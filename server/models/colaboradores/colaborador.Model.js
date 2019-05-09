@@ -108,6 +108,10 @@ const CargoSchema = new Schema({
         type:Schema.Types.ObjectId,
         ref:'cargos'
     },
+    Estado: {
+        type:Boolean,
+        default: true
+    },
     FechaIngreso:{
         type:Date,
         default:Date.now()

@@ -62,6 +62,35 @@ class colaboradorService extends general {
         if(!await cargoSrv.validarCargoById(data.Cargo)) return {error:msgHandler.Send().doNotExist('Cargo')};
         return {value:data};
     }
+
+    cargosUnicos(data){
+        const _Cargos = [];
+        //Se obtienen los permisos que tiene el cargo
+        //FIXME: En vez de devolver un empty array se tiene que devolver un error
+        if(!Array.isArray(data)) return []; 
+        if(Array.from(data).length == 0) return []
+
+        data.forEach(item => {
+            if(item.hasOwnProperty('IdCargo')){
+                _Cargos.push(item.IdCargo.toString());
+            }
+        });
+        return [...new Set(_Cargos)];
+    }
+
+    permisosUnicos(data){
+        if(!Array.isArray(data)) return [];
+        
+        const _dirtyPermisos = [];
+
+        data.forEach(item=> {
+            if(item.hasOwnProperty('Permisos') && Array.isArray(item.Permisos)){
+                _dirtyPermisos.push(...item.Permisos.map(obj=> obj.IdPermiso.toString()));
+            }
+        });
+
+        return [...new Set(_dirtyPermisos)];        
+    }
 };
 
 module.exports = new colaboradorService;
