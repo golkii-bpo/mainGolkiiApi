@@ -266,12 +266,12 @@ module.exports = {
         Task
             .update(
                 cargoMdl,
-                {'_id':new ObjectId(idCargo)},
+                {'_id':new ObjectId(idCargo.toString())},
                 {$set:{Estado:false}}
             )
             .update(
                 colMdl,
-                {'Cargo.IdCargo': new ObjectId(idCargo)},
+                {'Cargo.IdCargo': new ObjectId(idCargo.toString())},
                 {
                     $pull:{
                         'Permisos':{
@@ -290,12 +290,13 @@ module.exports = {
         Task
             .run({useMongoose: true})
             .then((data)=> {
-                return res.json(msgHandler.sendValue('Se ha dado de baja correctamente'));
+                return res.json(data);
             })
             .catch((err)=> {
                 return res.status(401).json(msgHandler.sendError(err))
             });
     },
+    
     /**
      * Da de alta a un cargo en especifico
      *
@@ -329,7 +330,7 @@ module.exports = {
         );
 
         Task
-        .update(cargoMdl,{_id:idCargo},{$set:{Estado:true}})
+        .update(cargoMdl,{'_id':new ObjectId(idCargo.toString())},{$set:{'Estado':true}})
         .update(
             colMdl,
             {
@@ -351,13 +352,9 @@ module.exports = {
         Task
         .run({useMongoose: true})
         .then((data)=> {
-            console.log(data);
-            return res.json(msgHandler.sendValue('Se ha dado de alta correctamente'));
+            return res.json(data);
         }).catch((err)=>{
             return res.status(400).json(err);
         });
-
-        res.json(null);
-        // res.json(await Cargo.save());
     }
 }

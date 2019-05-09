@@ -50,15 +50,34 @@ module.exports = {
             return {IdCargo:_iC,Estado:true}
         });
 
-        //Se buscan todos los permisos de los cargos y estos permisos se hacen unicos
-        let 
-            _cargosPermisos = await cargoModel.find({_id:{$in:Cargos},Estado:true}).select({Permisos:true,_id:false}).lean(true),
-            _permisosUnicos = colaboradorServices.permisosUnicos(_cargosPermisos),
-            _dataPermisos = [...[..._permisosUnicos].map(_IdPermiso=> {return {IdPermiso:new objectId(_IdPermiso),IsFrom:'Cargo'}})];
-
+        let permisos = [...new Set(await cargoModel.aggregate([
+                {$match:
+                    {'_id':{$in:Cargos}}
+                },
+                {$unwind:'$Permisos'},
+                {$replaceRoot :{'newRoot':'$Permisos'}},
+                {
+                    $addFields: {
+                        IdPermiso: { $toString: "$IdPermiso" }
+                    }
+                },
+                {
+                    $group:{
+                        _id:'$IdPermiso',
+                        IdPermiso:{$first:'$IdPermiso'}
+                    }
+                }
+            ]))].map(item =>
+                {
+                    return {
+                        IdPermiso:new ObjectId(item.IdPermiso.toString()),
+                        IsFrom:'Cargo'
+                    }
+                }
+            );
         
-        if(Array.from(_dataPermisos).length != 0){
-            value.Permisos = _dataPermisos;
+        if(Array.from(permisos).length != 0){
+            value.Permisos = permisos;
         }
 
         const _result = await colaboradorModel.create(value);
@@ -104,27 +123,55 @@ module.exports = {
         return res.json(_data);
     },
 
-    putModificarCargo: async(req,res) => {
-        if(!req.params.hasOwnProperty('idColaborador')) return res.status(400).json(msgHandler.Send().missingIdProperty('idColaborador'));
+    /**
+     *
+     *
+     * @param {*} req
+     * @param {*} res
+     */
+    putAgregarCargo: async (req,res) => {
+        const 
+            idColaborador = req.params.idColaborador,
+            idCargo = req.params.idCargo;
+        if(!colaboradorServices.validarObjectId(idColaborador)) return res.status(400).json(msgHandler.Send().errorIdObject('idColaborador'))
+        if(!colaboradorServices.validarObjectId(idCargo)) return res.status(400).json(msgHandler.Send().errorIdObject('idCargo'))
         
-        const idCargo = req.params.idColaborador;
-        if(!req.body.hasOwnProperty('Cargo')) return res.status(400).json();
-
-        const {error,value} = await colaboradorServices.validarCargo
-        if(error) return res.status(400).json(msgHandler.sendError(error));
+        //Se obtienen los datos del cargo
         
-        //Se realiza la busqueda de los nuevos permisos
-        const NewData = await cargoModel.find({_id:idCargo},{Permisos:true});
-        console.log(NewData);
+        const 
+            Colaborador = await colaboradorModel.findById(idCargo).lean(true),
+            Cargo = await cargoModel.aggregate([
+                {$match:{_id:new objectId(idCargo.toString())}},
+                {$unwind:'$Permisos'},
+                {$replaceRoot :{'newRoot':'$Permisos'}},
+                {
+                    $addFields: {
+                        IdPermiso: { $toString: "$IdPermiso" }
+                    }
+                },
+                {
+                    $group:{
+                        _id:'$IdPermiso',
+                        IdPermiso:{$first:'$IdPermiso'}
+                    }
+                }
+            ]);
 
-        const _dataNewPermisos = NewData.Permisos.map(item =>{
-            return {IdPermiso: item.IdPermiso,IsFrom:'cargo'}
-        });
+        colaboradorModel.update(
+            {
+                '_id':new objectId(idColaborador),
+                'Cargo.IdCargo':{$ne:new objectId(idCargo)}
+            },
+            {
+                $push:{
+                    'Cargo':{
+                        IdCargo:new objectId(idCargo.toString()),
+                        Estado:true
+                    }
+                }
+            }
+        );
 
-        console.log(_dataNewPermisos);
-
-        // const result = await colaboradorModel.updateOne({_id:idCargo},{$set:{Cargo:idCargo}});
-        res.json(null);
     }
 
     // putAgregarPerfil: async (req,res) => {
