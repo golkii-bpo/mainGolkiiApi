@@ -157,20 +157,25 @@ module.exports = {
                 }
             ]);
 
-        colaboradorModel.update(
-            {
-                '_id':new objectId(idColaborador),
-                'Cargo.IdCargo':{$ne:new objectId(idCargo)}
-            },
-            {
-                $push:{
-                    'Cargo':{
-                        IdCargo:new objectId(idCargo.toString()),
-                        Estado:true
-                    }
-                }
-            }
-        );
+        // colaboradorModel.update(
+        //     {
+        //         '_id':new objectId(idColaborador),
+        //         'Cargo.IdCargo':{$ne:new objectId(idCargo)}
+        //     },
+        //     {
+        //         $push:{
+        //             'Cargo':{
+        //                 IdCargo:new objectId(idCargo.toString()),
+        //                 Estado:true
+        //             }
+        //         },
+        //         $push:{
+        //             'Permisos':{
+        //                 $each:
+        //             }
+        //         }
+        //     }
+        // );
 
     }
 
