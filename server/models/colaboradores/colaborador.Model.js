@@ -1,7 +1,6 @@
 const Mongoose = require('mongoose');
 const {Schema,model} = Mongoose;
 
-//Item de Permisos
 const permisoSchema = new Schema({
     IdPermiso:{
         type: Schema.Types.ObjectId,
@@ -61,7 +60,6 @@ const GeneralSchema = new Schema({
     }
 })
 
-//Item de User
 const UserSchema = new Schema({
     userName:{
         type:String,

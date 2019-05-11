@@ -75,9 +75,28 @@ module.exports = new class Message {
                 this.error = `El ${IdData} ingresado no tiene el formato correcto`;
                 return {error:this.error,value:this.value};
             }
+            cantFind(model,crudType){
+                this.value = null;
+                this.error = `No se pudo encontrar el ${model} para poderlo ${crudType}`;
+                return {error:this.error,value:this.value};                
+            }
+            cantModified(model,crudType){
+                this.value = null;
+                this.error = `No se pudo ${crudType} el ${model}`;
+                return {error:this.error,value:this.value};                
+            }
+            successUpdate(_model){
+                this.error = null
+                this.value = `El ${_model} se ha actualizado correctamente`;
+                if(!_model) this.value = 'Se ha actualizado correctamente';
+                return {error:this.error,value:this.value};  
+            }
         }
     }
 
+    static Test(){
+        return 'Hola';
+    }
     /**
      * Retorna un valor boleano.
      * True si hay algun tipo de error

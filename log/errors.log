@@ -152,3 +152,12 @@
 {"ok":0,"errmsg":"The field 'IdPermiso' must be an accumulator object","code":40234,"codeName":"Location40234","name":"MongoError","level":"error"}
 {"level":"error"}
 {"level":"error"}
+{"ok":0,"errmsg":"unknown top level operator: $IdPermiso","code":2,"codeName":"BadValue","name":"MongoError","level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}

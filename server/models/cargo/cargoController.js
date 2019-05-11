@@ -305,7 +305,6 @@ module.exports = {
      * @returns
      */
     putDarAlta: async (req,res) => {
-        //TODO: Buscar todos los permisos y habilitarlos. Unicamente para este controlador
         if(!req.params.hasOwnProperty('idCargo')) return res.status(400).json(msgHandler.Send().missingIdProperty('idPermiso'));
         const idCargo = req.params.idCargo;
         if(!cargoSrv.validarObjectId(idCargo)) return res.status(400).json(msgHandler.Send().errorIdObject('idPermiso'))

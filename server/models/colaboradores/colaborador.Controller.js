@@ -1,9 +1,15 @@
-const 
-    colaboradorServices = require('./colaborador.Service'),
-    colaboradorModel = require('./colaborador.Model'),
+const
+    db = require('mongoose'),
+    objectId = require('mongoose/lib/types/objectid'),
+    colSrv = require('./colaborador.Service'),
+    colMdl = require('./colaborador.Model'),
     cargoModel = require('../cargo/cargoModel'),
     msgHandler = require('../../helpers/MessageToolHandler'),
-    objectId = require('mongoose/lib/types/objectid');
+    Fawn = require('fawn');
+    
+    Fawn.init(db);
+const 
+    Task = Fawn.Task();
 
 module.exports = {
     /**
@@ -15,7 +21,7 @@ module.exports = {
      * @returns
      */
     getObtener: async (req,res) => {
-        const _result = await colaboradorModel.find({Estado: true}).lean(true);
+        const _result = await colMdl.find({Estado: true}).lean(true);
         return res.json(_result);
     },
     
@@ -28,7 +34,7 @@ module.exports = {
      * @returns
      */
     getObtenerAll: async (req,res) => {
-        const _result = await colaboradorModel.find().lean(true);
+        const _result = await colMdl.find().lean(true);
         return res.json(_result);
     },
 
@@ -42,10 +48,10 @@ module.exports = {
      */
     postAgregar: async (req,res) => {
         const _data = req.body;
-        const {error,value} = await colaboradorServices.valdarAgregarColaborador(_data);
+        const {error,value} = await colSrv.valdarAgregarColaborador(_data);
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
-        let Cargos = colaboradorServices.cargosUnicos(value.Cargo).map(_idCargo => {return new objectId(_idCargo)});
+        let Cargos = colSrv.cargosUnicos(value.Cargo).map(_idCargo => {return new objectId(_idCargo)});
         value.Cargo = Cargos.map(_iC=> {
             return {IdCargo:_iC,Estado:true}
         });
@@ -80,7 +86,7 @@ module.exports = {
             value.Permisos = permisos;
         }
 
-        const _result = await colaboradorModel.create(value);
+        const _result = await colMdl.create(value);
         return res.json(msgHandler.sendValue(_result));
     },
 
@@ -95,15 +101,15 @@ module.exports = {
     putModificarGeneral: async (req,res) => {
         if(!req.params.hasOwnProperty('idColaborador')) return res.status(400).json(msgHandler.Send().missingIdProperty('idColaborador'));
         
-        const idColaborador = req.params.idColaborador;
-        const {error,value} = colaboradorServices.validarGeneral(req.body);
+        const idColaborador = new objectId(req.params.idColaborador.toString());
+        const {error,value} = colSrv.validarGeneral(req.body);
 
         if(error) return res.status(400).json(error);
         
-        const _log = await colaboradorModel.findById(idColaborador);
+        const _log = await colMdl.findById(idColaborador);
         if(!_log) return res.status(400).send(msgHandler.Send().putEmptyObject('Colaborador'));
 
-        const _data = await colaboradorModel.updateOne(
+        const _data = await colMdl.updateOne(
             {_id:idColaborador},
             {  $set:{
                     General:value,
@@ -124,24 +130,110 @@ module.exports = {
     },
 
     /**
-     *
+     * Este método agregar un Cargo a un empleado incluyendo todos los permisos que contiene el cargo
      *
      * @param {*} req
      * @param {*} res
+     * @returns {error,value}
      */
     putAgregarCargo: async (req,res) => {
         const 
-            idColaborador = req.params.idColaborador,
-            idCargo = req.params.idCargo;
-        if(!colaboradorServices.validarObjectId(idColaborador)) return res.status(400).json(msgHandler.Send().errorIdObject('idColaborador'))
-        if(!colaboradorServices.validarObjectId(idCargo)) return res.status(400).json(msgHandler.Send().errorIdObject('idCargo'))
-        
-        //Se obtienen los datos del cargo
+            idColaborador = req.params.idColaborador.toString(),
+            idCargo = new objectId(req.params.idCargo);
+        if(!colSrv.validarObjectId(idColaborador)) return res.status(400).json(msgHandler.Send().errorIdObject('idColaborador'))
+        if(!colSrv.validarObjectId(idCargo)) return res.status(400).json(msgHandler.Send().errorIdObject('idCargo'))
         
         const 
-            Colaborador = await colaboradorModel.findById(idCargo).lean(true),
-            Cargo = await cargoModel.aggregate([
+            Colaborador = await colMdl.findById(idColaborador).lean(true),
+            _permisosCol = Colaborador.hasOwnProperty('Permisos')? Colaborador.Permisos.map(item=> item.IdPermiso.toString()): [];
+            _permisos = await cargoModel.aggregate([
                 {$match:{_id:new objectId(idCargo.toString())}},
+                {$unwind:'$Permisos'},
+                {$replaceRoot :{'newRoot':'$Permisos'}},
+                {
+                    $addFields: {
+                        IdPermiso: { $toString: "$IdPermiso" }
+                    }
+                },
+                {$match:{'IdPermiso':{$nin:_permisosCol}}},
+                {
+                    $group:{
+                        _id:'$IdPermiso',
+                        IdPermiso:{$first:'$IdPermiso'}
+                    }
+                },
+                {
+                    $match:{'IdPermiso':{$ne:_permisosCol}}
+                },
+                {
+                    $project:{
+                        "IdPermiso":1,
+                        "_id":0
+                    }
+                },
+                {
+                    $addFields:{
+                        IsFrom: 'Cargo'
+                    }
+                }
+            ]);
+
+        colMdl
+        .updateOne(
+            {
+                _id:idColaborador,
+                'Cargo.IdCargo':{$nin:[idCargo]}
+            },
+            {
+                $push:{
+                    Cargo:{
+                        IdCargo:idCargo,
+                        Estado:true
+                    },
+                    Permisos:{
+                        $each:_permisos
+                    },
+                    Log:{
+                        Propiedad:'Cargo',
+                        Data:Colaborador.Cargo
+                    }
+                }
+            }
+        )
+        .then((data)=>{
+            if(data.n==0)   return res.status(400).json(msgHandler.Send().cantFind('Colaborador','Actualizar'));
+            if(data.nModified == 0) return res.status(400).json(msgHandler.Send().cantModified('Colaborador','Actualizar'));
+            if(data.ok == 0) return res.status(400).json(msgHandler.sendError('Ah ocurrio un error en la actualización del Colaborador'));
+            return res.json(msgHandler.Send().successUpdate());
+        }).catch((err)=>{
+            return res.status(400).json(err);
+        })
+    },
+
+    /**
+     * Este método se encarga de eliminar un cargo de un colaborador
+     * Ademas este método agrega todo los permisos
+     *
+     * @param {*} req
+     * @param {*} res
+     * @returns {erro,value}
+     */
+    putEliminarCargo: async (req,res) => {
+        
+        let
+            _IdColaborador = req.params.idColaborador.toString(),
+            _IdCargo = req.params.idCargo.toString();
+        
+        if(!colSrv.validarObjectId(_IdColaborador)) return res.status(400).json(msgHandler.Send().errorIdObject('IdColaborador'));
+        if(!colSrv.validarObjectId(_IdCargo)) return res.status(400).json(msgHandler.Send().errorIdObject('IdCargo'));
+
+        _IdColaborador = new objectId(_IdColaborador);
+        _IdCargo = new objectId(_IdCargo);
+        
+        const
+            Colaborador = await colMdl.findById(_IdColaborador).lean(true),
+            _permisos = (await cargoModel.aggregate([
+                {$match:{_id:new objectId(_IdCargo.toString())}},
                 {$unwind:'$Permisos'},
                 {$replaceRoot :{'newRoot':'$Permisos'}},
                 {
@@ -154,32 +246,106 @@ module.exports = {
                         _id:'$IdPermiso',
                         IdPermiso:{$first:'$IdPermiso'}
                     }
+                },
+                {
+                    $project:{
+                        "IdPermiso":1,
+                        "_id":0
+                    }
                 }
-            ]);
+            ])).map(_permiso => {return _permiso.IdPermiso});
 
-        // colaboradorModel.update(
-        //     {
-        //         '_id':new objectId(idColaborador),
-        //         'Cargo.IdCargo':{$ne:new objectId(idCargo)}
-        //     },
-        //     {
-        //         $push:{
-        //             'Cargo':{
-        //                 IdCargo:new objectId(idCargo.toString()),
-        //                 Estado:true
-        //             }
-        //         },
-        //         $push:{
-        //             'Permisos':{
-        //                 $each:
-        //             }
-        //         }
-        //     }
-        // );
+        colMdl.updateOne(
+            {
+                _id:_IdColaborador
+            },
+            {
+                $pull:{
+                    Cargo:{
+                        IdCargo:_IdCargo
+                    },
+                    Permisos:{
+                        IdPermiso:{$in:_permisos},
+                        IsFrom:'Cargo'
+                    }
+                },
+                $push:{
+                    Log:{
+                        Propiedad:'Cargo',
+                        Data:Colaborador.Cargo
+                    }
+                }
+            }
+        ).then((data)=>{
+            if(data.n==0)   return res.status(400).json(msgHandler.Send().cantFind('Colaborador','Actualizar'));
+            if(data.nModified == 0) return res.status(400).json(msgHandler.Send().cantModified('Colaborador','Actualizar'));
+            if(data.ok == 0) return res.status(400).json(msgHandler.sendError('Ah ocurrio un error en la actualización del Colaborador'));
+            return res.json(msgHandler.Send().successUpdate());
+        }).catch((err)=>{
+            return res.status(400).json(err);
+        });
+    },
 
+    putAgregarPermiso: async (req,res) => {
+        let
+            _idColaborador = req.params.idColaborador.toString(),
+            _idPermiso = req.params.idPermiso.toString();
+        if(!colSrv.validarObjectId(_idColaborador)) return res.status(400).json(msgHandler.Send().errorIdObject('IdColaborador'));
+        if(!colSrv.validarObjectId(_idPermiso)) return res.status(400).json(msgHandler.Send().errorIdObject('IdPermiso'));
+        
+        _idColaborador = new objectId(_idColaborador);
+        _idPermiso = new objectId(_idPermiso);
+        
+        const Colaborador = colMdl.findById(_idColaborador).lean(true);
+
+        await colMdl
+        .updateOne(
+            {
+                _id:_idColaborador
+            },
+            {
+                $push:{
+                    Permisos:{
+                        IdPermiso: _idPermiso,
+                        IsFrom: 'Manual'
+                    },
+                    Log:{
+                        Propiedad:'Permisos',
+                        Data:Colaborador.hasOwnProperty('Permisos')? Colaborador.Permisos: []
+                    }
+                }
+            }
+        ).then((data) => {
+            return res.json(data);
+        }).catch((err)=> {
+            return res.status(400).json(err);
+        })
+
+    },
+
+    putEliminarPermiso: async (req,res) => {
+        let
+            _idColaborador = req.params.idColaborador.toString(),
+            _idPermiso = req.params.idPermiso.toString();
+        if(!colSrv.validarObjectId(_idColaborador)) return res.status(400).json(msgHandler.Send().errorIdObject('IdColaborador'));
+        if(!colSrv.validarObjectId(_idPermiso)) return res.status(400).json(msgHandler.Send().errorIdObject('IdPermiso'));
+        
+        _idColaborador = new objectId(_idColaborador);
+        _idPermiso = new objectId(_idPermiso);
+        
+        const Colaborador = colMdl.findById(_idColaborador).lean(true);
+        await colMdl
+        .updateOne(
+            {
+                _id:_idColaborador
+            },
+            {
+                $pull:{
+                    Permisos:_idPermiso
+                }
+            }
+        ).then((data)=>{
+            console.log
+        })
     }
-
-    // putAgregarPerfil: async (req,res) => {
-
-    // }
 };
