@@ -2,7 +2,7 @@ const
     db = require('mongoose'),
     cargoMdl = require('./cargoModel'),
     cargoSrv = require('./cargoService'),
-    colMdl = require('../colaboradores/colaborador.Model');
+    colMdl = require('../colaboradores/colaborador.model');
     msgHandler = require('../../helpers/MessageToolHandler'),
     Fawn = require('fawn'),
     ObjectId = require('mongoose/lib/types/objectid');
@@ -27,7 +27,7 @@ module.exports = {
             Permisos:false,
             FechaModificacion:false,
             Estado:false
-        });
+        }).lean(true);
 
         return res.json(msgHandler.sendValue(_return));
     },
@@ -46,7 +46,8 @@ module.exports = {
         .select({
             Permisos:false,
             FechaModificacion:false
-        });
+        })
+        .lean(true);
 
         return res.json(_return);
     },

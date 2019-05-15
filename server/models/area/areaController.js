@@ -15,7 +15,7 @@ module.exports = {
             const _result = 
             await areaModel
             .find({Estado:true})
-            .select({FechaModificacion:0});
+            .select({FechaModificacion:0}).lean(true);
             return res.status(200).json(msgHandler.sendValue(_result));
     },
 
@@ -27,7 +27,7 @@ module.exports = {
      * @returns Array<AreaModel>
      */
     getObtenerAll: async(req,res) => {
-            const _result = await areaModel.find();
+            const _result = await areaModel.find().lean(true);
             return res.status(200).json(msgHandler.sendValue(_result));
     },
 

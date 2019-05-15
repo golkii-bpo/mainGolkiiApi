@@ -21,7 +21,8 @@ module.exports = {
             Path:true,
             IsTag:true,
             Titulo:true
-        });
+        })
+        .lean(true);
         res.json(_r);
     },
 
@@ -33,7 +34,7 @@ module.exports = {
      * @returns Array<permisoModel>
      */
     getBuscarAll: async(req,res) => {
-        const _r = await permisoModel.find();
+        const _r = await permisoModel.find().lean(true);
         return res.status(200).json(_r);
     },
 

@@ -1,8 +1,8 @@
 const
     db = require('mongoose'),
     objectId = require('mongoose/lib/types/objectid'),
-    colSrv = require('./colaborador.Service'),
-    colMdl = require('./colaborador.Model'),
+    colSrv = require('./colaborador.services'),
+    colMdl = require('./colaborador.model'),
     cargoModel = require('../cargo/cargoModel'),
     msgHandler = require('../../helpers/MessageToolHandler'),
     Fawn = require('fawn');
@@ -139,15 +139,15 @@ module.exports = {
     putAgregarCargo: async (req,res) => {
         const 
             idColaborador = req.params.idColaborador.toString(),
-            idCargo = new objectId(req.params.idCargo);
+            _idCargo = new objectId(req.params.idCargo);
         if(!colSrv.validarObjectId(idColaborador)) return res.status(400).json(msgHandler.Send().errorIdObject('idColaborador'))
-        if(!colSrv.validarObjectId(idCargo)) return res.status(400).json(msgHandler.Send().errorIdObject('idCargo'))
+        if(!colSrv.validarObjectId(_idCargo)) return res.status(400).json(msgHandler.Send().errorIdObject('idCargo'))
         
         const 
             Colaborador = await colMdl.findById(idColaborador).lean(true),
             _permisosCol = Colaborador.hasOwnProperty('Permisos')? Colaborador.Permisos.map(item=> item.IdPermiso.toString()): [];
             _permisos = await cargoModel.aggregate([
-                {$match:{_id:new objectId(idCargo.toString())}},
+                {$match:{_id:new objectId(_idCargo.toString())}},
                 {$unwind:'$Permisos'},
                 {$replaceRoot :{'newRoot':'$Permisos'}},
                 {
@@ -178,16 +178,17 @@ module.exports = {
                 }
             ]);
 
+            console.log(Colaborador);
         colMdl
         .updateOne(
             {
                 _id:idColaborador,
-                'Cargo.IdCargo':{$nin:[idCargo]}
+                'Cargo.IdCargo':{$nin:[_idCargo]}
             },
             {
                 $push:{
                     Cargo:{
-                        IdCargo:idCargo,
+                        IdCargo:_idCargo,
                         Estado:true
                     },
                     Permisos:{
@@ -201,6 +202,7 @@ module.exports = {
             }
         )
         .then((data)=>{
+            console.log(data);
             if(data.n==0)   return res.status(400).json(msgHandler.Send().cantFind('Colaborador','Actualizar'));
             if(data.nModified == 0) return res.status(400).json(msgHandler.Send().cantModified('Colaborador','Actualizar'));
             if(data.ok == 0) return res.status(400).json(msgHandler.sendError('Ah ocurrio un error en la actualización del Colaborador'));
@@ -257,7 +259,8 @@ module.exports = {
 
         colMdl.updateOne(
             {
-                _id:_IdColaborador
+                _id:_IdColaborador,
+                'Cargo.IdCargo':{$eq:_IdCargo}
             },
             {
                 $pull:{
@@ -286,6 +289,14 @@ module.exports = {
         });
     },
 
+    //TODO: Llenar Documentacion
+    /**
+     *
+     *
+     * @param {*} req
+     * @param {*} res
+     * @returns
+     */
     putAgregarPermiso: async (req,res) => {
         let
             _idColaborador = req.params.idColaborador.toString(),
@@ -296,12 +307,12 @@ module.exports = {
         _idColaborador = new objectId(_idColaborador);
         _idPermiso = new objectId(_idPermiso);
         
-        const Colaborador = colMdl.findById(_idColaborador).lean(true);
-
+        const Colaborador = await colMdl.findById(_idColaborador).lean(true);
         await colMdl
         .updateOne(
             {
-                _id:_idColaborador
+                _id:_idColaborador,
+                'Permisos.IdPermiso':{$ne:_idPermiso}
             },
             {
                 $push:{
@@ -311,18 +322,25 @@ module.exports = {
                     },
                     Log:{
                         Propiedad:'Permisos',
-                        Data:Colaborador.hasOwnProperty('Permisos')? Colaborador.Permisos: []
+                        Data: Colaborador?Colaborador.hasOwnProperty('Permisos')? Colaborador.Permisos: []:null
                     }
                 }
             }
         ).then((data) => {
-            return res.json(data);
+            return res.json(msgHandler.sendValue(data));
         }).catch((err)=> {
-            return res.status(400).json(err);
+            return res.status(400).json(msgHandler.sendError(err));
         })
-
     },
 
+    //TODO: Llenar Documentacion
+    /**
+     *
+     *
+     * @param {*} req
+     * @param {*} res
+     * @returns
+     */
     putEliminarPermiso: async (req,res) => {
         let
             _idColaborador = req.params.idColaborador.toString(),
@@ -332,20 +350,31 @@ module.exports = {
         
         _idColaborador = new objectId(_idColaborador);
         _idPermiso = new objectId(_idPermiso);
-        
-        const Colaborador = colMdl.findById(_idColaborador).lean(true);
+
+        const Colaborador = await colMdl.findById(_idColaborador).lean(true);
         await colMdl
         .updateOne(
             {
-                _id:_idColaborador
+                _id:_idColaborador,
+                'Permisos.IdPermiso':{$eq:_idPermiso}
             },
             {
                 $pull:{
-                    Permisos:_idPermiso
+                    Permisos:{
+                        IdPermiso:_idPermiso
+                    },
+                },
+                $push:{
+                    Log:{
+                        Propiedad:'Permisos',
+                        Data:Colaborador.hasOwnProperty('Permisos')? Colaborador.Permisos: []
+                    }
                 }
             }
         ).then((data)=>{
-            console.log
+            return res.send(data);
+        }).catch((err)=>{
+            return res.status(400).json(err.message);
         })
     }
 };
