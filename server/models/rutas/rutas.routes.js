@@ -13,4 +13,4 @@ rutaRoutes
 .post('/',errorHandler(rutasCtrl.postAgregar))
 .put('/:idRuta/Modificar',errorHandler(rutasCtrl.putModificar))
 .put('/:idRuta/Alta',errorHandler(rutasCtrl.putDarAlta))
-.delete('/:idRuta/Eliminar',errorHandler(rutasCtrl.deleteDarBaja));
+.delete('/:idRuta/Baja',errorHandler(rutasCtrl.deleteDarBaja));

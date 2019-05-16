@@ -31,9 +31,10 @@ module.exports = {
      * @returns {error,value}
      */
     getObtenerTodos: async (req,res) => {
+        //FIXME: Cantidad maxima de paginacion
         let 
-            page = req.query.page;
-            page = page? Number.isInteger(page)?page:1:1;
+            page = Number(req.query.page);
+            page = page?page:1;
         const
             skipData = sizeData*(page-1);
 
@@ -57,8 +58,8 @@ module.exports = {
      */
     getObtenerActivos: async (req,res) => {
         let 
-            page = req.query.page;
-            page = page? Number.isInteger(page)?page:1:1;
+            page = Number(req.query.page);
+            page = page?page:1;
         const
             skipData = sizeData*(page-1);
 
@@ -135,6 +136,7 @@ module.exports = {
         })
         .then((data)=>{
             // if(data.n == 0) return res.status(402).json(msgHandler)
+            console.log(data);
             return res.json(msgHandler.Send.successUpdate());
         })
         .catch((err)=>{
@@ -166,7 +168,8 @@ module.exports = {
                     Estado:true
                 }
             }
-        ).then(()=>{
+        ).then((data)=>{
+            console.log(data);
             return res.json(msgHandler.Send().successUpdate());
         }).catch((err)=> {
             return res.status(400).json(msgHandler.sendError(err));
@@ -197,7 +200,8 @@ module.exports = {
                     Estado:false
                 }
             }
-        ).then(()=>{
+        ).then((data)=>{
+            console.log(data);
             return res.json(msgHandler.Send().successUpdate());
         }).catch((err)=> {
             return res.status(400).json(msgHandler.sendError(err));

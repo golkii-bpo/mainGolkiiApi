@@ -5,9 +5,10 @@ module.exports = new class Message {
      * @param { Retorno de información de donde se encuentra el posible error } error
      * @param { Si no hubo ningun tipo de fallo entonces retorna el resultado esperado } value
      */
-    constructor(){
-        this.error = null,
-        this.value = null
+    constructor(_error,_mensaje){
+        if(_error){this.error = _error; this.value = null}
+        else if(!_error&&_mensaje){this.error = null; this.value = _mensaje}
+        else{{this.error = null; this.value = null}}
     }
 
     sendError(_error){
@@ -16,10 +17,19 @@ module.exports = new class Message {
         return {error: this.error,value: this.value};
     }
 
+    static sendTest(){
+        return new Message('Esto es una error','Jack');
+    }
+
     sendValue(content){
         this.error = null;
         this.value = content;
         return {error: this.error,value: this.value};
+    }
+
+    test(){
+        this.error = 'hola',
+        this.value = 'Jack'
     }
 
     /**
@@ -75,6 +85,9 @@ module.exports = new class Message {
                 this.error = `El ${IdData} ingresado no tiene el formato correcto`;
                 return {error:this.error,value:this.value};
             }
+            errorCrud(crudType){
+                return new Message(`Lo sentimos no se ha podido ${crudType.toString()}`,null);
+            }
             cantFind(model,crudType){
                 this.value = null;
                 this.error = `No se pudo encontrar el ${model} para poderlo ${crudType}`;
@@ -84,6 +97,20 @@ module.exports = new class Message {
                 this.value = null;
                 this.error = `No se pudo ${crudType} el ${model}`;
                 return {error:this.error,value:this.value};                
+            }
+            /**
+             * Este método devuelve un mensaje si una actualizacion esta ok o no
+             *
+             * @param {n,nModified,ok} data
+             * @param {Collecion que se esta utilizando} model
+             * @param {Tipo de Operacion} crud
+             */
+            resultCrud(data,model,crud){
+                if(!data.hasOwnProperty('n')&&!data.hasOwnProperty('nModified')&&!data.hasOwnProperty('ok')) throw new Error('El formato esperado para el método no es el adecuado');
+                if(data.n==1 && data.nModified ==1 && data.ok ==1) return new Message(null,'Se ha actualizado correctamente')
+                else if(data.ok == 1) return this.errorCrud('actualizar')
+                else if(data.nModified) return this.cantModified(model,'actualizar');
+                else if(data.n) return this.cantFind(model,'actualizar');
             }
             successUpdate(_model){
                 this.error = null

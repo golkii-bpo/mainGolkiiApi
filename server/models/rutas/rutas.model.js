@@ -36,8 +36,7 @@ const HojaRutaSchema = new Schema({
     Insumo: {
         type:String,
         required:true,
-        enum:['Gasolina','Pasaje'],
-        default:'Gasolina'
+        enum:['Gasolina','Pasaje']
     },
     FechaSalida:{
         type: Schema.Types.Date,
