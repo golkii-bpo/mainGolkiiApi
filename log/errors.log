@@ -166,3 +166,4 @@
 {"level":"error"}
 {"level":"error"}
 {"errors":{"FechaSalida":{"message":"La fecha tiene que ser menor a la fecha y hora actual actual","name":"ValidatorError","properties":{"message":"La fecha tiene que ser menor a la fecha y hora actual actual","type":"user defined","path":"FechaSalida","value":"2019-05-16T03:46:00.000Z"},"kind":"user defined","path":"FechaSalida","value":"2019-05-16T03:46:00.000Z"}},"_message":"Ruta validation failed","message":"Ruta validation failed: FechaSalida: La fecha tiene que ser menor a la fecha y hora actual actual","name":"ValidationError","level":"error"}
+{"level":"error"}

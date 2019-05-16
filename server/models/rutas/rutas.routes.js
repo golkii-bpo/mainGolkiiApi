@@ -7,6 +7,7 @@ const
 module.exports = rutaRoutes;
 
 rutaRoutes
+.get('/Registros',errorHandler(rutasCtrl.getTotalRuta))
 .get('/',errorHandler(rutasCtrl.getObtenerTodos))
 .get('/:idRuta',errorHandler(rutasCtrl.getObtenerById))
 .post('/',errorHandler(rutasCtrl.postAgregar))
