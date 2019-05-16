@@ -3,7 +3,7 @@ const
     cargoMdl = require('./cargoModel'),
     cargoSrv = require('./cargoService'),
     colMdl = require('../colaboradores/colaborador.model');
-    msgHandler = require('../../helpers/MessageToolHandler'),
+    msgHandler = require('../../helpers/msgHandler'),
     Fawn = require('fawn'),
     ObjectId = require('mongoose/lib/types/objectid');
 

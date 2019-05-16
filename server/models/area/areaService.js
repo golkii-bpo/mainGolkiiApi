@@ -2,7 +2,7 @@
 const Joi = require('joi');
 const general = require('../../helpers/generalValidation');
 const areaModel = require('./areaModel');
-const msgHandler = require('../../helpers/MessageToolHandler');
+const msgHandler = require('../../helpers/msgHandler');
 
 const areaValidation = Joi.object().keys({
     Nombre: Joi.string().max(20).required(),

@@ -3,7 +3,7 @@ const joi = require('joi');
 joi.objectId = require('joi-objectid')(joi);
 const lodash = require('lodash');
 const cargoSrv = require('../cargo/cargoService');
-const msgHandler = require('../../helpers/MessageToolHandler');
+const msgHandler = require('../../helpers/msgHandler');
 const general = require('../../helpers/generalValidation');
 
 const JoiPerfil = joi.object().keys({

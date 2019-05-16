@@ -4,7 +4,7 @@ const
     colSrv = require('./colaborador.services'),
     colMdl = require('./colaborador.model'),
     cargoModel = require('../cargo/cargoModel'),
-    msgHandler = require('../../helpers/MessageToolHandler'),
+    msgHandler = require('../../helpers/msgHandler'),
     Fawn = require('fawn');
     
     Fawn.init(db);

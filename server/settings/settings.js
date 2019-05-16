@@ -1,5 +1,5 @@
 module.exports = {
     Rutas:{
-        paginacion:15
+        maxData:1000
     }
 }

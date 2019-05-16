@@ -7,9 +7,10 @@ const
 module.exports = rutaRoutes;
 
 rutaRoutes
-.get('/Registros',errorHandler(rutasCtrl.getTotalRuta))
-.get('/',errorHandler(rutasCtrl.getObtenerTodos))
+.get('/',errorHandler(rutasCtrl.getObtener))
+.get('/registros',errorHandler(rutasCtrl.getModelTotal))
 .get('/:idRuta',errorHandler(rutasCtrl.getObtenerById))
+.get('/:fechaInicio/:fechaFinal',errorHandler(rutasCtrl.getObtenerFecha))
 .post('/',errorHandler(rutasCtrl.postAgregar))
 .put('/:idRuta/Modificar',errorHandler(rutasCtrl.putModificar))
 .put('/:idRuta/Alta',errorHandler(rutasCtrl.putDarAlta))

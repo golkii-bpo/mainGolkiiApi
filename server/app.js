@@ -15,7 +15,7 @@ const logger = Winston.createLogger({
 //inicializacion de web api
 const mainRoute = require('./routes/main');
 const database = require('./db/conexion');
-const msgHanlder = require('./helpers/MessageToolHandler');
+const msgHanlder = require('./helpers/msgHandler');
 const app = express();
 
 //inicialización de la base de datos

@@ -3,7 +3,7 @@ const Joi = require('joi');
 const general = require('../../helpers/generalValidation');
 const areaService = new (require('../../models/area/areaService'))();
 const permisoModel = require('./permisoModel');
-const msgHandler = require('../../helpers/MessageToolHandler');
+const msgHandler = require('../../helpers/msgHandler');
 
 const JoiTree = Joi.object().keys({
     Idx: Joi.number().integer().required(),

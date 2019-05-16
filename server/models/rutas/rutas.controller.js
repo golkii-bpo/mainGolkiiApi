@@ -2,8 +2,8 @@ const
     Rutas = require('./rutas.model'),
     rutaSrv = require('./rutas.services'),
     ObjectId = require('mongoose/lib/types/objectid'),
-    msgHandler = require('../../helpers/MessageToolHandler'),
-    sizeData = require('../../settings/settings').Rutas.paginacion;
+    msgHandler = require('../../helpers/msgHandler'),
+    sttng = require('../../settings/settings').Rutas;
 
 module.exports = {
 
@@ -13,7 +13,7 @@ module.exports = {
      * @param {*} req
      * @param {*} res
      */
-    getTotalRuta: async (req,res) => {
+    getModelTotal: async (req,res) => {
         await 
             Rutas
             .find()
@@ -25,29 +25,70 @@ module.exports = {
 
     /**
      * Obtiene todas las rutas
+     * utilizando la paginación
      *
      * @param {*} req
      * @param {*} res
      * @returns {error,value}
      */
-    getObtenerTodos: async (req,res) => {
+    getObtener: async (req,res) => {
         //FIXME: Cantidad maxima de paginacion
         let 
-            page = Number(req.query.page);
+            page = Number(req.query.page),
+            size = Number(req.query.size);
             page = page?page:1;
+            size = size? size>sttng.maxData?sttng:size:sttng.maxData;
         const
-            skipData = sizeData*(page-1);
+            skipData = size*(page-1);
+
+            console.log(size);
 
         await 
             Rutas
             .find()
             .select({FechaData:false})
             .skip(skipData)
-            .limit(sizeData)
+            .limit(size)
+            .lean(true)
+            .then((data)=>{return res.json(msgHandler.sendValue(data))})
+            .catch((err)=>{;return res.status(400).json(msgHandler.sendError(err))});
+    },
+
+    /**
+     * Obtiene todas las rutas
+     * utilizando filtro de fechas
+     *
+     * @param {*} req
+     * @param {*} res
+     * @returns {error,value}
+     */
+    getObtenerFecha: async (req,res) => {
+        console.log(req.params.fechaInicio);
+        console.log(req.params.fechaFinal);
+        //FIXME: Cantidad maxima de paginacion
+        let 
+            fi = Number(req.params.fechaInicio.toString())
+            ff = Number(req.params.fechaFinal.toString());
+
+        fi = fi? new Date(fi) : Date.now();
+        ff = ff? new Date(ff) : Date.now();
+        
+        console.log('Aqui deberia de ir todo');
+
+        await 
+            Rutas
+            .find({
+                FechaSalida:{
+                    $lte:ff,
+                    $gte: fi
+                }
+            })
+            .select({FechaData:false})
             .lean(true)
             .then((data)=>{return res.json(msgHandler.sendValue(data))})
             .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))});
     },
+
 
     /**
      * Obtiene todas las rutas

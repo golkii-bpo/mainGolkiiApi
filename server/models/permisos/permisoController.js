@@ -1,6 +1,6 @@
 const permisoModel = require('./permisoModel');
 const permisoService = new (require('./permisoServices'))();
-const msgHandler = require('../../helpers/MessageToolHandler');
+const msgHandler = require('../../helpers/msgHandler');
 
 module.exports = {
 

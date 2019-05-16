@@ -5,7 +5,7 @@ Joi.objectId = require('joi-objectid')(Joi);
 const general = require('../../helpers/generalValidation');
 const cargoModel = require('./cargoModel');
 const areaService = new (require('../../models/area/areaService'))();
-const msgHandler = require('../../helpers/MessageToolHandler');
+const msgHandler = require('../../helpers/msgHandler');
 const lodash = require('lodash');
 
 const JoiFunciones = Joi.object().keys({
