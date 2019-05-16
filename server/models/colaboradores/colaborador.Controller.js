@@ -18,11 +18,11 @@ module.exports = {
      *
      * @param {*} req
      * @param {*} res
-     * @returns
+     * @returns {}
      */
     getObtener: async (req,res) => {
         const _result = await colMdl.find({Estado: true}).lean(true);
-        return res.json(_result);
+        return res.json(msgHandler.sendValue(_result));
     },
     
     /**
@@ -35,13 +35,13 @@ module.exports = {
      */
     getObtenerAll: async (req,res) => {
         const _result = await colMdl.find().lean(true);
-        return res.json(_result);
+        return res.json(msgHandler.sendValue(_result));
     },
 
     /**
-     * Método que te permite agregar los datos generales
+     * Agrega un modelo de Colaborador a la base de datos
      *
-     * @param {*} req
+     * @param {} req
      * @param {*} res
      * @returns
      * @type colaboradorModel
@@ -86,12 +86,14 @@ module.exports = {
             value.Permisos = permisos;
         }
 
-        const _result = await colMdl.create(value);
-        return res.json(msgHandler.sendValue(_result));
+        await colMdl
+        .create(value)
+        .then((data)=>{return res.json(msgHandler.sendValue(_result))})
+        .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))});
     },
 
     /**
-     * Método que te permite agregar los datos generales
+     * Permite Modificar los datos generales del colaborador
      *
      * @param {*} req
      * @param {*} res
@@ -109,7 +111,8 @@ module.exports = {
         const _log = await colMdl.findById(idColaborador);
         if(!_log) return res.status(400).send(msgHandler.Send().putEmptyObject('Colaborador'));
 
-        const _data = await colMdl.updateOne(
+        await colMdl
+        .updateOne(
             {_id:idColaborador},
             {  $set:{
                     General:value,
@@ -125,8 +128,8 @@ module.exports = {
             },{
                 new:true
             }
-        );
-        return res.json(_data);
+        ).then((data)=>{return res.json(msgHandler.resultCrud(data))})
+        .catch((err)=> {return res.status(400).json(msgHandler.sendError(err))})
     },
 
     /**
@@ -218,10 +221,9 @@ module.exports = {
      *
      * @param {*} req
      * @param {*} res
-     * @returns {erro,value}
+     * @returns {error,value}
      */
     putEliminarCargo: async (req,res) => {
-        
         let
             _IdColaborador = req.params.idColaborador.toString(),
             _IdCargo = req.params.idCargo.toString();
@@ -289,13 +291,12 @@ module.exports = {
         });
     },
 
-    //TODO: Llenar Documentacion
     /**
-     *
+     * Este método permite agregar un permiso a un colaborador en especifico
      *
      * @param {*} req
      * @param {*} res
-     * @returns
+     * @returns {error,value}
      */
     putAgregarPermiso: async (req,res) => {
         let
@@ -335,11 +336,11 @@ module.exports = {
 
     //TODO: Llenar Documentacion
     /**
-     *
+     * Este método elimina un persona de un colaborador en especifico
      *
      * @param {*} req
      * @param {*} res
-     * @returns
+     * @returns {error,value}
      */
     putEliminarPermiso: async (req,res) => {
         let

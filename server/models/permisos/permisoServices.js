@@ -37,4 +37,4 @@ class permisoService extends general{
     };
 }
 
-module.exports = permisoService;
+module.exports = new permisoService;

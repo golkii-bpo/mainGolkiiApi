@@ -1,6 +1,13 @@
-const permisoModel = require('./permisoModel');
-const permisoService = new (require('./permisoServices'))();
-const msgHandler = require('../../helpers/msgHandler');
+const 
+    permisoModel = require('./permisoModel'),
+    permisoService = require('./permisoServices'),
+    msgHandler = require('../../helpers/msgHandler'),
+    Fawn = require('fawn'),
+    db = require('mongoose');
+    
+    Fawn.init(db);
+const 
+    Task = Fawn.Task;
 
 module.exports = {
 
@@ -12,7 +19,7 @@ module.exports = {
      * @returns Array<permisoModel>
      */
     getBuscar: async (req,res) => {
-        const _r = await permisoModel
+        await permisoModel
         .find({Estado:true})
         .select({
             Descripcion:true,
@@ -22,8 +29,9 @@ module.exports = {
             IsTag:true,
             Titulo:true
         })
-        .lean(true);
-        res.json(_r);
+        .lean(true)
+        .then((data)=>{return res.json(msgHandler.sendValue(data))})
+        .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))})
     },
 
     /**
@@ -34,8 +42,12 @@ module.exports = {
      * @returns Array<permisoModel>
      */
     getBuscarAll: async(req,res) => {
-        const _r = await permisoModel.find().lean(true);
-        return res.status(200).json(_r);
+        await 
+        permisoModel
+        .find()
+        .lean(true)
+        .then((data)=>{return res.json(msgHandler.sendValue(data))})
+        .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))});
     },
 
     /**
@@ -47,15 +59,18 @@ module.exports = {
      */
     getBuscarById: async(req,res) => {
         const id = req.params.idPermiso;
-        const _r = await permisoModel
+        await 
+        permisoModel
         .find({_id:id,Estado:true})
         .select({
             Descripcion:true,
             Area:true,
             Tree:true,
             Path:true
-        });
-        return res.json(_r)
+        })
+        .lean(true)
+        .then((data)=>{return res.json(msgHandler.sendValue(data))})
+        .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))});
     },
 
     /**
@@ -69,8 +84,11 @@ module.exports = {
         const{error,value} = await permisoService.validarModelo(req.body);
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
-        const _permiso = await permisoModel.create(value)
-        return res.status(200).json(msgHandler.sendValue(_permiso));
+        await 
+        permisoModel
+        .create(value)
+        .then((data)=>{return res.json(msgHandler.sendValue(data))})
+        .catch((err)=>{return res.status(400).sendError(err)});
     },
 
     /**
@@ -82,24 +100,38 @@ module.exports = {
      */
     putModificar: async (req,res) => {
         if(!req.params.hasOwnProperty('idPermiso')) return res.status(400).json(msgHandler.sendError('La propiedad idPermiso no ha sido especificada'));
-        const id = req.params.idPermiso;
-        if(!permisoService.validarObjectId(id)) return res.status(400).json(msgHandler.sendError('El id ingresado no cumple con el formato requerido'));
+        const _idPermiso = req.params.idPermiso;
+        if(!permisoService.validarObjectId(_idPermiso)) return res.status(400).json(msgHandler.sendError('El id ingresado no cumple con el formato requerido'));
 
         const {error,value} = await permisoService.validarModelo(req.body);
 
         if(error) return res.status(400).json(msgHandler.sendValue(error));
 
-        const Permiso = await permisoModel.findById(id);
+        await
+        permisoModel
+        .updateOne(
+            {id:_idPermiso},
+            {
+                $set:{
+                    Titulo: value.Titulo,
+                    Descripcion: value.Descripcion,
+                    Area: value.Area,
+                    Titulo: value.Titulo,
+                    Tree: value.Tree,
+                    Path: value.Path,
+                    FechaModificacion: Date.now()
+                }
+            }
+        )
+
+        const Permiso = await permisoModel.findById(_idPermiso);
         Permiso.set({
-            Titulo: value.Titulo,
-            Descripcion: value.Descripcion,
-            Area: value.Area,
-            Titulo: value.Titulo,
-            Tree: value.Tree,
-            Path: value.Path,
-            FechaModificacion: Date.now()
-        })
-        let _Permiso = await Permiso.save();
+            
+        });
+
+        await 
+        Permiso
+        .save()
         return res.json(_Permiso);
     },
 
@@ -149,7 +181,7 @@ module.exports = {
     },
 
     /**
-     * Procedimiento que permite dar de baja a un equipo
+     * Procedimiento que permite dar de baja a un Permiso
      *
      * @param {*} req
      * @param {*} res
