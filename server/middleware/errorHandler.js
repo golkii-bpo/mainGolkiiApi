@@ -3,7 +3,6 @@ const errorHandler = function(callback){
         try{
             await callback(req,res);
         } catch(err){
-            console.log(err);
             next(err);
         }
     }

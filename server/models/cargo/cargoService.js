@@ -99,7 +99,7 @@ class cargoService extends general {
     async validarPermisoSingle (idCargo,Permiso) {
 
         const _Permiso = lodash.pick(Permiso,['IdPermiso','Estado']);
-        let {error} = JoiPermisos.validate(_Permiso);
+        let {error,value} = JoiPermisos.validate(_Permiso);
         if(error) return msgHandler.sendError(error.details[0].message);
 
         const _dataCargo = (await cargoModel.findOne({_id:idCargo})).toObject();
@@ -115,8 +115,8 @@ class cargoService extends general {
                     break;
                 }
             }
-        }
-        return !error?msgHandler.sendValue(_Permiso): {error};
+        } else {return msgHandler.sendValue(value)}
+        return error?msgHandler.sendError(error):msgHandler.sendValue(value);
     }
 
     async validarCargoById(idCargo){

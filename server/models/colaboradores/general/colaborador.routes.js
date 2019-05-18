@@ -1,7 +1,7 @@
 const express = require('express');
 const colaboradorCtrl = require('./colaborador.controller');
 const colaboradorRouter = express.Router();
-const errHandler = require('../../middleware/errorHandler');
+const errHandler = require('../../../middleware/errorHandler');
 
 module.exports = colaboradorRouter;
 

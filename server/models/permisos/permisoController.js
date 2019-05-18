@@ -1,13 +1,14 @@
-const 
-    permisoModel = require('./permisoModel'),
-    permisoService = require('./permisoServices'),
+const
+    ObjectId = (require('mongoose')).Types.ObjectId,
+    permisoMdl = require('./permisoModel'),
+    colMdl = require('../colaboradores/general/colaborador.model'),
+    cargoMdl = require('../cargo/cargoModel'),
+    permisoSrv = require('./permisoServices'),
     msgHandler = require('../../helpers/msgHandler'),
-    Fawn = require('fawn'),
-    db = require('mongoose');
-    
-    Fawn.init(db);
-const 
-    Task = Fawn.Task;
+    Task = (require('../../db/transactions')).Task();
+
+// let 
+//     Task = new Fawn.Task();
 
 module.exports = {
 
@@ -19,7 +20,7 @@ module.exports = {
      * @returns Array<permisoModel>
      */
     getBuscar: async (req,res) => {
-        await permisoModel
+        await permisoMdl
         .find({Estado:true})
         .select({
             Descripcion:true,
@@ -43,7 +44,7 @@ module.exports = {
      */
     getBuscarAll: async(req,res) => {
         await 
-        permisoModel
+        permisoMdl
         .find()
         .lean(true)
         .then((data)=>{return res.json(msgHandler.sendValue(data))})
@@ -60,7 +61,7 @@ module.exports = {
     getBuscarById: async(req,res) => {
         const id = req.params.idPermiso;
         await 
-        permisoModel
+        permisoMdl
         .find({_id:id,Estado:true})
         .select({
             Descripcion:true,
@@ -81,11 +82,11 @@ module.exports = {
      * @returns permisoModel
      */
     postAgregar: async (req,res) => {
-        const{error,value} = await permisoService.validarModelo(req.body);
+        const{error,value} = await permisoSrv.validarModelo(req.body);
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
         await 
-        permisoModel
+        permisoMdl
         .create(value)
         .then((data)=>{return res.json(msgHandler.sendValue(data))})
         .catch((err)=>{return res.status(400).sendError(err)});
@@ -101,14 +102,14 @@ module.exports = {
     putModificar: async (req,res) => {
         if(!req.params.hasOwnProperty('idPermiso')) return res.status(400).json(msgHandler.sendError('La propiedad idPermiso no ha sido especificada'));
         const _idPermiso = req.params.idPermiso;
-        if(!permisoService.validarObjectId(_idPermiso)) return res.status(400).json(msgHandler.sendError('El id ingresado no cumple con el formato requerido'));
+        if(!permisoSrv.validarObjectId(_idPermiso)) return res.status(400).json(msgHandler.sendError('El id ingresado no cumple con el formato requerido'));
 
-        const {error,value} = await permisoService.validarModelo(req.body);
+        const {error,value} = await permisoSrv.validarModelo(req.body);
 
         if(error) return res.status(400).json(msgHandler.sendValue(error));
 
         await
-        permisoModel
+        permisoMdl
         .updateOne(
             {id:_idPermiso},
             {
@@ -123,16 +124,8 @@ module.exports = {
                 }
             }
         )
-
-        const Permiso = await permisoModel.findById(_idPermiso);
-        Permiso.set({
-            
-        });
-
-        await 
-        Permiso
-        .save()
-        return res.json(_Permiso);
+        .then((data)=>{return res.json(msgHandler.resultCrud(data,'Permiso','Actualizar'))})
+        .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))})
     },
 
     /**
@@ -146,16 +139,28 @@ module.exports = {
     putDarBaja: async (req,res) => {
         if(!req.params.hasOwnProperty('idPermiso')) return res.status(400).json(msgHandler.sendError('La propiedad idPermiso no ha sido especificada'));
         
-        const id = req.params.idPermiso;
-        if(!permisoService.validarObjectId(id)) return res.status(400).json(msgHandler.sendError('El id ingresado no cumple con el formato requerido'));
+        const _idPermiso = req.params.idPermiso;
+        if(!permisoSrv.validarObjectId(_idPermiso)) return res.status(400).json(msgHandler.sendError('El id ingresado no cumple con el formato requerido'));
 
-        const Permiso = await permisoModel.findOne({_id:id});
+        const Permiso = await permisoMdl.findOne({_id:_idPermiso});
         Permiso.set({
             Estado:false
         });
-        
-        let _Permiso = await Permiso.save();
-        return res.json(_Permiso);
+
+        await 
+        permisoMdl
+        .updateOne(
+            {
+                _id:_idPermiso
+            },
+            {
+                $set:{
+                    Estado:false
+                }
+            }
+        )
+        .then((data)=>{return res.json(msgHandler.resultCrud(data,'Permiso','Actualizar'))})
+        .catch((err)=>{return res.status(400).sendError(err)})
     },
 
     /**
@@ -169,15 +174,20 @@ module.exports = {
         if(!req.params.hasOwnProperty('idPermiso')) return res.status(400).json(msgHandler.sendError('La propiedad idPermiso no ha sido especificada'));
         
         const id = req.params.idPermiso;
-        if(!permisoService.validarObjectId(id)) return res.status(400).json(msgHandler.sendError('El id ingresado no cumple con el formato requerido'));
+        if(!permisoSrv.validarObjectId(id)) return res.status(400).json(msgHandler.sendError('El id ingresado no cumple con el formato requerido'));
 
-        const Permiso = await permisoModel.findOne({_id:id});
-        Permiso.set({
-            Estado:true
-        });
-        
-        let _Permiso = await Permiso.save();
-        return res.json(_Permiso);
+        await 
+        permisoMdl
+        .updateOne(
+            {_id:id},
+            {
+                $set:{
+                    Estado:true
+                }
+            }
+        )
+        .then((data)=>{return res.json(msgHandler.resultCrud(data,'Permisos','Actualizar'))})
+        .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))});
     },
 
     /**
@@ -187,11 +197,18 @@ module.exports = {
      * @param {*} res
      * @returns
      */
-    delEliminar: async (req,res) => {
-        if(!req.params.hasOwnProperty('idPermiso')) return res.status(400).json(msgHandler.sendError('La propiedad idPermiso no ha sido especificada'));
-
-        const idPermiso = req.params.idPermiso;
-        const _resultado = await permisoModel.deleteOne({_id:id});
-        return res.json(_resultado);
+    delPermiso: async (req,res) => {
+        if(!permisoSrv.validarObjectId(req.params.idPermiso)) return res.status(400).json(msgHandler.errorIdObject('IdPermiso'))
+        const _idPermiso = new ObjectId(req.params.idPermiso);
+        
+        Task
+        .remove(permisoMdl,{_id:_idPermiso})
+        .update(colMdl,{'Permisos.IdPermiso':{$eq:_idPermiso}},{$pull:{Permisos:{IdPermiso:_idPermiso}}})
+        .update(cargoMdl,{'Permisos.IdPermiso':{$eq:_idPermiso}},{$pull:{Permisos:{IdPermiso:_idPermiso}}});
+        
+        Task
+        .run({useMongoose: true})
+        .then((data)=>{return res.json(msgHandler.sendValue(data))})
+        .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))});
     }
 }

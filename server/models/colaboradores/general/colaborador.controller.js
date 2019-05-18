@@ -1,15 +1,9 @@
 const
-    db = require('mongoose'),
-    objectId = require('mongoose/lib/types/objectid'),
+    objectId = (require('mongoose')).Types.ObjectId,
     colSrv = require('./colaborador.services'),
     colMdl = require('./colaborador.model'),
-    cargoModel = require('../cargo/cargoModel'),
-    msgHandler = require('../../helpers/msgHandler'),
-    Fawn = require('fawn');
-    
-    Fawn.init(db);
-const 
-    Task = Fawn.Task();
+    cargoModel = require('../../cargo/cargoModel'),
+    msgHandler = require('../../../helpers/msgHandler');
 
 module.exports = {
     /**
@@ -111,7 +105,8 @@ module.exports = {
         const _log = await colMdl.findById(idColaborador);
         if(!_log) return res.status(400).send(msgHandler.Send().putEmptyObject('Colaborador'));
 
-        await colMdl
+        await 
+        colMdl
         .updateOne(
             {_id:idColaborador},
             {  $set:{

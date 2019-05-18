@@ -1,14 +1,11 @@
 const 
-    db = require('mongoose'),
     cargoMdl = require('./cargoModel'),
     cargoSrv = require('./cargoService'),
-    colMdl = require('../colaboradores/colaborador.model');
+    colMdl = require('../colaboradores/general/colaborador.model');
     msgHandler = require('../../helpers/msgHandler'),
     Fawn = require('fawn'),
-    ObjectId = require('mongoose/lib/types/objectid');
-
-    Fawn.init(db,'golkii_api');
-    const Task = Fawn.Task(); 
+    ObjectId = require('mongoose/lib/types/objectid'),
+    Task = (require('../../db/transactions')).Task();
 
 module.exports = {
     
@@ -153,14 +150,12 @@ module.exports = {
      */
     putAgregarPermisos:async (req,res) => {
 
-        if(!req.params.hasOwnProperty('idCargo')) return res.status(400).json(msgHandler.Send().missingIdProperty('idCargo'));
+        if(!cargoSrv.validarObjectId(req.params.idCargo)) return res.status(400).json(msgHandler.Send().errorIdObject('idCargo'))
         const 
-            _idCargo = req.params.idCargo,
+            _idCargo = new ObjectId(req.params.idCargo),
             _permiso = req.body;
-        
-        if(!cargoSrv.validarObjectId(_idCargo)) return res.status(400).json(msgHandler.Send().errorIdObject('idCargo'))
-        const {error,value} = await cargoSrv.validarPermisoSingle(_idCargo,_permiso);
 
+        const {error,value} = await cargoSrv.validarPermisoSingle(_idCargo,_permiso);
         if(error) return res.status(400).json(msgHandler.sendError(error));
         
         Task.update(cargoMdl,
@@ -172,9 +167,9 @@ module.exports = {
 
         Task.update(colMdl,
             {
-                'Cargo.IdCargo':new ObjectId(_idCargo.toString()),
+                'Cargo.IdCargo':_idCargo,
                 'Cargo.Estado':true,
-                'Permisos':{IdPermiso:{$ne:_permiso.IdPermiso}}
+                'Permisos.IdPermiso':{$ne:_permiso.IdPermiso}
             },{
                 $push:{
                     Permisos:{
@@ -201,25 +196,26 @@ module.exports = {
      * @param {*} res
      */
     putEliminarPermiso: async (req,res) => {
-        if(!req.params.hasOwnProperty('idCargo')) return res.status(400).json(msgHandler.Send().missingIdProperty('idCargo'));
-        if(!req.params.hasOwnProperty('idPermiso')) return res.status(400).json(msgHandler.Send().missingIdProperty('idPermiso'));
-        const
-            idCargo = req.params.idCargo,
-            idPermiso = req.params.idPermiso;
-        if(!cargoSrv.validarObjectId(idCargo)) return res.status(400).json(msgHandler.Send().missingIdProperty('idCargo'));
-        if(!cargoSrv.validarObjectId(idPermiso)) return res.status(400).json(msgHandler.Send().missingIdProperty('idPermiso'));
+
+        if(!cargoSrv.validarObjectId(req.params.idCargo)) return res.status(400).json(msgHandler.Send().missingIdProperty('idCargo'));
+        if(!cargoSrv.validarObjectId(req.params.idPermiso)) return res.status(400).json(msgHandler.Send().missingIdProperty('idPermiso'));
         
+        const
+            idCargo = new ObjectId(req.params.idCargo),
+            idPermiso = new ObjectId(req.params.idPermiso);
+
         Task
         .update(cargoMdl,{'_id':idCargo},{$pull:{'Permisos':{'IdPermiso':idPermiso}}})
         .update(
             colMdl,
             {
                 'Cargo.IdCargo':new ObjectId(idCargo.toString()),
-                'Cargo.Estado':true //ultimo cambio
+                'Cargo.Estado':true, //ultimo cambio
+                'Permisos.IdPermiso':idPermiso
             },{
                 $pull:{
                     Permisos: {
-                        IdPermiso:new ObjectId(idPermiso),
+                        IdPermiso:idPermiso,
                         IsFrom:'Cargo'
                     }
                 }
@@ -231,7 +227,6 @@ module.exports = {
         await Task
         .run({useMongoose: true})
         .then((data) => {
-            console.log(data);
             return res.json(msgHandler.sendValue('El Permiso se ha eliminado correctamente'));
         }).catch((err)=>{
             return res.status(401).json(err);

@@ -14,6 +14,10 @@ class MsgHandler extends Mensaje {
     missingBodyProperty(propiedad){
         return new MsgHandler(`No se encontro la propiedad ${propiedad}. Para poder continuar continuar con el flujo es necesario este dato.`,null);
     }
+
+    missingModelData(model){
+        return new MsgHandler(`El ${model} no se encuentra registrador`);
+    }
     
     doNotExist(campo){
         return new MsgHandler(`El valor del campo ${campo} no se encuentra registrado. Favor ingrese un dato valido.`,null);
@@ -47,7 +51,7 @@ class MsgHandler extends Mensaje {
 
     /**
      * Este método devuelve un mensaje si una actualizacion esta ok o no
-     *
+     *FIXME: Se tiene que crear un metodo para Arrays multiples
      * @param {n,nModified,ok} data
      * @param {Collecion que se esta utilizando} model
      * @param {Tipo de Operacion} crud

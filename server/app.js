@@ -43,10 +43,10 @@ app.use("*",(req,res)=>{
 });
 
 //Errors
-app.use((err,req,res,next)=>{
-    logger.log('error',err);
-    if(err && err.hasOwnProperty('errmsg')) return res.status(400).json(msgHanlder.sendError(err.errmsg));
-    if(err) return res.status(500).json(msgHanlder.sendError(err.message));
+app.use((error,req,res,next)=>{
+    logger.log('error',error);
+    if(error && error.hasOwnProperty('errmsg')) return res.status(400).json(msgHanlder.sendError(error.errmsg));
+    if(error) return res.status(500).json(msgHanlder.sendError(error.message));
 })
 
 //inicio del servidor en un puerto

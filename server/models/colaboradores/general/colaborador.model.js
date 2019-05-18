@@ -1,7 +1,8 @@
 const Mongoose = require('mongoose');
 const {Schema,model} = Mongoose;
 
-const permisoSchema = new Schema({
+const 
+permisoSchema = new Schema({
     IdPermiso:{
         type: Schema.Types.ObjectId,
         ref: 'Permisos'
@@ -15,9 +16,8 @@ const permisoSchema = new Schema({
         type:Date,
         default:Date.now()
     }
-});
-
-const PerfilSchema = new Schema({
+}),
+PerfilSchema = new Schema({
     Foto:{
         type:String
     },
@@ -31,9 +31,8 @@ const PerfilSchema = new Schema({
             default:false
         }
     })
-});
-
-const GeneralSchema = new Schema({
+}),
+GeneralSchema = new Schema({
     Nombre:{
         type:String,
         required:true,
@@ -58,30 +57,63 @@ const GeneralSchema = new Schema({
         index: true,
         match:/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
     }
-})
-
-const UserSchema = new Schema({
-    userName:{
+}),
+RecoverySchema = new Schema({
+    IpSend:{
         type:String,
+        match:/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
+        default: null
+    },
+    EmailSend: {
+        type:String,
+        index: true,
+        match:/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
+    },
+    Solicitud:{
+        type:Boolean,
+        default:false
+    },
+    Token:{
+        type:String
+    },
+    Estado:{
+        type:Boolean,
+        default:false
+    }
+}),
+UserSchema = new Schema({
+    User:{
+        type:String,
+        min:5,
+        max:20,
         required:()=>{
-            if(this.userName != null || this.password != null) return true;
+            if(this.User != null || this.password != null) return true;
             return false
         }
     },
     password:{
         type:String,
+        match:/((?=.*[a-z])(?=.*[A-Z])(?=.*\d)).{8,}/,
         required:()=>{
-            if(this.userName != null || this.password != null) return true;
+            if(this.User != null || this.password != null) return true;
             return false
         }
     },
-    Olvidada:{
+    Recovery:{
+        type:RecoverySchema,
+        default:null
+    },
+    IsCreated:{
         type:Boolean,
         default:false
     },
-    fechaModificacion: {
-        type: Date,
-        default: Date.now()
+    Disable:{
+        type:Boolean,
+        default:false
+    },
+    FechaModificacion:{
+        type:Date,
+        default:Date.now()
     }
 });
 
@@ -133,10 +165,12 @@ const ColaboradoresSchema = new Schema({
     User: {
         type : UserSchema,
         default:{
-            userName:null,
+            User:null,
             password:null,
             Olvidada: false,
-            fechaModificacion: Date.now()
+            fechaModificacion: Date.now(),
+            IsCreated:false,
+            Disable:false
         }
     },
     Perfil: {

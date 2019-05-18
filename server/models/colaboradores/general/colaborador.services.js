@@ -2,9 +2,9 @@ const joi = require('joi');
 // const joi = require('joi-es');
 joi.objectId = require('joi-objectid')(joi);
 const lodash = require('lodash');
-const cargoSrv = require('../cargo/cargoService');
-const msgHandler = require('../../helpers/msgHandler');
-const general = require('../../helpers/generalValidation');
+const cargoSrv = require('../../cargo/cargoService');
+const msgHandler = require('../../../helpers/msgHandler');
+const general = require('../../../helpers/generalValidation');
 
 const JoiPerfil = joi.object().keys({
     Foto: joi.string(),

@@ -30,7 +30,7 @@ Message.prototype.sendError = (_error) => {
  * @returns {error,value}
  */
 Message.prototype.sendValue = (content) => {
-    return new Message(content);
+    return new Message(null,content);
 }
 
 module.exports = Message;
