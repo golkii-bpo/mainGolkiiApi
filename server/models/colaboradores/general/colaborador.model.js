@@ -167,9 +167,15 @@ const ColaboradoresSchema = new Schema({
         default:{
             User:null,
             password:null,
-            Olvidada: false,
-            fechaModificacion: Date.now(),
             IsCreated:false,
+            Recovery: {
+                IpSend:null,
+                EmailSend:null,
+                Solicitud:false,
+                Token:null,
+                Estado:false
+            },
+            fechaModificacion: Date.now(),
             Disable:false
         }
     },

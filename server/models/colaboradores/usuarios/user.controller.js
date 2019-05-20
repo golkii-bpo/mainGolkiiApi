@@ -21,14 +21,19 @@ module.exports = {
         ColMdl
         .updateOne(
             {
-                _id:idColaborador
+                _id:idColaborador,
+                'User.IsCreated':false,
+                Estado:true
             },
             {
                 $set:{
                     User:{
                         User:value.User,
                         password: pwdCrypted,
-                        IsCreated:true
+                        IsCreated:true,
+                        Recovery: null,
+                        fechaModificacion: Date.now(),
+                        Disable:false
                     }
                 }
             }
