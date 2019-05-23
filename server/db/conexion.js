@@ -10,10 +10,10 @@ const
     });
 
 const Options = { 
-    useCreateIndex: true,
-    useNewUrlParser: true,
     reconnectTries: Number.MAX_VALUE,
-    reconnectInterval: 1500
+    reconnectInterval: 1500,
+    user: "test",
+    pass: "Admin@123"
 }
 
 module.exports = {
@@ -25,19 +25,26 @@ module.exports = {
     connect: (MongoUri,env) => {
         db.connect(MongoUri,Options);
 
+        // db.connect("mongodb://192.168.1.243:27017/GolkiiDb", {
+        //     "user": "test",
+        //     "pass": "Admin@123"
+        // });
+
         db.connection.on('connected',()=>{
             console.log('Base de datos: '+Chalk.bgGreen(Chalk.black('Conectada')));
         });
         db.connection.on('disconnected', (err) =>{
             if(env == 'development'){
                 console.log('Base de datos: '+Chalk.yellow('Desconectada'));
+                console.log(err);
             } else {
-                Log.error(err);
+                Log.error(err);                
             }
         });
         db.connection.on('error', function(err){
             if(env == 'development'){
                 console.log(`Base de datos: ${Chalk.red(err)} error`);
+                console.log(err);
             } else {
                 Log.error(err);
             }
