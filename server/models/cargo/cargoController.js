@@ -4,7 +4,7 @@ const
     colMdl = require('../colaboradores/general/colaborador.model');
     msgHandler = require('../../helpers/msgHandler'),
     Fawn = require('fawn'),
-    ObjectId = require('mongoose/lib/types/objectid'),
+    ObjectId = require('mongoose').Types.ObjectId,
     Task = (require('../../db/transactions')).Task();
 
 module.exports = {
@@ -59,7 +59,6 @@ module.exports = {
      * @returns cargoModel
      */
     getBuscarById: async (req,res) => {
-        if(!req.params.hasOwnProperty('idCargo')) return res.status(400).json(msgHandler.Send().missingIdProperty('idCargo')); //creo que igual esto se valida por default con el routing
         const id = req.params.idCargo;
         if(!cargoSrv.validarObjectId(id)) return res.status(400).json(msgHandler.Send().errorIdObject('idCargo'));
 

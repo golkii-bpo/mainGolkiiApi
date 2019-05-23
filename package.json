@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon server/app.js",
-    "wdev":"nodemon server\\app.js"
+    "wdev": "nodemon server\\app.js"
   },
   "repository": {
     "type": "git",
@@ -38,6 +38,7 @@
     "winston": "^3.2.1"
   },
   "devDependencies": {
-    "jest": "^24.7.1"
+    "jest": "^24.7.1",
+    "typescript": "^3.4.5"
   }
 }

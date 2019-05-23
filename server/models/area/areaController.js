@@ -1,6 +1,7 @@
-const areaModel = require('./areaModel');
-const areaService = new (require('./areaService'))();
-const msgHandler = require('../../helpers/msgHandler');
+const 
+    areaModel = require('./areaModel'),
+    areaService = new (require('./areaService'))(),
+    msgHandler = require('../../helpers/msgHandler');
 
 module.exports = {
     

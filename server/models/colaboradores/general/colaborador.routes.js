@@ -3,8 +3,6 @@ const colaboradorCtrl = require('./colaborador.controller');
 const colaboradorRouter = express.Router();
 const errHandler = require('../../../middleware/errorHandler');
 
-module.exports = colaboradorRouter;
-
 colaboradorRouter
 .get('/',errHandler(colaboradorCtrl.getObtener))
 .post('/',errHandler(colaboradorCtrl.postAgregar))
@@ -13,3 +11,5 @@ colaboradorRouter
 .put('/:idColaborador/Cargo/:idCargo/Eliminar',errHandler(colaboradorCtrl.putEliminarCargo))
 .put('/:idColaborador/Permiso/:idPermiso/Agregar',errHandler(colaboradorCtrl.putAgregarPermiso))
 .put('/:idColaborador/Permiso/:idPermiso/Eliminar',errHandler(colaboradorCtrl.putEliminarPermiso));
+
+module.exports = colaboradorRouter;

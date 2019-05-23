@@ -82,7 +82,7 @@ module.exports = {
 
         await colMdl
         .create(value)
-        .then((data)=>{return res.json(msgHandler.sendValue(_result))})
+        .then((data)=>{return res.json(msgHandler.sendValue(data))})
         .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))});
     },
 
@@ -95,13 +95,12 @@ module.exports = {
      * @type colaboradorModel
     **/
     putModificarGeneral: async (req,res) => {
-        if(!req.params.hasOwnProperty('idColaborador')) return res.status(400).json(msgHandler.Send().missingIdProperty('idColaborador'));
-        
-        const idColaborador = new objectId(req.params.idColaborador.toString());
-        const {error,value} = colSrv.validarGeneral(req.body);
-
+        let {error,value} = colSrv.valModGeneral(req.body);
         if(error) return res.status(400).json(error);
-        
+
+        const 
+            idColaborador = new objectId(req.params.idColaborador.toString());
+
         const _log = await colMdl.findById(idColaborador);
         if(!_log) return res.status(400).send(msgHandler.Send().putEmptyObject('Colaborador'));
 
@@ -135,13 +134,13 @@ module.exports = {
      * @returns {error,value}
      */
     putAgregarCargo: async (req,res) => {
+
+        let {error,value} = valAgregarCargo(req.params.idColaborador,req.params.idCargo);
+        if(error) return res.status(400).json(msgHandler.sendError(error));
+
         const 
-            idColaborador = req.params.idColaborador.toString(),
-            _idCargo = new objectId(req.params.idCargo);
-        if(!colSrv.validarObjectId(idColaborador)) return res.status(400).json(msgHandler.Send().errorIdObject('idColaborador'))
-        if(!colSrv.validarObjectId(_idCargo)) return res.status(400).json(msgHandler.Send().errorIdObject('idCargo'))
-        
-        const 
+            idColaborador = new objectId(req.params.idColaborador.toString()),
+            _idCargo = new objectId(req.params.idCargo.toString()),
             Colaborador = await colMdl.findById(idColaborador).lean(true),
             _permisosCol = Colaborador.hasOwnProperty('Permisos')? Colaborador.Permisos.map(item=> item.IdPermiso.toString()): [];
             _permisos = await cargoModel.aggregate([
@@ -176,7 +175,6 @@ module.exports = {
                 }
             ]);
 
-            console.log(Colaborador);
         colMdl
         .updateOne(
             {
@@ -219,15 +217,13 @@ module.exports = {
      * @returns {error,value}
      */
     putEliminarCargo: async (req,res) => {
-        let
-            _IdColaborador = req.params.idColaborador.toString(),
-            _IdCargo = req.params.idCargo.toString();
-        
-        if(!colSrv.validarObjectId(_IdColaborador)) return res.status(400).json(msgHandler.Send().errorIdObject('IdColaborador'));
-        if(!colSrv.validarObjectId(_IdCargo)) return res.status(400).json(msgHandler.Send().errorIdObject('IdCargo'));
 
-        _IdColaborador = new objectId(_IdColaborador);
-        _IdCargo = new objectId(_IdCargo);
+        let {error,value} = valAgregarCargo(req.params.idColaborador,req.params.idCargo);
+        if(error) return msgHandler.sendError(error);
+
+        let
+            _IdColaborador = new objectId(req.params.idColaborador.toString()),
+            _IdCargo = new objectId(req.params.idCargo.toString());
         
         const
             Colaborador = await colMdl.findById(_IdColaborador).lean(true),
@@ -294,17 +290,17 @@ module.exports = {
      * @returns {error,value}
      */
     putAgregarPermiso: async (req,res) => {
+        let {error,value} = valAgregarCargo(req.params.idColaborador,req.params.idPermiso);
+        if(error) return res.status(400).json(msgHandler.sendError(error));
+
         let
-            _idColaborador = req.params.idColaborador.toString(),
-            _idPermiso = req.params.idPermiso.toString();
-        if(!colSrv.validarObjectId(_idColaborador)) return res.status(400).json(msgHandler.Send().errorIdObject('IdColaborador'));
-        if(!colSrv.validarObjectId(_idPermiso)) return res.status(400).json(msgHandler.Send().errorIdObject('IdPermiso'));
+            _idColaborador = new objectId(req.params.idColaborador.toString()),
+            _idPermiso = new objectId(req.params.idPermiso.toString());
         
-        _idColaborador = new objectId(_idColaborador);
-        _idPermiso = new objectId(_idPermiso);
-        
-        const Colaborador = await colMdl.findById(_idColaborador).lean(true);
-        await colMdl
+        const 
+            Colaborador = await colMdl.findById(_idColaborador).lean(true);
+        await 
+        colMdl
         .updateOne(
             {
                 _id:_idColaborador,
@@ -338,16 +334,14 @@ module.exports = {
      * @returns {error,value}
      */
     putEliminarPermiso: async (req,res) => {
-        let
-            _idColaborador = req.params.idColaborador.toString(),
-            _idPermiso = req.params.idPermiso.toString();
-        if(!colSrv.validarObjectId(_idColaborador)) return res.status(400).json(msgHandler.Send().errorIdObject('IdColaborador'));
-        if(!colSrv.validarObjectId(_idPermiso)) return res.status(400).json(msgHandler.Send().errorIdObject('IdPermiso'));
-        
-        _idColaborador = new objectId(_idColaborador);
-        _idPermiso = new objectId(_idPermiso);
+        let {error,value} = valAgregarCargo(req.params.idColaborador,req.params.idPermiso);
+        if(error) return res.status(400).json(msgHandler.sendError(error));
 
-        const Colaborador = await colMdl.findById(_idColaborador).lean(true);
+        const
+            _idColaborador = new objectId(req.params.idColaborador.toString()),
+            _idPermiso = new objectId(req.params.idPermiso.toString());
+            Colaborador = await colMdl.findById(_idColaborador).lean(true);
+            
         await colMdl
         .updateOne(
             {

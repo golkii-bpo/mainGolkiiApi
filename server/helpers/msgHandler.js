@@ -16,7 +16,7 @@ class MsgHandler extends Mensaje {
     }
 
     missingModelData(model){
-        return new MsgHandler(`El ${model} no se encuentra registrador`);
+        return new MsgHandler(`El ${model} no se encuentra registrado`);
     }
     
     doNotExist(campo){

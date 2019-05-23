@@ -1,10 +1,12 @@
-const joi = require('joi');
-// const joi = require('joi-es');
+const 
+    joi = require('joi'),
+    // const joi = require('joi-es');
+    colModel = require('./colaborador.model'),
+    cargoSrv = require('../../cargo/cargoService'),
+    msgHandler = require('../../../helpers/msgHandler'),
+    general = require('../../../helpers/generalValidation');
 joi.objectId = require('joi-objectid')(joi);
-const lodash = require('lodash');
-const cargoSrv = require('../../cargo/cargoService');
-const msgHandler = require('../../../helpers/msgHandler');
-const general = require('../../../helpers/generalValidation');
+
 
 const JoiPerfil = joi.object().keys({
     Foto: joi.string(),
@@ -47,7 +49,9 @@ class colaboradorService extends general {
         if(error) return {error};
         if(!await cargoSrv.validarCargos(value.Cargo)) return msgHandler.Send().doNotExist('Cargo');
         if(data.hasOwnProperty('User')) return msgHandler.sendError('Error. No se puede crear un Usuario sin antes haber creado un Colaborador');
-        return {value};
+        let uniCedula = await colModel.findOne({'General.Cedula':value.General.Cedula}).lean(true);
+        if(uniCedula) return msgHandler.sendError('La cedula ingresada ya se encuentra registrada');
+        return {error:null,value};
     }
 
     validarGeneral(data){
@@ -56,11 +60,34 @@ class colaboradorService extends general {
         return {value};
     }
 
-    async validarCargo(data) {
-        if(!data.hasOwnProperty('Cargo')) return {error:msgHandler.Send().missingIdProperty('Cargo')};
-        if(!this.validarObjectId(data.Cargo)) return {error:msgHandler.Send().errorIdObject('Cargo')};
-        if(!await cargoSrv.validarCargoById(data.Cargo)) return {error:msgHandler.Send().doNotExist('Cargo')};
-        return {value:data};
+    valModGeneral(idColaborador,data){
+        if(!this.validarObjectId(idColaborador)) return msgHandler.errorIdObject('Id Colaborador');
+        let {error,value} = this.validarGeneral(data);
+        if(error) return {error};
+    }
+
+    valAgregarCargo(idColaborador,idCargo){
+        if(!this.validarObjectId(idColaborador)) return msgHandler.errorIdObject('Id Colaborador');
+        if(!this.validarObjectId(idCargo)) return msgHandler.errorIdObject('Id Cargo');
+        return msgHandler.sendValue(true);
+    }
+
+    valEliminarCargo(idColaborador,idCargo){
+        if(!this.validarObjectId(idColaborador)) return msgHandler.errorIdObject('Id Colaborador');
+        if(!this.validarObjectId(idCargo)) return msgHandler.errorIdObject('Id Cargo');
+        return msgHandler.sendValue(true);
+    }
+
+    valAgregarPermiso(idColaborador,idPermiso){
+        if(!this.validarObjectId(idColaborador)) return msgHandler.errorIdObject('Id Colaborador');
+        if(!this.validarObjectId(idPermiso)) return msgHandler.errorIdObject('Id Permiso');
+        return msgHandler.sendValue(true);
+    }
+
+    valEliminarPermiso(idColaborador,idPermiso){
+        if(!this.validarObjectId(idColaborador)) return msgHandler.errorIdObject('Id Colaborador');
+        if(!this.validarObjectId(idPermiso)) return msgHandler.errorIdObject('Id Permiso');
+        return msgHandler.sendValue(true);
     }
 
     cargosUnicos(data){

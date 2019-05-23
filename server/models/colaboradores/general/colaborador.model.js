@@ -93,7 +93,6 @@ UserSchema = new Schema({
     },
     password:{
         type:String,
-        match:/((?=.*[a-z])(?=.*[A-Z])(?=.*\d)).{8,}/,
         required:()=>{
             if(this.User != null || this.password != null) return true;
             return false
@@ -152,7 +151,8 @@ const CargoSchema = new Schema({
 const ColaboradoresSchema = new Schema({
     General:{
         type: GeneralSchema,
-        required: true
+        required: true,
+        unique:true
     },
     Cargo:{
         type: [CargoSchema],
