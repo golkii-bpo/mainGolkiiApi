@@ -3,9 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 class Message {
     /**
      *Crea un instancia Message
-     * @param { Retorno de información de donde se encuentra el posible error } error
-     * @param { Si no hubo ningun tipo de fallo entonces retorna el resultado esperado } value
-     */
+        * @param { Retorno de información de donde se encuentra el posible error } error
+        * @param { Si no hubo ningun tipo de fallo entonces retorna el resultado esperado } value
+        */
     constructor(_error, _mensaje) {
         if (_error) {
             this.error = _error;
@@ -39,4 +39,4 @@ class Message {
         return new Message(null, content);
     }
 }
-exports.default = Message;
+exports.Message = Message;

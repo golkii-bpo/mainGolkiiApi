@@ -15,9 +15,9 @@ const logger = Winston.createLogger({
 //inicializacion de data
 dotenv.config();
 //inicializacion de web api
-const mainRoute = require("./routes/main");
+const main_1 = require("./routes/main");
 const conexion_1 = require("./db/conexion");
-const msgHandler_1 = require("./helpers/msgHandler");
+const msgHandler_1 = require("./helpers/resultHandler/msgHandler");
 const app = express();
 //inicialización de la base de datos
 conexion_1.database.connect(config.get('MONGO_URI'), app.get('env'));
@@ -34,7 +34,7 @@ app.use(function (req, res, next) {
     next();
 });
 //Routing
-app.use('/api', mainRoute);
+app.use('/api', main_1.mainRoute);
 app.use("*", (req, res) => {
     return res.status(404).send(msgHandler_1.msgHandler.sendError('La ruta indicada no se encuentra estipulada'));
 });

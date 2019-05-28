@@ -1,11 +1,9 @@
-const 
-    joi = require('joi'),
-    // const joi = require('joi-es');
-    colModel = require('./colaborador.model'),
-    cargoSrv = require('../../cargo/cargoService'),
-    msgHandler = require('../../../helpers/msgHandler'),
-    general = require('../../../helpers/generalValidation');
-joi.objectId = require('joi-objectid')(joi);
+import * as joi from 'joi';
+// import * as joi from 'joi-es';
+import colModel from './colaborador.model';
+import cargoSrv from '../../cargo/cargoService'
+import {msgHandler} from '../../../helpers/resultHandler/msgHandler';
+import general from '../../../helpers/validation/basicValidations';
 
 
 const JoiPerfil = joi.object().keys({
@@ -17,14 +15,14 @@ const JoiPerfil = joi.object().keys({
 })
 
 const JoiGeneral = joi.object().keys({
-    Nombre: joi.string().required(5).max(30),
-    Apellido: joi.string().required(5).max(30),
+    Nombre: joi.string().required().min(5).max(30),
+    Apellido: joi.string().required().min(5).max(30),
     Cedula: joi.string().required().regex(/\d{3}-{0,1}\d{6}-{0,1}\d{4}[A-z]{1}/),
     Email: joi.string().email()
 })
 
 const JoiCargo = joi.object().keys({
-    IdCargo: joi.objectId(),
+    IdCargo: joi.string(),
     FechaIngreso: joi.date()
 });
 
@@ -47,7 +45,7 @@ class colaboradorService extends general {
     async valdarAgregarColaborador(data) {
         const{error,value} = joi.validate(data,JoiColaborador);
         if(error) return {error};
-        if(!await cargoSrv.validarCargos(value.Cargo)) return msgHandler.Send().doNotExist('Cargo');
+        if(!await cargoSrv.validarCargos(value.Cargo)) return msgHandler.doNotExist('Cargo');
         if(data.hasOwnProperty('User')) return msgHandler.sendError('Error. No se puede crear un Usuario sin antes haber creado un Colaborador');
         let uniCedula = await colModel.findOne({'General.Cedula':value.General.Cedula}).lean(true);
         if(uniCedula) return msgHandler.sendError('La cedula ingresada ya se encuentra registrada');
@@ -56,17 +54,17 @@ class colaboradorService extends general {
 
     validarGeneral(data){
         const{error,value} = joi.validate(data,JoiGeneral);
-        if(error) return {error};
-        return {value};
+        if(error) return msgHandler.sendError(error);
+        return {error,value};
     }
 
-    valModGeneral(idColaborador,data){
+    valModGeneral(idColaborador:string,data:any){
         if(!this.validarObjectId(idColaborador)) return msgHandler.errorIdObject('Id Colaborador');
         let {error,value} = this.validarGeneral(data);
-        if(error) return {error};
+        if(error) return msgHandler.sendError(error);
     }
 
-    valAgregarCargo(idColaborador,idCargo){
+    valAgregarCargo(idColaborador:string,idCargo:string){
         if(!this.validarObjectId(idColaborador)) return msgHandler.errorIdObject('Id Colaborador');
         if(!this.validarObjectId(idCargo)) return msgHandler.errorIdObject('Id Cargo');
         return msgHandler.sendValue(true);
@@ -119,4 +117,4 @@ class colaboradorService extends general {
     }
 };
 
-module.exports = new colaboradorService;
+export default new colaboradorService;

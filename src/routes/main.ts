@@ -1,17 +1,15 @@
 import * as express from 'express';
-const mainRoute = express.Router();
+import {permisosRouter} from '../models/permisos/permisoRouter';
+import {cargoRouter} from '../models/cargo/cargoRouter';
+import {areaRouter} from '../models/area/areaRouter';
+import {colaboradorRouter} from '../models/colaboradores/colaboradores.router';
+import {rutaRoutes} from '../models/rutas/rutas.route';
 
-const 
-    permisosRouter = require('../models/permisos/permisoRouter'),
-    cargoRouter = require('../models/cargo/cargoRouter'),
-    areaRouter = require('../models/area/areaRouter'),
-    colaboradorRouter = require('../models/colaboradores/colaboradores.router'),
-    rutaRouter = require('../models/rutas/rutas.routes');
+const mainRoute = express.Router();
 
 mainRoute.use('/area',areaRouter);
 mainRoute.use('/permiso',permisosRouter);
 mainRoute.use('/cargo',cargoRouter);
 mainRoute.use('/colaborador',colaboradorRouter);
-mainRoute.use('/rutas',rutaRouter);
-
-export = mainRoute;
+mainRoute.use('/rutas',rutaRoutes);
+export {mainRoute};

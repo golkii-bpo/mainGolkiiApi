@@ -25,7 +25,7 @@ export const database = {
         db.connect(MongoUri,Options);
 
         db.connection.on('connected',()=>{
-            console.log('Base de datos: '+chalk(chalk.black('Conectada')));
+            console.log('Base de datos: '+chalk.bgGreen(chalk.black(' Conectada ')));
         });
         db.connection.on('disconnected', (err) =>{
             if(env == 'development'){

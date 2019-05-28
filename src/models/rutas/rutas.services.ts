@@ -1,22 +1,41 @@
 import * as joi from 'joi';
 // import * as joi from 'joi-es';
-import General from '../../helpers/generalValidation';
-joi.objectid = require('joi-objectid')(joi);
-
-const joiRuta = joi.object().keys({
-    Colaborador: joi.objectid(),
-    Descripcion: joi.string().min(0).max(255),
-    Casos:  joi.array().items(joi.string()).min(1),
-    Kilometraje: joi.number().min(0).max(2000),
-    Insumos: joi.string().valid('Gasolina','Pasaje'),
-    FechaSalida: joi.date()
-});
+import General from '../../helpers/validation/basicValidations';
+import ColMdl from '../colaboradores/general/colaborador.controller'
+import {msgHandler,msgResult} from '../../helpers/resultHandler/msgHandler'
 
 class RutaService extends General{
-    valAgregar(_model) {
+    private joiInsumos = joi.object().keys({
+        Tipo: joi.string().required(),
+        Observacion: joi.string().min(10).max(50),
+        Valor: joi.number().required().min(0).max(5000),
+        Kilometro: joi.number().min(0).max(2000)
+    })
+    private joiRuta = joi.object().keys({
+        Colaborador: joi.string(),
+        Descripcion: joi.string().min(0).max(255),
+        Casos:  joi.array().items(joi.string()).min(1),
+        Insumos: joi.array().items(this.joiInsumos),
+        FechaSalida: joi.date()
+    });
+    private joiPostRuta = this.joiRuta;
+    private joiPutRuta = this.joiRuta;
+
+    public valPostAgregar(_model:Object) {
         //TODO: Hace falta validar el modelo de colaboradores
-        return joi.validate(_model,joiRuta);
+        const{error,value} = joi.validate(_model,this.joiPostRuta);
+        return {error,value};
+    }
+    public valPutModificar(idRuta:string,model: any){
+        if(!this.validarObjectId(idRuta)) return msgHandler.errorIdObject('Id de Ruta');
+        const {error,value} = this.joiPutRuta.validate(model)
+        if(error) return msgHandler.sendError(error);
+        return msgHandler.sendValue(value);
+    }
+    public valputDarAlta(idRuta:string){
+        if(!this.validarObjectId(idRuta)) return msgHandler.errorIdObject('Id de Ruta'); 
+        return
     }
 }
 
-export default new RutaService;
+export const rutaSrv = new RutaService;

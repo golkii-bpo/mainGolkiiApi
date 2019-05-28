@@ -1,8 +1,8 @@
 // const Joi = require('joi-es');
 import * as Joi from 'joi';
-import general from '../../helpers/generalValidation';
+import general from '../../helpers/validation/basicValidations';
 import areaModel from './areaModel';
-import {msgHandler} from '../../helpers/msgHandler';
+import {msgHandler} from '../../helpers/resultHandler/msgHandler';
 
 const areaValidation = Joi.object().keys({
     Nombre: Joi.string().max(20).required(),

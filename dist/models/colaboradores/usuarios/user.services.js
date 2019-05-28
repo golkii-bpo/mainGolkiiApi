@@ -1,3 +1,4 @@
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -6,9 +7,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const joi = require('joi'), 
-// joi = require('joi-es'),
-gnralSrv = require('../../../helpers/generalValidation'), ColMdl = require('../general/colaborador.model'), msgHandler = require('../../../helpers/msgHandler'), pwdHandler = require('../../../security/pwdService'), ObjectId = require('mongoose').Types.ObjectId, joiUser = joi.object().keys({
+Object.defineProperty(exports, "__esModule", { value: true });
+const joi = require("joi");
+// import * as joi from 'joi-es';
+const basicValidations_1 = require("../../../helpers/validation/basicValidations");
+const colaborador_model_1 = require("../general/colaborador.model");
+const msgHandler_1 = require("../../../helpers/resultHandler/msgHandler");
+const pwdService_1 = require("../../../security/pwdService");
+const objectid_1 = require("mongoose/lib/types/objectid");
+//FIXME: Crear un nuevo archivo con todas las interfaces a utilizar
+const joiUser = joi.object().keys({
     User: joi.string().min(5).max(20),
     password: joi.string().regex(/((?=.*[a-z])(?=.*[A-Z])(?=.*\d)).{8,}/)
 }), joiChangeUserName = joi.object().keys({
@@ -19,54 +27,58 @@ gnralSrv = require('../../../helpers/generalValidation'), ColMdl = require('../g
     OldPwd: joi.string(),
     NewPwd: joi.string().regex(/((?=.*[a-z])(?=.*[A-Z])(?=.*\d)).{8,}/)
 });
-class UserSrv extends gnralSrv {
+class UserSrv extends basicValidations_1.default {
     validarModelo(data) {
         //se valida el modelo si esta correcto
-        return joi.validate(data, joiUser);
+        var { error, value } = joi.validate(data, joiUser);
+        return { error, value };
     }
+    //FIXME:Validar si los métodos estan bien creados
     validarUserName(newUser, idColaborador) {
         return __awaiter(this, void 0, void 0, function* () {
             const _r = !idColaborador ?
-                yield ColMdl.findOne({ 'User:User': newUser }).lean(true) :
-                yield ColMdl.findOne({ _id: { $ne: { idColaborador } }, 'User:User': newUser }).lean(true);
+                yield colaborador_model_1.default.findOne({ 'User:User': newUser }).lean(true) :
+                yield colaborador_model_1.default.findOne({ _id: { $ne: { idColaborador } }, 'User:User': newUser }).lean(true);
             if (_r)
-                return msgHandler.sendError('Usuario ya se encuentra registrado');
-            return msgHandler.sendValue(true);
+                return msgHandler_1.msgHandler.sendError('Usuario ya se encuentra registrado');
+            return msgHandler_1.msgHandler.sendValue(true);
         });
     }
     valAgregar(idColaborador, data) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.validarObjectId(idColaborador))
-                return res.status(400).json(msgHandler.errorIdObject('Id Colaborador'));
-            let { error, value } = this.validarModelo(data);
+                msgHandler_1.msgHandler.errorIdObject('Id Colaborador');
+            var { error: any, value: Object } = this.validarModelo(data);
             if (error)
-                return { error };
-            let { error, value } = yield this.validarUserName(data.User);
+                return msgHandler_1.msgHandler.sendError(error);
+            var { error, value } = yield this.validarUserName(data.User, null);
             if (error)
-                return { error };
+                return msgHandler_1.msgHandler.sendError(error);
             //Se valida que el usuario existe
-            const ColObj = yield ColMdl
+            const ColObj = yield colaborador_model_1.default
                 .findOne({ _id: idColaborador, 'User.IsCreated': false })
                 .lean(true);
             if (!ColObj)
-                return msgHandler.missingModelData('colaborador');
-            return { error: null, value };
+                return msgHandler_1.msgHandler.missingModelData('colaborador');
+            return msgHandler_1.msgHandler.sendValue(value);
         });
     }
     valModUsr(idColaborador, data) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.validarObjectId(idColaborador))
-                return res.status(400).json(msgHandler.errorIdObject('Id Colaborador'));
-            let { error, value } = this.validarModelo(data);
+                return msgHandler_1.msgHandler.errorIdObject('Id Colaborador');
+            var { error: any, value: Object } = this.validarModelo(data);
             if (error)
-                return { error };
-            let { error, value } = this.validarUserName(value.User);
-            const ColObj = yield ColMdl
+                return { error, value: null };
+            var { error, value } = yield this.validarUserName(value.User, idColaborador);
+            if (error)
+                return { error, value: null };
+            const ColObj = yield colaborador_model_1.default
                 .findOne({ _id: idColaborador, 'User.IsCreated': false })
                 .lean(true);
             if (!ColObj)
-                return msgHandler.missingModelData('colaborador');
-            value.password = pwdHandler.encrypPwd(value.password);
+                return msgHandler_1.msgHandler.missingModelData('colaborador');
+            value.password = pwdService_1.default.encrypPwd(value.password);
             return { error: null, value };
         });
     }
@@ -75,28 +87,28 @@ class UserSrv extends gnralSrv {
         return __awaiter(this, void 0, void 0, function* () {
             const { error, value } = joi.validate(data, joiChangeUserName);
             if (error)
-                return msgHandler.sendError(error);
+                return msgHandler_1.msgHandler.sendError(error);
             if (!this.validarObjectId(idColaborador))
-                return res.status(400).json(msgHandler.errorIdObject('Id Colaborador'));
-            return yield this.validarUserName(data.newUser);
+                msgHandler_1.msgHandler.errorIdObject('Id Colaborador');
+            return yield this.validarUserName(data.newUser, idColaborador);
         });
     }
     valChangePwd(idColaborador, data) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.validarObjectId(idColaborador))
-                return res.status(400).json(msgHandler.errorIdObject('Id Colaborador'));
+                return msgHandler_1.msgHandler.errorIdObject('Id Colaborador');
             //Se valida la estructura de la data
             const { error, value } = joi.validate(data, joiChangePwd);
             if (error)
                 return { error, value: null };
-            const User = yield ColMdl.aggregate([{ $match: { _id: new ObjectId(idColaborador), 'User.User': value.User } }, { $replaceRoot: { 'newRoot': '$User' } }]);
+            const User = yield colaborador_model_1.default.aggregate([{ $match: { _id: new objectid_1.default(idColaborador), 'User.User': value.User } }, { $replaceRoot: { 'newRoot': '$User' } }]);
             if (!User)
-                return msgHandler.sendError('El usuario no existe');
-            if (!pwdHandler.comparePwd(User.password, value.OldPwd))
-                return msgHandler.sendError('La contraseña ingresada es incorrecta.');
-            value.NewPassword = pwdHandler.encrypPwd(value.NewPwd);
-            return msgHandler.sendValue(value);
+                return msgHandler_1.msgHandler.sendError('El usuario no existe');
+            if (!pwdService_1.default.comparePwd(User.password, value.OldPwd))
+                return msgHandler_1.msgHandler.sendError('La contraseña ingresada es incorrecta.');
+            value.NewPassword = pwdService_1.default.encrypPwd(value.NewPwd);
+            return msgHandler_1.msgHandler.sendValue(value);
         });
     }
 }
-module.exports = new UserSrv;
+exports.default = new UserSrv;

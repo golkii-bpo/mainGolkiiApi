@@ -1,10 +1,10 @@
 
-import Rutas from './rutas.model';
-import rutaSrv from './rutas.services';
-import {ObjectId} from 'mongoose/lib/types';
-import {msgHandler,enumCrud} from '../../helpers/msgHandler';
+import RutasModel from './rutas.model';
+import {rutaSrv} from './rutas.services';
+import * as rutasInt from './rutas.interfaces';
+import {msgHandler,crudType as  enumCrud} from '../../helpers/resultHandler/msgHandler';
 import {Rutas as sttng} from '../../settings/settings';
-
+import userServices from '../colaboradores/usuarios/user.services';
 
 export default {
 
@@ -16,12 +16,12 @@ export default {
      */
     getModelTotal: async (req,res) => {
         await 
-            Rutas
-            .find()
-            .count()
-            .lean(true)
-            .then((data)=> {return res.json(msgHandler.sendValue(data))})
-            .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))});
+        RutasModel
+        .find()
+        .count()
+        .lean(true)
+        .then((data)=> {return res.json(msgHandler.sendValue(data))})
+        .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))});
     },
 
     /**
@@ -33,7 +33,6 @@ export default {
      * @returns {error,value}
      */
     getObtener: async (req,res) => {
-        //FIXME: Cantidad maxima de paginacion
         let 
             page:number = Number(req.query.page.toString()),
             size:number = Number(req.query.size.toString());
@@ -49,14 +48,14 @@ export default {
         let skipData:number = (size * ( page - 1));
 
         await 
-            Rutas
-            .find()
-            .select({FechaData:false})
-            .skip(skipData)
-            .limit(size)
-            .lean(true)
-            .then((data)=>{return res.json(msgHandler.sendValue(data))})
-            .catch((err)=>{;return res.status(400).json(msgHandler.sendError(err))});
+        RutasModel
+        .find()
+        .select({FechaData:false})
+        .skip(skipData)
+        .limit(size)
+        .lean(true)
+        .then((data)=>{return res.json(msgHandler.sendValue(data))})
+        .catch((err)=>{;return res.status(400).json(msgHandler.sendError(err))});
     },
 
     /**
@@ -68,7 +67,20 @@ export default {
      * @returns {error,value}
      */
     getObtenerFecha: async (req,res) => {
-        //FIXME: Cantidad maxima de paginacion
+        let 
+            page:number = Number(req.query.page.toString()),
+            size:number = Number(req.query.size.toString());
+        page = page?page:1;
+        /**
+         * 1. Si la variable size contiene datos
+         * 1.2 Entonces valida si no es mayor a la cantidad de datos que puede devolver
+         * 1.2.1 Si la Cantidad es mayor entonces devuelve el numero de datos que se pueden devolver
+         * 1.2.2 Si la cantidad es menor se devuelve el numero que se esta solicitando
+         * 2. Si la variable size no contiene datos se devuelve la cantidad maxima de datos permitada
+         */
+        size = size? size>sttng.maxData?sttng.maxData:size:sttng.maxData;
+        let skipData:number = (size * ( page - 1));
+
         let 
             _fi:number = Number(req.params.fechaInicio.toString()),
             _ff:number = Number(req.params.fechaFinal.toString());
@@ -78,7 +90,7 @@ export default {
             ff:Date = _ff? new Date(_ff) : new Date();
 
         await 
-            Rutas
+            RutasModel
             .find({
                 FechaSalida:{
                     $lte:ff,
@@ -86,11 +98,12 @@ export default {
                 }
             })
             .select({FechaData:false})
+            .skip(skipData)
+            .limit(size)
             .lean(true)
             .then((data)=>{return res.json(msgHandler.sendValue(data))})
             .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))});
     },
-
 
     /**
      * Obtiene todas las rutas
@@ -115,7 +128,7 @@ export default {
         let skipData:number = (size * ( page - 1));
 
         await 
-        Rutas
+        RutasModel
         .find({Estado:true})
         .select({FechaData:false})
         .skip(skipData)
@@ -137,10 +150,17 @@ export default {
      * @returns {error,value}
      */
     getObtenerById: async (req,res) => {
-        const idRuta = req.params.idRuta;
-        if(!rutaSrv.validarObjectId(idRuta)) return res.status(400).json(msgHandler.errorIdObject('Id de Ruta'));
-        const _data = await Rutas.findById(idRuta).select({FechaData:false}).lean(true);
-        return res.json(msgHandler.sendValue(_data));
+        await 
+        RutasModel
+        .findById(req.params.idRuta.toString())
+        .select({FechaData:false})
+        .lean(true)
+        .then((data)=>{
+            return res.json(msgHandler.sendValue(data));
+        })
+        .catch((err)=>{
+            return res.status(400).json(msgHandler.sendError(err));
+        })
     },
 
     /**
@@ -152,9 +172,9 @@ export default {
      */
     postAgregar: async (req,res) => {
         const _model = req.body;
-        const {error,value}=rutaSrv.valAgregar(_model);
+        const {error,value} = rutaSrv.valPostAgregar(_model);
         if(error) return res.status(400).json(msgHandler.sendError(error));
-        const _result = await Rutas.create(value);
+        const _result = await RutasModel.create(value);
         return res.json(msgHandler.sendError(_result));
     },
 
@@ -166,25 +186,24 @@ export default {
      * @returns {error,value}
      */
     putModificar: async (req,res) => {
-        //FIXME: Se tiene que modificar el retorno de la informacion.
+        const {error,value } = rutaSrv.valPutModificar(req.params.idRuta,req.body);
+        if(error) return msgHandler.sendError(error);
         const 
-            _model = req.model,
-            idRuta = req.params.idRuta;
-        if(!rutaSrv.validarObjectId(idRuta)) return res.status(400).json(msgHandler.errorIdObject('Id de Ruta'));
+            idRuta:string =  req.params.idRuta,
+            model:rutasInt.intPutRuta = <rutasInt.intPutRuta>value; 
         
         await 
-        Rutas.updateOne(
+        RutasModel.updateOne(
         {
             _id:idRuta
         },
         {
             $set:{
-                Colaborador:_model.Colaborador,
-                Descripcion:_model.hasOwnProperty('Descripcion')?_model.Descripcion:'',
-                Casos: _model.Casos,
-                Kilometraje: _model.Kilometraje,
-                Insumo: _model.Insumo,
-                FechaSalida: _model.FechaSalida
+                Colaborador:model.Colaborador,
+                Descripcion:model.Descripcion,
+                Casos: model.Casos,
+                Insumo: model.Insumos,
+                FechaSalida: model.FechaSalida
             }
         })
         .then((data)=>{
@@ -209,7 +228,7 @@ export default {
         //se realiza la validacion para saber si el idRuta es un ObjectId
         if(!rutaSrv.validarObjectId(idRuta)) return res.status(400).json(msgHandler.errorIdObject('Id de Ruta'));        
         await
-        Rutas
+        RutasModel
         .updateOne(
             {
                 _id:idRuta
@@ -235,12 +254,11 @@ export default {
      */
     deleteDarBaja: async (req,res) => {
         //FIXME: Se tiene que modificar el retorno de la informacion.
-        const
-            idRuta = req.params.idRuta;
+        const idRuta:string = req.params.idRuta;
         //se realiza la validacion para saber si el idRuta es un ObjectId
         if(!rutaSrv.validarObjectId(idRuta)) return res.status(400).json(msgHandler.errorIdObject('Id de Ruta'));        
         await
-        Rutas
+        RutasModel
         .updateOne(
             {
                 _id:idRuta
@@ -251,7 +269,6 @@ export default {
                 }
             }
         ).then((data)=>{
-            console.log(data);
             return res.json(msgHandler.resultCrud(data,'rutas',enumCrud.actualizar));
         }).catch((err)=> {
             return res.status(400).json(msgHandler.sendError(err));

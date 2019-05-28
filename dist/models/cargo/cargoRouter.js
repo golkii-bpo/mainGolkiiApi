@@ -3,8 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
 const cargoController_1 = require("./cargoController");
 const errorHandler_1 = require("../../middleware/errorHandler");
-exports.cargoRoute = express.Router();
-exports.cargoRoute
+exports.cargoRouter = express.Router();
+exports.cargoRouter
     .get('/', errorHandler_1.default(cargoController_1.default.getObtener))
     .get('/:idCargo', errorHandler_1.default(cargoController_1.default.getBuscarById))
     .get('/:idCargo/Permisos', errorHandler_1.default(cargoController_1.default.getPermisosById))

@@ -2,7 +2,7 @@ import * as express from 'express';
 import rutasCtrl from './rutas.controller';
 import errorHandler from '../../middleware/errorHandler';
 
-export const rutaRoutes = express.Router();
+const rutaRoutes = express.Router();
 
 rutaRoutes
 .get('/',errorHandler(rutasCtrl.getObtener))
@@ -13,3 +13,5 @@ rutaRoutes
 .put('/:idRuta/Modificar',errorHandler(rutasCtrl.putModificar))
 .put('/:idRuta/Alta',errorHandler(rutasCtrl.putDarAlta))
 .delete('/:idRuta/Baja',errorHandler(rutasCtrl.deleteDarBaja));
+
+export {rutaRoutes}; 

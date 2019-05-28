@@ -1,11 +1,13 @@
+import * as joi from 'joi';
+// import * as joi from 'joi-es';
+import general from '../../../helpers/validation/basicValidations';
+import ColMdl from '../general/colaborador.model';
+import {msgHandler,crudType as  enumCrud,msgResult} from '../../../helpers/resultHandler/msgHandler';
+import pwdHandler from '../../../security/pwdService';
+import ObjectId from 'mongoose/lib/types/objectid';
+
+//FIXME: Crear un nuevo archivo con todas las interfaces a utilizar
 const
-    joi = require('joi'),
-    // joi = require('joi-es'),
-    gnralSrv = require('../../../helpers/generalValidation'),
-    ColMdl = require('../general/colaborador.model'),
-    msgHandler = require('../../../helpers/msgHandler'),
-    pwdHandler = require('../../../security/pwdService'),
-    ObjectId = require('mongoose').Types.ObjectId,
     joiUser = joi.object().keys({
         User: joi.string().min(5).max(20),
         password: joi.string().regex(/((?=.*[a-z])(?=.*[A-Z])(?=.*\d)).{8,}/)
@@ -21,13 +23,15 @@ const
     })
 
 
-class UserSrv extends gnralSrv{
-    validarModelo(data){
+class UserSrv extends general{
+    validarModelo(data):msgResult{
         //se valida el modelo si esta correcto
-        return joi.validate(data,joiUser);
+        var {error,value} = joi.validate(data,joiUser);
+        return {error,value};
     }
 
-    async validarUserName(newUser,idColaborador){
+    //FIXME:Validar si los métodos estan bien creados
+    async validarUserName(newUser:any,idColaborador:any){
         const _r = 
             !idColaborador? 
                 await ColMdl.findOne({'User:User':newUser}).lean(true):
@@ -36,14 +40,14 @@ class UserSrv extends gnralSrv{
         return msgHandler.sendValue(true);
     }
 
-    async valAgregar(idColaborador,data){
-        if(!this.validarObjectId(idColaborador)) return res.status(400).json(msgHandler.errorIdObject('Id Colaborador'));
+    async valAgregar(idColaborador,data): Promise<msgResult>{
+        if(!this.validarObjectId(idColaborador)) msgHandler.errorIdObject('Id Colaborador');
 
-        let {error,value} = this.validarModelo(data);
-        if(error) return {error};
+        var {error:any,value:Object} = this.validarModelo(data);
+        if(error) return msgHandler.sendError(error);
 
-        let {error,value} = await this.validarUserName(data.User)
-        if(error) return {error};
+        var {error,value} = await this.validarUserName(data.User,null)
+        if(error) return msgHandler.sendError(error);
 
         //Se valida que el usuario existe
         const ColObj = await 
@@ -51,17 +55,17 @@ class UserSrv extends gnralSrv{
         .findOne({_id:idColaborador,'User.IsCreated':false})
         .lean(true);
         if(!ColObj) return msgHandler.missingModelData('colaborador');
-        return {error:null,value};
+        return msgHandler.sendValue(value);
     }
 
     async valModUsr(idColaborador,data){
 
-        if(!this.validarObjectId(idColaborador)) return res.status(400).json(msgHandler.errorIdObject('Id Colaborador'));
+        if(!this.validarObjectId(idColaborador)) return msgHandler.errorIdObject('Id Colaborador');
 
-        let {error,value} = this.validarModelo(data);
-        if(error) return {error};
-
-        let {error,value} = this.validarUserName(value.User)
+        var {error:any,value:Object} = this.validarModelo(data);
+        if(error) return {error,value:null};
+        var {error,value} = await this.validarUserName(value.User,idColaborador)
+        if(error) return {error,value:null};
          
         const ColObj = await 
         ColMdl
@@ -74,15 +78,15 @@ class UserSrv extends gnralSrv{
     }
 
     //FIXME: Puede validarse de alguna mejor forma
-    async valModUsrName(idColaborador,data) {
+    async valModUsrName(idColaborador:string,data) {
         const {error,value} = joi.validate(data,joiChangeUserName);
         if(error) return msgHandler.sendError(error);
-        if(!this.validarObjectId(idColaborador)) return res.status(400).json(msgHandler.errorIdObject('Id Colaborador'));
-        return await this.validarUserName(data.newUser);
+        if(!this.validarObjectId(idColaborador)) msgHandler.errorIdObject('Id Colaborador');
+        return await this.validarUserName(data.newUser,idColaborador);
     }
 
     async valChangePwd(idColaborador,data){
-        if(!this.validarObjectId(idColaborador)) return res.status(400).json(msgHandler.errorIdObject('Id Colaborador'));
+        if(!this.validarObjectId(idColaborador)) return msgHandler.errorIdObject('Id Colaborador');
         //Se valida la estructura de la data
         const {error,value} = joi.validate(data,joiChangePwd);
         if(error) return {error,value:null};
@@ -94,4 +98,4 @@ class UserSrv extends gnralSrv{
     }
 }
 
-module.exports = new UserSrv;
+export default new UserSrv;

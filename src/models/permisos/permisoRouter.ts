@@ -1,9 +1,8 @@
-const express = require('express');
-const permisosRouter = express.Router();
-const prmCtrl = require('./permisoController');
-const errorHandler = require('../../middleware/errorHandler');
+import * as express from 'express';
+import prmCtrl from './permisoController';
+import errorHandler from '../../middleware/errorHandler';
 
-module.exports = permisosRouter;
+export const permisosRouter = express.Router();
 
 permisosRouter
 .get('',errorHandler(prmCtrl.getBuscar))

@@ -1,14 +1,14 @@
+import * as express from 'express';
+import usrCtrl from './user.controller';
+import errorHandler from '../../../middleware/errorHandler';
 const 
-    express = require('express'),
-    usrCtrl = require('./user.controller'),
-    errorHandler = require('../../../middleware/errorHandler'),
-    useRouter = express.Router();
+    userRouter = express.Router();
 
-useRouter
+userRouter
 .post('/:idColaborador/agregar/',errorHandler(usrCtrl.postAgregarUsuario))
 .put('/:idColaborador/modificar',errorHandler(usrCtrl.putModUser))
 .put('/:idColaborador/usuario/cambio/username',errorHandler(usrCtrl.putModUserName))
 .put('/:idColaborador/usuario/cambio/pwd',errorHandler(usrCtrl.putChangePwd))
 .put('/:idColaborador/usuario/cambio/pwd',errorHandler(usrCtrl.putDisableUser));
 
-module.exports = useRouter;
+export {userRouter};

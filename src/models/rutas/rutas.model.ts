@@ -5,8 +5,30 @@ const
         Tipo:{
             type:String,
             required:true,
-            enum:['Gasolina','Pasaje'],
-            default:'Gasolina'
+            enum:['Gasolina','Transporte','Alimento']
+        },
+        Observacion:{
+            type:String,
+            required:function(){
+                return this.Tipo != 'Alimento';
+            },
+            min:10,
+            max:50
+        },
+        Valor:{
+            type:Number,
+            required:true,
+            min:0,
+            max:5000
+        },
+        Kilometro:{
+            type:Number,
+            default:0,
+            required:function(){
+                return this.Tipo == 'Gasolina';
+            },
+            min:0,
+            max:2000
         }
     }),
     HojaRutaSchema = new Schema({
@@ -26,35 +48,27 @@ const
             required:true,
             min:1
         },
-        Kilometraje:{
-            type:Schema.Types.Number,
-            default:0,
-            required:true,
-            min:0,
-            max:2000
-        },
-        Insumo: {
-            type:String,
-            required:true,
-            enum:['Gasolina','Pasaje']
+        Insumos: {
+            type:[InsumoShema],
+            required:true
         },
         FechaSalida:{
-            type: Schema.Types.Date,
-            default:Date.now(),
+            type: Date,
+            default:new Date(),
             required:true,
             validate:{
                 validator: function(fecha){
-                    return Date.now()>= fecha;
+                    return new Date()>= fecha;
                 },
                 message:'La fecha tiene que ser menor a la fecha y hora actual actual'
             }
         },
         FechaData:{
-            type:Schema.Types.Date,
+            type:Date,
             default:Date.now()
         },
         Estado:{
-            type:Schema.Types.Boolean,
+            type:Boolean,
             default:Date.now(),
             required:true
         }

@@ -1,13 +1,15 @@
-const express = require('express');
-const colaboradorCtrl = require('./colaborador.controller');
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express = require("express");
+const colaborador_controller_1 = require("./colaborador.controller");
+const errorHandler_1 = require("../../../middleware/errorHandler");
 const colaboradorRouter = express.Router();
-const errHandler = require('../../../middleware/errorHandler');
+exports.colaboradorRouter = colaboradorRouter;
 colaboradorRouter
-    .get('/', errHandler(colaboradorCtrl.getObtener))
-    .post('/', errHandler(colaboradorCtrl.postAgregar))
-    .put('/:idColaborador/General', errHandler(colaboradorCtrl.putModificarGeneral))
-    .put('/:idColaborador/Cargo/:idCargo/Agregar', errHandler(colaboradorCtrl.putAgregarCargo))
-    .put('/:idColaborador/Cargo/:idCargo/Eliminar', errHandler(colaboradorCtrl.putEliminarCargo))
-    .put('/:idColaborador/Permiso/:idPermiso/Agregar', errHandler(colaboradorCtrl.putAgregarPermiso))
-    .put('/:idColaborador/Permiso/:idPermiso/Eliminar', errHandler(colaboradorCtrl.putEliminarPermiso));
-module.exports = colaboradorRouter;
+    .get('/', errorHandler_1.default(colaborador_controller_1.default.getObtener))
+    .post('/', errorHandler_1.default(colaborador_controller_1.default.postAgregar))
+    .put('/:idColaborador/General', errorHandler_1.default(colaborador_controller_1.default.putModificarGeneral))
+    .put('/:idColaborador/Cargo/:idCargo/Agregar', errorHandler_1.default(colaborador_controller_1.default.putAgregarCargo))
+    .put('/:idColaborador/Cargo/:idCargo/Eliminar', errorHandler_1.default(colaborador_controller_1.default.putEliminarCargo))
+    .put('/:idColaborador/Permiso/:idPermiso/Agregar', errorHandler_1.default(colaborador_controller_1.default.putAgregarPermiso))
+    .put('/:idColaborador/Permiso/:idPermiso/Eliminar', errorHandler_1.default(colaborador_controller_1.default.putEliminarPermiso));

@@ -5,8 +5,30 @@ const InsumoShema = new mongoose_1.Schema({
     Tipo: {
         type: String,
         required: true,
-        enum: ['Gasolina', 'Pasaje'],
-        default: 'Gasolina'
+        enum: ['Gasolina', 'Transporte', 'Alimento']
+    },
+    Observacion: {
+        type: String,
+        required: function () {
+            return this.Tipo != 'Alimento';
+        },
+        min: 10,
+        max: 50
+    },
+    Valor: {
+        type: Number,
+        required: true,
+        min: 0,
+        max: 5000
+    },
+    Kilometro: {
+        type: Number,
+        default: 0,
+        required: function () {
+            return this.Tipo == 'Gasolina';
+        },
+        min: 0,
+        max: 2000
     }
 }), HojaRutaSchema = new mongoose_1.Schema({
     Colaborador: {
@@ -25,35 +47,27 @@ const InsumoShema = new mongoose_1.Schema({
         required: true,
         min: 1
     },
-    Kilometraje: {
-        type: mongoose_1.Schema.Types.Number,
-        default: 0,
-        required: true,
-        min: 0,
-        max: 2000
-    },
-    Insumo: {
-        type: String,
-        required: true,
-        enum: ['Gasolina', 'Pasaje']
+    Insumos: {
+        type: [InsumoShema],
+        required: true
     },
     FechaSalida: {
-        type: mongoose_1.Schema.Types.Date,
-        default: Date.now(),
+        type: Date,
+        default: new Date(),
         required: true,
         validate: {
             validator: function (fecha) {
-                return Date.now() >= fecha;
+                return new Date() >= fecha;
             },
             message: 'La fecha tiene que ser menor a la fecha y hora actual actual'
         }
     },
     FechaData: {
-        type: mongoose_1.Schema.Types.Date,
+        type: Date,
         default: Date.now()
     },
     Estado: {
-        type: mongoose_1.Schema.Types.Boolean,
+        type: Boolean,
         default: Date.now(),
         required: true
     }

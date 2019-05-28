@@ -1,3 +1,4 @@
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -6,44 +7,47 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const UsrSrv = require('./user.services'), ColMdl = require('../general/colaborador.model'), ObjectId = require('mongoose').Types.ObjectId, msgHandler = require('../../../helpers/msgHandler');
-module.exports = {
+Object.defineProperty(exports, "__esModule", { value: true });
+const user_services_1 = require("./user.services");
+const colaborador_model_1 = require("../general/colaborador.model");
+const objectid_1 = require("mongoose/lib/types/objectid");
+const bcrypt = require("bcrypt");
+const msgHandler_1 = require("../../../helpers/resultHandler/msgHandler");
+exports.default = {
     postAgregarUsuario: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        let { error, value } = yield UsrSrv.valAgregar(idColaborador, req.body);
+        let { error, value } = yield user_services_1.default.valAgregar(req.params.idColaborador, req.body);
         if (error)
-            return res.status(400).json(msgHandler.sendError(error));
-        const idColaborador = new ObjectId(req.params.idColaborador.toString());
-        yield ColMdl
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
+        const idColaborador = new objectid_1.default(req.params.idColaborador);
+        yield colaborador_model_1.default
             .updateOne({
             _id: idColaborador,
             'User.IsCreated': false,
             Estado: true
         }, {
             $set: {
-                'User.User': value.User,
-                'User.password': value.password,
+                'User.User': value["User"],
+                'User.password': value["password"],
                 'User.IsCreated': true
             }
         })
             .then((data) => {
-            return res.json(msgHandler.resultCrud(data, 'Usuario', 'actualización'));
+            return res.json(msgHandler_1.msgHandler.resultCrud(data, 'Usuario', msgHandler_1.crudType.agregar));
         })
             .catch((err) => {
-            return res.status(400).json(msgHandler.sendError(err));
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
         });
     }),
     putModUser: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        let { error, value } = yield UsrSrv.valModUsr(idColaborador, data);
+        let { error, value } = yield user_services_1.default.valModUsr(req.params.idColaborador, req.body);
         if (error)
-            return res.status(400).json(msgHandler.sendError(error));
-        const idColaborador = new ObjectId(req.params.idColaborador.toString()), data = req.body;
-        pwdSalt = yield bcrypt.genSaltSync(10),
-            pwdCrypted = yield bcrypt.hashSync(value.password, pwdSalt);
-        let UserData = yield ColMdl.findById(idColaborador).lean(true);
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
+        const idColaborador = new objectid_1.default(req.params.idColaborador.toString()), data = req.body, pwdSalt = yield bcrypt.genSaltSync(10), pwdCrypted = yield bcrypt.hashSync(value.password, pwdSalt);
+        let UserData = yield colaborador_model_1.default.findById(idColaborador).lean(true);
         if (!UserData.hasOwnProperty('User'))
             throw new Error('Este modelo no se puede actualizar debido a la insuficiencia de datos del modelo');
         UserData = UserData.User;
-        yield ColMdl
+        yield colaborador_model_1.default
             .updateOne({
             _id: idColaborador,
             Estado: true
@@ -64,18 +68,18 @@ module.exports = {
             }
         })
             .then((data) => {
-            return res.json(msgHandler.sendValue(data));
+            return res.json(msgHandler_1.msgHandler.sendValue(data));
         })
             .catch((err) => {
-            return res.status(400).json(msgHandler.sendError(err));
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
         });
     }),
     putModUserName: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        let { error, value } = yield UsrSrv.valModUsrName(req.params.idColaborador, req.body);
+        let { error, value } = yield user_services_1.default.valModUsrName(req.params.idColaborador, req.body);
         if (error)
-            return res.status(400).json(msgHandler.sendError(error));
-        const idColaborador = new ObjectId(req.params.idColaborador), newUser = value.NewUser, oldUser = value.OldUser;
-        yield ColMdl
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
+        const idColaborador = new objectid_1.default(req.params.idColaborador), newUser = value["NewUser"], oldUser = value["OldUser"];
+        yield colaborador_model_1.default
             .updateOne({
             _id: idColaborador,
             'User.User': oldUser
@@ -85,28 +89,28 @@ module.exports = {
                 'User.FechaModificacion': Date.now()
             }
         })
-            .then((data) => { return res.json(msgHandler.sendValue(data)); })
-            .catch((err) => { return res.status(400).json(msgHandler.sendError(err)); });
+            .then((data) => { return res.json(msgHandler_1.msgHandler.sendValue(data)); })
+            .catch((err) => { return res.status(400).json(msgHandler_1.msgHandler.sendError(err)); });
     }),
     putChangePwd: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        const { error, value } = yield UsrSrv.valChangePwd(req.params.idColaborador, req.body);
+        const { error, value } = yield user_services_1.default.valChangePwd(req.params.idColaborador, req.body);
         if (error)
-            return res.status(400).json(msgHandler.sendError(error));
-        let idColaborador = new ObjectId(req.params.idColaborador), data = value;
-        yield ColMdl
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
+        let idColaborador = new objectid_1.default(req.params.idColaborador), data = value;
+        yield colaborador_model_1.default
             .updateOne({
-            _id: idColaborador, 'User.User': value.User
+            _id: idColaborador, 'User.User': value["User"]
         }, {
             $set: {
-                'User.password': value.NewPassword,
+                'User.password': value["NewPassword"],
                 'User.FechaModificacion': Date.now()
             }
         })
             .then((data) => {
-            return res.json(msgHandler.resultCrud(data, 'Usuario', 'actualizar'));
+            return res.json(msgHandler_1.msgHandler.resultCrud(data, 'Usuario', msgHandler_1.crudType.actualizar));
         })
             .catch((err) => {
-            return res.status(400).json(msgHandler.sendError(err));
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
         });
     }),
     putDisableUser: (req, res) => __awaiter(this, void 0, void 0, function* () {

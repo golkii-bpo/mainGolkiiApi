@@ -1,16 +1,16 @@
-const Mongoose = require('mongoose');
-const { model, Schema } = Mongoose;
-const TreeItemSchema = new Schema({
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const mongoose_1 = require("mongoose");
+const TreeItemSchema = new mongoose_1.Schema({
     Idx: {
-        type: Number,
+        type: mongoose_1.Schema.Types.Number,
         required: true
     },
     Item: {
         type: String,
         required: true
     }
-});
-const PermisoSchema = new Schema({
+}), PermisoSchema = new mongoose_1.Schema({
     Titulo: {
         type: String,
         required: true,
@@ -37,11 +37,11 @@ const PermisoSchema = new Schema({
     },
     FechaIngreso: {
         type: Date,
-        default: Date.now()
+        default: new Date()
     },
     FechaModificacion: {
         type: Date,
-        default: Date.now()
+        default: new Date()
     },
     Estado: {
         type: Boolean,
@@ -49,4 +49,4 @@ const PermisoSchema = new Schema({
         required: true
     }
 });
-module.exports = model("Permiso", PermisoSchema);
+exports.default = mongoose_1.model("Permiso", PermisoSchema);

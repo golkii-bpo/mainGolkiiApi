@@ -1,9 +1,10 @@
 import cargoMdl from './cargoModel';
 import cargoSrv from './cargoService';
 import colMdl from '../colaboradores/general/colaborador.model';
-import {msgHandler,enumCrud} from '../../helpers/msgHandler';
+import {msgHandler,crudType as enumCrud} from '../../helpers/resultHandler/msgHandler';
 import {ObjectId} from 'mongoose/lib/types';
-const Task = (require('../../db/transactions')).Task();
+import db from '../../db/transactions';
+const Task = db.Task();
 
 export default {
     
@@ -160,31 +161,29 @@ export default {
             idCargo:ObjectId = new ObjectId(req.params.idCargo),
             _permiso:any = value;
         if(error) return res.status(400).json(msgHandler.sendError(error));
-        
-        Task.update(cargoMdl,
-            {
-                _id:idCargo
-            },{
-                $push:{'Permisos':_permiso}
-            });
-
-        Task.update(colMdl,
-            {
-                'Cargo.IdCargo':idCargo,
-                'Cargo.Estado':true,
-                'Permisos.IdPermiso':{$ne:_permiso.IdPermiso}
-            },{
-                $push:{
-                    Permisos:{
-                        IdPermiso: new ObjectId(_permiso.IdPermiso.toString()),
-                        IsFrom:'Cargo'
-                    }
+        await
+        Task
+        .update(
+        cargoMdl,
+        {
+            _id:idCargo
+        },{
+            $push:{'Permisos':_permiso}
+        })
+        .update(
+            colMdl,
+        {
+            'Cargo.IdCargo':idCargo,
+            'Cargo.Estado':true,
+            'Permisos.IdPermiso':{$ne:_permiso.IdPermiso}
+        },{
+            $push:{
+                Permisos:{
+                    IdPermiso: new ObjectId(_permiso.IdPermiso.toString()),
+                    IsFrom:'Cargo'
                 }
-            });
-
-        await Task
-        .run({useMongoose: true})
-        .then((data) => {
+            }
+        }).run({useMongoose: true}).then((data) => {
             return res.json(msgHandler.sendValue('El Permiso se ha agregado correctamente'));
         }).catch((err)=>{
             return res.status(400).json(err.message);
@@ -205,7 +204,7 @@ export default {
         const
             idCargo = new ObjectId(req.params.idCargo),
             idPermiso = new ObjectId(req.params.idPermiso);
-
+        await 
         Task
         .update(cargoMdl,{'_id':idCargo},{$pull:{'Permisos':{'IdPermiso':idPermiso}}})
         .update(
@@ -224,9 +223,8 @@ export default {
             },
             {
                 safe:true
-            })
-
-        await Task
+            }
+        )
         .run({useMongoose: true})
         .then((data) => {
             return res.json(msgHandler.sendValue('El Permiso se ha eliminado correctamente'));
@@ -261,38 +259,37 @@ export default {
             } 
         });
 
+        await
         Task
-            .update(
-                cargoMdl,
-                {'_id':new ObjectId(idCargo.toString())},
-                {$set:{Estado:false}}
-            )
-            .update(
-                colMdl,
-                {'Cargo.IdCargo': new ObjectId(idCargo.toString())},
-                {
-                    $pull:{
-                        'Permisos':{
-                            'IdPermiso':{
-                                $in:cargoPermisos
-                            },
-                            'IsFrom':'Cargo'
-                        }
-                    },
-                    $set:{
-                        'Cargo.$.Estado':false
+        .update(
+            cargoMdl,
+            {'_id':new ObjectId(idCargo.toString())},
+            {$set:{Estado:false}}
+        )
+        .update(
+            colMdl,
+            {'Cargo.IdCargo': new ObjectId(idCargo.toString())},
+            {
+                $pull:{
+                    'Permisos':{
+                        'IdPermiso':{
+                            $in:cargoPermisos
+                        },
+                        'IsFrom':'Cargo'
                     }
+                },
+                $set:{
+                    'Cargo.$.Estado':false
                 }
-            )
-        
-        Task
-            .run({useMongoose: true})
-            .then((data)=> {
-                return res.json(data);
-            })
-            .catch((err)=> {
-                return res.status(401).json(msgHandler.sendError(err))
-            });
+            }
+        )
+        .run({useMongoose: true})
+        .then((data)=> {
+            return res.json(data);
+        })
+        .catch((err)=> {
+            return res.status(401).json(msgHandler.sendError(err))
+        });
     },
     
     /**
@@ -325,7 +322,7 @@ export default {
                 }
             }
         );
-
+        await
         Task
         .update(cargoMdl,{'_id':new ObjectId(idCargo.toString())},{$set:{'Estado':true}})
         .update(
@@ -344,9 +341,7 @@ export default {
                     'Cargo.$.Estado':true
                 }
             }
-        );
-
-        Task
+        )
         .run({useMongoose: true})
         .then((data)=> {
             return res.json(data);

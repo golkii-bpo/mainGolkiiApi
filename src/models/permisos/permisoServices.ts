@@ -1,9 +1,9 @@
-// const Joi = require('joi-es');
-const Joi = require('joi');
-const general = require('../../helpers/generalValidation');
-const areaService = new (require('../../models/area/areaService'))();
-const permisoModel = require('./permisoModel');
-const msgHandler = require('../../helpers/msgHandler');
+// import * as Joi from 'joi-es';
+import * as Joi from 'joi';
+import general from '../../helpers/validation/basicValidations';
+import permisoModel from './permisoModel';
+import {msgHandler} from '../../helpers/resultHandler/msgHandler';
+import areaService from '../../models/area/areaService';
 
 const JoiTree = Joi.object().keys({
     Idx: Joi.number().integer().required(),
@@ -31,10 +31,9 @@ class permisoService extends general{
         const {error,value} = Joi.validate(_data,JoiPermiso);
         if(error && error.details) return msgHandler.sendError(error.details[0].message);
         if(!await areaService.validarArea(value.Area)) return msgHandler.sendError('El Area a ingresar no se encuentra registrada en sistema');
-        if(!await IsPathUnique(value.Path)) return msgHandler.Send().alredyExist('Path');
-
-        return {value};
+        if(!await IsPathUnique(value.Path)) return msgHandler.alredyExist('Path');
+        return {error:null,value};
     };
 }
 
-module.exports = new permisoService;
+export default new permisoService;

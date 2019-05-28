@@ -3,8 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
 const rutas_controller_1 = require("./rutas.controller");
 const errorHandler_1 = require("../../middleware/errorHandler");
-exports.rutaRoutes = express.Router();
-exports.rutaRoutes
+const rutaRoutes = express.Router();
+exports.rutaRoutes = rutaRoutes;
+rutaRoutes
     .get('/', errorHandler_1.default(rutas_controller_1.default.getObtener))
     .get('/registros', errorHandler_1.default(rutas_controller_1.default.getModelTotal))
     .get('/:idRuta', errorHandler_1.default(rutas_controller_1.default.getObtenerById))

@@ -1,28 +1,26 @@
-const
-    ObjectId = (require('mongoose')).Types.ObjectId,
-    permisoMdl = require('./permisoModel'),
-    colMdl = require('../colaboradores/general/colaborador.model'),
-    cargoMdl = require('../cargo/cargoModel'),
-    permisoSrv = require('./permisoServices'),
-    msgHandler = require('../../helpers/msgHandler'),
-    Task = (require('../../db/transactions')).Task();
+import {Types} from 'mongoose';
+import permisoMdl from './permisoModel';
+import colMdl from '../colaboradores/general/colaborador.model';
+import cargoMdl from '../cargo/cargoModel';
+import permisoSrv from './permisoServices';
+import {msgHandler,crudType as enumCrud} from '../../helpers/resultHandler/msgHandler';
+import db from '../../db/transactions';
+const Task = db.Task();
 
-// let 
-//     Task = new Fawn.Task();
+export default {
 
-module.exports = {
-
-    /**
-     *  Método que devuelve todos los permisos activos
-     *
-     * @param {*} req
-     * @param {*} res
-     * @returns Array<permisoModel>
-     */
+    // /**
+    //  *  Método que devuelve todos los permisos activos
+    //  *
+    //  * @param {*} req
+    //  * @param {*} res
+    //  * @returns Array<permisoModel>
+    //  */
     getBuscar: async (req,res) => {
         await permisoMdl
-        .find({Estado:true})
-        .select({
+        .find(
+            {Estado:true}
+        ).select({
             Descripcion:true,
             Area:true,
             Tree:true,
@@ -59,10 +57,9 @@ module.exports = {
      * @returns permisoModel
      */
     getBuscarById: async(req,res) => {
-        const id = req.params.idPermiso;
         await 
         permisoMdl
-        .find({_id:id,Estado:true})
+        .find({_id:req.params.idPermiso,Estado:true})
         .select({
             Descripcion:true,
             Area:true,
@@ -111,20 +108,21 @@ module.exports = {
         await
         permisoMdl
         .updateOne(
-            {id:_idPermiso},
+            {
+                id:_idPermiso
+            },
             {
                 $set:{
                     Titulo: value.Titulo,
                     Descripcion: value.Descripcion,
                     Area: value.Area,
-                    Titulo: value.Titulo,
                     Tree: value.Tree,
                     Path: value.Path,
                     FechaModificacion: Date.now()
                 }
             }
         )
-        .then((data)=>{return res.json(msgHandler.resultCrud(data,'Permiso','Actualizar'))})
+        .then((data)=>{return res.json(msgHandler.resultCrud(data,'Permiso',enumCrud.actualizar))})
         .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))})
     },
 
@@ -159,7 +157,7 @@ module.exports = {
                 }
             }
         )
-        .then((data)=>{return res.json(msgHandler.resultCrud(data,'Permiso','Actualizar'))})
+        .then((data)=>{return res.json(msgHandler.resultCrud(data,'Permiso',enumCrud.actualizar))})
         .catch((err)=>{return res.status(400).sendError(err)})
     },
 
@@ -186,7 +184,7 @@ module.exports = {
                 }
             }
         )
-        .then((data)=>{return res.json(msgHandler.resultCrud(data,'Permisos','Actualizar'))})
+        .then((data)=>{return res.json(msgHandler.resultCrud(data,'Permisos',enumCrud.actualizar))})
         .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))});
     },
 
@@ -196,19 +194,18 @@ module.exports = {
      * @param {*} req
      * @param {*} res
      * @returns
-     */
+     */ 
     delPermiso: async (req,res) => {
         if(!permisoSrv.validarObjectId(req.params.idPermiso)) return res.status(400).json(msgHandler.errorIdObject('IdPermiso'))
-        const _idPermiso = new ObjectId(req.params.idPermiso);
+        const _idPermiso = new Types.ObjectId(req.params.idPermiso);
         
+        await
         Task
         .remove(permisoMdl,{_id:_idPermiso})
         .update(colMdl,{'Permisos.IdPermiso':{$eq:_idPermiso}},{$pull:{Permisos:{IdPermiso:_idPermiso}}})
-        .update(cargoMdl,{'Permisos.IdPermiso':{$eq:_idPermiso}},{$pull:{Permisos:{IdPermiso:_idPermiso}}});
-        
-        Task
+        .update(cargoMdl,{'Permisos.IdPermiso':{$eq:_idPermiso}},{$pull:{Permisos:{IdPermiso:_idPermiso}}})
         .run({useMongoose: true})
         .then((data)=>{return res.json(msgHandler.sendValue(data))})
-        .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))});
+        .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))}); 
     }
 }

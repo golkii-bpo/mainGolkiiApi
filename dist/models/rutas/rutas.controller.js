@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const rutas_model_1 = require("./rutas.model");
 const rutas_services_1 = require("./rutas.services");
-const msgHandler_1 = require("../../helpers/msgHandler");
+const msgHandler_1 = require("../../helpers/resultHandler/msgHandler");
 const settings_1 = require("../../settings/settings");
 exports.default = {
     /**
@@ -36,7 +36,6 @@ exports.default = {
      * @returns {error,value}
      */
     getObtener: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        //FIXME: Cantidad maxima de paginacion
         let page = Number(req.query.page.toString()), size = Number(req.query.size.toString());
         page = page ? page : 1;
         /**
@@ -66,7 +65,17 @@ exports.default = {
      * @returns {error,value}
      */
     getObtenerFecha: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        //FIXME: Cantidad maxima de paginacion
+        let page = Number(req.query.page.toString()), size = Number(req.query.size.toString());
+        page = page ? page : 1;
+        /**
+         * 1. Si la variable size contiene datos
+         * 1.2 Entonces valida si no es mayor a la cantidad de datos que puede devolver
+         * 1.2.1 Si la Cantidad es mayor entonces devuelve el numero de datos que se pueden devolver
+         * 1.2.2 Si la cantidad es menor se devuelve el numero que se esta solicitando
+         * 2. Si la variable size no contiene datos se devuelve la cantidad maxima de datos permitada
+         */
+        size = size ? size > settings_1.Rutas.maxData ? settings_1.Rutas.maxData : size : settings_1.Rutas.maxData;
+        let skipData = (size * (page - 1));
         let _fi = Number(req.params.fechaInicio.toString()), _ff = Number(req.params.fechaFinal.toString());
         let fi = _fi ? new Date(_fi) : new Date(), ff = _ff ? new Date(_ff) : new Date();
         yield rutas_model_1.default
@@ -77,6 +86,8 @@ exports.default = {
             }
         })
             .select({ FechaData: false })
+            .skip(skipData)
+            .limit(size)
             .lean(true)
             .then((data) => { return res.json(msgHandler_1.msgHandler.sendValue(data)); })
             .catch((err) => { return res.status(400).json(msgHandler_1.msgHandler.sendError(err)); });
@@ -121,11 +132,16 @@ exports.default = {
      * @returns {error,value}
      */
     getObtenerById: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        const idRuta = req.params.idRuta;
-        if (!rutas_services_1.default.validarObjectId(idRuta))
-            return res.status(400).json(msgHandler_1.msgHandler.errorIdObject('Id de Ruta'));
-        const _data = yield rutas_model_1.default.findById(idRuta).select({ FechaData: false }).lean(true);
-        return res.json(msgHandler_1.msgHandler.sendValue(_data));
+        yield rutas_model_1.default
+            .findById(req.params.idRuta.toString())
+            .select({ FechaData: false })
+            .lean(true)
+            .then((data) => {
+            return res.json(msgHandler_1.msgHandler.sendValue(data));
+        })
+            .catch((err) => {
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
+        });
     }),
     /**
      *  Agrega una nueva ruta
@@ -136,7 +152,7 @@ exports.default = {
      */
     postAgregar: (req, res) => __awaiter(this, void 0, void 0, function* () {
         const _model = req.body;
-        const { error, value } = rutas_services_1.default.valAgregar(_model);
+        const { error, value } = rutas_services_1.rutaSrv.valPostAgregar(_model);
         if (error)
             return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
         const _result = yield rutas_model_1.default.create(value);
@@ -150,24 +166,23 @@ exports.default = {
      * @returns {error,value}
      */
     putModificar: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        //FIXME: Se tiene que modificar el retorno de la informacion.
-        const _model = req.model, idRuta = req.params.idRuta;
-        if (!rutas_services_1.default.validarObjectId(idRuta))
-            return res.status(400).json(msgHandler_1.msgHandler.errorIdObject('Id de Ruta'));
+        const { error, value } = rutas_services_1.rutaSrv.valPutModificar(req.params.idRuta, req.body);
+        if (error)
+            return msgHandler_1.msgHandler.sendError(error);
+        const idRuta = req.params.idRuta, model = value;
         yield rutas_model_1.default.updateOne({
             _id: idRuta
         }, {
             $set: {
-                Colaborador: _model.Colaborador,
-                Descripcion: _model.hasOwnProperty('Descripcion') ? _model.Descripcion : '',
-                Casos: _model.Casos,
-                Kilometraje: _model.Kilometraje,
-                Insumo: _model.Insumo,
-                FechaSalida: _model.FechaSalida
+                Colaborador: model.Colaborador,
+                Descripcion: model.Descripcion,
+                Casos: model.Casos,
+                Insumo: model.Insumos,
+                FechaSalida: model.FechaSalida
             }
         })
             .then((data) => {
-            return res.json(msgHandler_1.msgHandler.resultCrud(data, 'rutas', msgHandler_1.enumCrud.actualizar));
+            return res.json(msgHandler_1.msgHandler.resultCrud(data, 'rutas', msgHandler_1.crudType.actualizar));
         })
             .catch((err) => {
             return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
@@ -184,7 +199,7 @@ exports.default = {
         //FIXME: Se tiene que modificar el retorno de la informacion.
         const idRuta = req.params.idRuta;
         //se realiza la validacion para saber si el idRuta es un ObjectId
-        if (!rutas_services_1.default.validarObjectId(idRuta))
+        if (!rutas_services_1.rutaSrv.validarObjectId(idRuta))
             return res.status(400).json(msgHandler_1.msgHandler.errorIdObject('Id de Ruta'));
         yield rutas_model_1.default
             .updateOne({
@@ -194,7 +209,7 @@ exports.default = {
                 Estado: true
             }
         }).then((data) => {
-            return res.json(msgHandler_1.msgHandler.resultCrud(data, 'rutas', msgHandler_1.enumCrud.actualizar));
+            return res.json(msgHandler_1.msgHandler.resultCrud(data, 'rutas', msgHandler_1.crudType.actualizar));
         }).catch((err) => {
             return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
         });
@@ -211,7 +226,7 @@ exports.default = {
         //FIXME: Se tiene que modificar el retorno de la informacion.
         const idRuta = req.params.idRuta;
         //se realiza la validacion para saber si el idRuta es un ObjectId
-        if (!rutas_services_1.default.validarObjectId(idRuta))
+        if (!rutas_services_1.rutaSrv.validarObjectId(idRuta))
             return res.status(400).json(msgHandler_1.msgHandler.errorIdObject('Id de Ruta'));
         yield rutas_model_1.default
             .updateOne({
@@ -221,8 +236,7 @@ exports.default = {
                 Estado: false
             }
         }).then((data) => {
-            console.log(data);
-            return res.json(msgHandler_1.msgHandler.resultCrud(data, 'rutas', msgHandler_1.enumCrud.actualizar));
+            return res.json(msgHandler_1.msgHandler.resultCrud(data, 'rutas', msgHandler_1.crudType.actualizar));
         }).catch((err) => {
             return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
         });

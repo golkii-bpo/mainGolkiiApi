@@ -1,11 +1,11 @@
-const
-    objectId = (require('mongoose')).Types.ObjectId,
-    colSrv = require('./colaborador.services'),
-    colMdl = require('./colaborador.model'),
-    cargoModel = require('../../cargo/cargoModel'),
-    msgHandler = require('../../../helpers/msgHandler');
 
-module.exports = {
+import {ObjectId} from 'mongoose/lib/types';
+import colSrv from './colaborador.services';
+import colMdl from './colaborador.model';
+import cargoModel from '../../cargo/cargoModel';
+import {msgHandler,crudType as  enumCrud} from '../../../helpers/resultHandler/msgHandler';
+
+export default {
     /**
      * Método que nos permite obtener todos los Colaboradores activos
      * de la base de datos
@@ -45,7 +45,7 @@ module.exports = {
         const {error,value} = await colSrv.valdarAgregarColaborador(_data);
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
-        let Cargos = colSrv.cargosUnicos(value.Cargo).map(_idCargo => {return new objectId(_idCargo)});
+        let Cargos = colSrv.cargosUnicos(value.Cargo).map(_idCargo => {return new ObjectId(_idCargo)});
         value.Cargo = Cargos.map(_iC=> {
             return {IdCargo:_iC,Estado:true}
         });
@@ -95,14 +95,13 @@ module.exports = {
      * @type colaboradorModel
     **/
     putModificarGeneral: async (req,res) => {
-        let {error,value} = colSrv.valModGeneral(req.body);
+        let {error,value} = colSrv.valModGeneral(req.params.idColaborador,req.body);
         if(error) return res.status(400).json(error);
 
         const 
-            idColaborador = new objectId(req.params.idColaborador.toString());
+            idColaborador = new ObjectId(req.params.idColaborador);
 
         const _log = await colMdl.findById(idColaborador);
-        if(!_log) return res.status(400).send(msgHandler.Send().putEmptyObject('Colaborador'));
 
         await 
         colMdl
@@ -116,13 +115,13 @@ module.exports = {
                     Log: {
                         FechaModificación:Date.now(),
                         Propiedad:'General',
-                        Data: _log.General
+                        Data: _log? _log.General:null
                     }
                 }
             },{
                 new:true
             }
-        ).then((data)=>{return res.json(msgHandler.resultCrud(data))})
+        ).then((data)=>{return res.json(msgHandler.resultCrud(data,'colaborador',enumCrud.actualizar))})
         .catch((err)=> {return res.status(400).json(msgHandler.sendError(err))})
     },
 
@@ -135,16 +134,16 @@ module.exports = {
      */
     putAgregarCargo: async (req,res) => {
 
-        let {error,value} = valAgregarCargo(req.params.idColaborador,req.params.idCargo);
+        let {error,value} = colSrv.valAgregarCargo(req.params.idColaborador,req.params.idCargo);
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
         const 
-            idColaborador = new objectId(req.params.idColaborador.toString()),
-            _idCargo = new objectId(req.params.idCargo.toString()),
+            idColaborador = new ObjectId(req.params.idColaborador.toString()),
+            _idCargo = new ObjectId(req.params.idCargo.toString()),
             Colaborador = await colMdl.findById(idColaborador).lean(true),
-            _permisosCol = Colaborador.hasOwnProperty('Permisos')? Colaborador.Permisos.map(item=> item.IdPermiso.toString()): [];
+            _permisosCol = Colaborador.hasOwnProperty('Permisos')? Colaborador.Permisos.map(item=> item.IdPermiso.toString()): [],
             _permisos = await cargoModel.aggregate([
-                {$match:{_id:new objectId(_idCargo.toString())}},
+                {$match:{_id:new ObjectId(_idCargo.toString())}},
                 {$unwind:'$Permisos'},
                 {$replaceRoot :{'newRoot':'$Permisos'}},
                 {
@@ -198,11 +197,7 @@ module.exports = {
             }
         )
         .then((data)=>{
-            console.log(data);
-            if(data.n==0)   return res.status(400).json(msgHandler.Send().cantFind('Colaborador','Actualizar'));
-            if(data.nModified == 0) return res.status(400).json(msgHandler.Send().cantModified('Colaborador','Actualizar'));
-            if(data.ok == 0) return res.status(400).json(msgHandler.sendError('Ah ocurrio un error en la actualización del Colaborador'));
-            return res.json(msgHandler.Send().successUpdate());
+            return res.json(msgHandler.resultCrud(data,'colaborador',enumCrud.actualizar));
         }).catch((err)=>{
             return res.status(400).json(err);
         })
@@ -218,17 +213,17 @@ module.exports = {
      */
     putEliminarCargo: async (req,res) => {
 
-        let {error,value} = valAgregarCargo(req.params.idColaborador,req.params.idCargo);
+        let {error,value} = colSrv.valAgregarCargo(req.params.idColaborador,req.params.idCargo);
         if(error) return msgHandler.sendError(error);
 
         let
-            _IdColaborador = new objectId(req.params.idColaborador.toString()),
-            _IdCargo = new objectId(req.params.idCargo.toString());
+            _IdColaborador = new ObjectId(req.params.idColaborador.toString()),
+            _IdCargo = new ObjectId(req.params.idCargo.toString());
         
         const
             Colaborador = await colMdl.findById(_IdColaborador).lean(true),
             _permisos = (await cargoModel.aggregate([
-                {$match:{_id:new objectId(_IdCargo.toString())}},
+                {$match:{_id:new ObjectId(_IdCargo.toString())}},
                 {$unwind:'$Permisos'},
                 {$replaceRoot :{'newRoot':'$Permisos'}},
                 {
@@ -273,10 +268,7 @@ module.exports = {
                 }
             }
         ).then((data)=>{
-            if(data.n==0)   return res.status(400).json(msgHandler.Send().cantFind('Colaborador','Actualizar'));
-            if(data.nModified == 0) return res.status(400).json(msgHandler.Send().cantModified('Colaborador','Actualizar'));
-            if(data.ok == 0) return res.status(400).json(msgHandler.sendError('Ah ocurrio un error en la actualización del Colaborador'));
-            return res.json(msgHandler.Send().successUpdate());
+            return res.json(msgHandler.resultCrud(data,'colaborador',enumCrud.actualizar));
         }).catch((err)=>{
             return res.status(400).json(err);
         });
@@ -290,12 +282,12 @@ module.exports = {
      * @returns {error,value}
      */
     putAgregarPermiso: async (req,res) => {
-        let {error,value} = valAgregarCargo(req.params.idColaborador,req.params.idPermiso);
+        let {error,value} = colSrv.valAgregarCargo(req.params.idColaborador,req.params.idPermiso);
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
         let
-            _idColaborador = new objectId(req.params.idColaborador.toString()),
-            _idPermiso = new objectId(req.params.idPermiso.toString());
+            _idColaborador = new ObjectId(req.params.idColaborador.toString()),
+            _idPermiso = new ObjectId(req.params.idPermiso.toString());
         
         const 
             Colaborador = await colMdl.findById(_idColaborador).lean(true);
@@ -334,12 +326,12 @@ module.exports = {
      * @returns {error,value}
      */
     putEliminarPermiso: async (req,res) => {
-        let {error,value} = valAgregarCargo(req.params.idColaborador,req.params.idPermiso);
+        let {error,value} = colSrv.valAgregarCargo(req.params.idColaborador,req.params.idPermiso);
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
         const
-            _idColaborador = new objectId(req.params.idColaborador.toString()),
-            _idPermiso = new objectId(req.params.idPermiso.toString());
+            _idColaborador = new ObjectId(req.params.idColaborador.toString()),
+            _idPermiso = new ObjectId(req.params.idPermiso.toString()),
             Colaborador = await colMdl.findById(_idColaborador).lean(true);
             
         await colMdl

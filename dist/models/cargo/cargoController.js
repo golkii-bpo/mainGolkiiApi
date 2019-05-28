@@ -11,9 +11,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const cargoModel_1 = require("./cargoModel");
 const cargoService_1 = require("./cargoService");
 const colaborador_model_1 = require("../colaboradores/general/colaborador.model");
-const msgHandler_1 = require("../../helpers/msgHandler");
+const msgHandler_1 = require("../../helpers/resultHandler/msgHandler");
 const types_1 = require("mongoose/lib/types");
-const Task = (require('../../db/transactions')).Task();
+const transactions_1 = require("../../db/transactions");
+const Task = transactions_1.default.Task();
 exports.default = {
     /**
      * Metodo que permite obtener todos los registros de cargos activos de la base de datos
@@ -132,7 +133,7 @@ exports.default = {
                 Funciones: value["Funciones"]
             }
         }).then((data) => {
-            return res.json(msgHandler_1.msgHandler.resultCrud(data, 'cargo', msgHandler_1.enumCrud.actualizar));
+            return res.json(msgHandler_1.msgHandler.resultCrud(data, 'cargo', msgHandler_1.crudType.actualizar));
         }).catch((err) => {
             return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
         });
@@ -149,12 +150,13 @@ exports.default = {
         const idCargo = new types_1.ObjectId(req.params.idCargo), _permiso = value;
         if (error)
             return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
-        Task.update(cargoModel_1.default, {
+        yield Task
+            .update(cargoModel_1.default, {
             _id: idCargo
         }, {
             $push: { 'Permisos': _permiso }
-        });
-        Task.update(colaborador_model_1.default, {
+        })
+            .update(colaborador_model_1.default, {
             'Cargo.IdCargo': idCargo,
             'Cargo.Estado': true,
             'Permisos.IdPermiso': { $ne: _permiso.IdPermiso }
@@ -165,10 +167,7 @@ exports.default = {
                     IsFrom: 'Cargo'
                 }
             }
-        });
-        yield Task
-            .run({ useMongoose: true })
-            .then((data) => {
+        }).run({ useMongoose: true }).then((data) => {
             return res.json(msgHandler_1.msgHandler.sendValue('El Permiso se ha agregado correctamente'));
         }).catch((err) => {
             return res.status(400).json(err.message);
@@ -186,7 +185,7 @@ exports.default = {
         if (!cargoService_1.default.validarObjectId(req.params.idPermiso.toString()))
             return res.status(400).json(msgHandler_1.msgHandler.missingIdProperty('idPermiso'));
         const idCargo = new types_1.ObjectId(req.params.idCargo), idPermiso = new types_1.ObjectId(req.params.idPermiso);
-        Task
+        yield Task
             .update(cargoModel_1.default, { '_id': idCargo }, { $pull: { 'Permisos': { 'IdPermiso': idPermiso } } })
             .update(colaborador_model_1.default, {
             'Cargo.IdCargo': new types_1.ObjectId(idCargo.toString()),
@@ -201,8 +200,7 @@ exports.default = {
             }
         }, {
             safe: true
-        });
-        yield Task
+        })
             .run({ useMongoose: true })
             .then((data) => {
             return res.json(msgHandler_1.msgHandler.sendValue('El Permiso se ha eliminado correctamente'));
@@ -235,7 +233,7 @@ exports.default = {
                     cargoPermisos.push(..._data["Permisos"].map(t => { return t.IdPermiso; }));
                 }
         });
-        Task
+        yield Task
             .update(cargoModel_1.default, { '_id': new types_1.ObjectId(idCargo.toString()) }, { $set: { Estado: false } })
             .update(colaborador_model_1.default, { 'Cargo.IdCargo': new types_1.ObjectId(idCargo.toString()) }, {
             $pull: {
@@ -249,8 +247,7 @@ exports.default = {
             $set: {
                 'Cargo.$.Estado': false
             }
-        });
-        Task
+        })
             .run({ useMongoose: true })
             .then((data) => {
             return res.json(data);
@@ -288,7 +285,7 @@ exports.default = {
                 IsFrom: 'Cargo'
             };
         });
-        Task
+        yield Task
             .update(cargoModel_1.default, { '_id': new types_1.ObjectId(idCargo.toString()) }, { $set: { 'Estado': true } })
             .update(colaborador_model_1.default, {
             'Cargo.IdCargo': new types_1.ObjectId(idCargo),
@@ -302,8 +299,7 @@ exports.default = {
             $set: {
                 'Cargo.$.Estado': true
             }
-        });
-        Task
+        })
             .run({ useMongoose: true })
             .then((data) => {
             return res.json(data);

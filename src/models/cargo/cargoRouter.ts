@@ -2,8 +2,8 @@ import * as express from 'express';
 import cargoController from './cargoController';
 import errorHandler from '../../middleware/errorHandler';
 
-export const cargoRoute = express.Router();
-cargoRoute
+export const cargoRouter = express.Router();
+cargoRouter
 .get('/',errorHandler(cargoController.getObtener))
 .get('/:idCargo',errorHandler(cargoController.getBuscarById))
 .get('/:idCargo/Permisos',errorHandler(cargoController.getPermisosById))

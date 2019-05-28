@@ -4,6 +4,6 @@ export default function(callback){
             await callback(req,res);
         } catch(err){
             next(err);
-        }
+        } 3
     }
 }

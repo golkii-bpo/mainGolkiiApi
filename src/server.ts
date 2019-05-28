@@ -15,9 +15,9 @@ const logger = Winston.createLogger({
 dotenv.config();
 
 //inicializacion de web api
-import * as mainRoute from './routes/main';
+import {mainRoute} from './routes/main';
 import {database} from './db/conexion';
-import {msgHandler} from './helpers/msgHandler';
+import {msgHandler} from './helpers/resultHandler/msgHandler';
 const app = express();
 
 //inicialización de la base de datos

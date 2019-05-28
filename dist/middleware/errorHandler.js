@@ -16,6 +16,7 @@ function default_1(callback) {
         catch (err) {
             next(err);
         }
+        3;
     });
 }
 exports.default = default_1;

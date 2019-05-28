@@ -1,11 +1,10 @@
 import * as Joi from 'joi';
 // import * as Joi from 'joi-es';
 //Se instancia la variable de Joi ObjectId
-Joi.objectId = require('joi-objectid')(Joi);
-import general from '../../helpers/generalValidation';
+import general from '../../helpers/validation/basicValidations';
 import cargoModel from './cargoModel';
 import areaService from '../../models/area/areaService';
-import {msgHandler} from '../../helpers/msgHandler';
+import {msgHandler} from '../../helpers/resultHandler/msgHandler';
 import * as lodash from 'lodash';
 
 const JoiFunciones = Joi.object().keys({
@@ -14,7 +13,7 @@ const JoiFunciones = Joi.object().keys({
         Estado: Joi.bool()
     }),
     JoiPermisos = Joi.object().keys({
-        IdPermiso: Joi.objectId(),
+        IdPermiso: Joi.string(),
         Estado: Joi.bool()
     }),
     cargoValidacion = Joi.object().keys({
@@ -108,8 +107,7 @@ class cargoService extends general {
             let Permisos = Array.from(_dataCargo.Permisos);
             for (const item of Permisos) {
                 if(item["IdPermiso"] == _Permiso.IdPermiso){
-                    error = msgHandler.sendError('Lo sentimos la ruta o direccion ya a sido ingresado a este cargo');
-                    break;
+                    return msgHandler.sendError('Lo sentimos la ruta o direccion ya a sido ingresado a este cargo');
                 }
             }
         } else {return msgHandler.sendValue(value)}

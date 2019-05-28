@@ -11,18 +11,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Joi = require("joi");
 // import * as Joi from 'joi-es';
 //Se instancia la variable de Joi ObjectId
-Joi.objectId = require('joi-objectid')(Joi);
-const generalValidation_1 = require("../../helpers/generalValidation");
+const basicValidations_1 = require("../../helpers/validation/basicValidations");
 const cargoModel_1 = require("./cargoModel");
 const areaService_1 = require("../../models/area/areaService");
-const msgHandler_1 = require("../../helpers/msgHandler");
+const msgHandler_1 = require("../../helpers/resultHandler/msgHandler");
 const lodash = require("lodash");
 const JoiFunciones = Joi.object().keys({
     Descripcion: Joi.string().required().max(255),
     FechaIngreso: Joi.date(),
     Estado: Joi.bool()
 }), JoiPermisos = Joi.object().keys({
-    IdPermiso: Joi.objectId(),
+    IdPermiso: Joi.string(),
     Estado: Joi.bool()
 }), cargoValidacion = Joi.object().keys({
     Nombre: Joi.string().required().max(20),
@@ -61,7 +60,7 @@ const JoiFunciones = Joi.object().keys({
             return msgHandler_1.msgHandler.sendError('No pueden existir permisos duplicados en un mismo cargo');
     return msgHandler_1.msgHandler.sendValue(value);
 });
-class cargoService extends generalValidation_1.default {
+class cargoService extends basicValidations_1.default {
     /**
      * Realiza la validación para agregar un Cargo
      *
@@ -122,8 +121,7 @@ class cargoService extends generalValidation_1.default {
                 let Permisos = Array.from(_dataCargo.Permisos);
                 for (const item of Permisos) {
                     if (item["IdPermiso"] == _Permiso.IdPermiso) {
-                        error = msgHandler_1.msgHandler.sendError('Lo sentimos la ruta o direccion ya a sido ingresado a este cargo');
-                        break;
+                        return msgHandler_1.msgHandler.sendError('Lo sentimos la ruta o direccion ya a sido ingresado a este cargo');
                     }
                 }
             }

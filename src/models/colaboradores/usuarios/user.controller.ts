@@ -1,15 +1,16 @@
-const 
-    UsrSrv = require('./user.services'),
-    ColMdl = require('../general/colaborador.model'),
-    ObjectId = require('mongoose').Types.ObjectId,
-    msgHandler = require('../../../helpers/msgHandler');
+import UsrSrv from './user.services';
+import ColMdl from '../general/colaborador.model';
+import ObjectId from 'mongoose/lib/types/objectid';
+import * as bcrypt from 'bcrypt';
+import {msgHandler,crudType as  enumCrud} from '../../../helpers/resultHandler/msgHandler';
 
-module.exports = {
+export default {
     postAgregarUsuario: async (req,res) => {
-        let {error,value} = await UsrSrv.valAgregar(idColaborador,req.body);
+        let {error,value} = await UsrSrv.valAgregar(req.params.idColaborador,req.body);
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
-        const idColaborador = new ObjectId(req.params.idColaborador.toString());
+        const 
+            idColaborador = new ObjectId(req.params.idColaborador);
 
         await
         ColMdl
@@ -21,14 +22,14 @@ module.exports = {
             },
             {
                 $set:{
-                    'User.User':value.User,
-                    'User.password':value.password,
+                    'User.User':value["User"],
+                    'User.password':value["password"],
                     'User.IsCreated':true
                 }
             }
         )
         .then((data)=>{
-            return res.json(msgHandler.resultCrud(data,'Usuario','actualización'))
+            return res.json(msgHandler.resultCrud(data,'Usuario',enumCrud.agregar))
         })
         .catch((err)=>{
             return res.status(400).json(msgHandler.sendError(err));
@@ -36,12 +37,12 @@ module.exports = {
     },
 
     putModUser: async(req,res) =>{
-        let {error,value} = await UsrSrv.valModUsr(idColaborador,data);
+        let {error,value} = await UsrSrv.valModUsr(req.params.idColaborador,req.body);
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
         const 
             idColaborador = new ObjectId(req.params.idColaborador.toString()),
-            data = req.body
+            data = req.body,
             pwdSalt = await bcrypt.genSaltSync(10),
             pwdCrypted = await bcrypt.hashSync(value.password,pwdSalt);
             
@@ -88,8 +89,8 @@ module.exports = {
         
         const 
             idColaborador = new ObjectId(req.params.idColaborador),
-            newUser = value.NewUser,
-            oldUser = value.OldUser;
+            newUser = value["NewUser"],
+            oldUser = value["OldUser"];
 
         await
         ColMdl
@@ -122,17 +123,17 @@ module.exports = {
         .updateOne
         (
             {
-                _id:idColaborador,'User.User':value.User
+                _id:idColaborador,'User.User':value["User"]
             },
             {
                 $set:{
-                    'User.password':value.NewPassword,
+                    'User.password':value["NewPassword"],
                     'User.FechaModificacion':Date.now()
                 }
             }
         )
         .then((data)=>{
-            return res.json(msgHandler.resultCrud(data,'Usuario','actualizar'));
+            return res.json(msgHandler.resultCrud(data,'Usuario',enumCrud.actualizar));
         })
         .catch((err)=>{
             return res.status(400).json(msgHandler.sendError(err));

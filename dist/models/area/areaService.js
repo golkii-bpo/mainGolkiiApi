@@ -10,9 +10,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 // const Joi = require('joi-es');
 const Joi = require("joi");
-const generalValidation_1 = require("../../helpers/generalValidation");
+const basicValidations_1 = require("../../helpers/validation/basicValidations");
 const areaModel_1 = require("./areaModel");
-const msgHandler_1 = require("../../helpers/msgHandler");
+const msgHandler_1 = require("../../helpers/resultHandler/msgHandler");
 const areaValidation = Joi.object().keys({
     Nombre: Joi.string().max(20).required(),
     Descripcion: Joi.string().max(255),
@@ -28,7 +28,7 @@ const validarModelo = (body) => {
     //Se valida que sea unico el tipo de datos
     return msgHandler_1.msgHandler.sendValue(value);
 };
-class areaService extends generalValidation_1.default {
+class areaService extends basicValidations_1.default {
     /**
      *Funcion que permite validar el modelo de datos de un Area
      *

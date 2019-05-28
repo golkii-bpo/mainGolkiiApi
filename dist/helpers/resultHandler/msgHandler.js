@@ -1,13 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const msgGeneralHandler_1 = require("./msgGeneralHandler");
+const generalHandler_1 = require("./generalHandler");
+;
 var crudType;
 (function (crudType) {
     crudType[crudType["actualizar"] = 0] = "actualizar";
     crudType[crudType["eliminar"] = 1] = "eliminar";
     crudType[crudType["agregar"] = 2] = "agregar";
-})(crudType || (crudType = {}));
-class MsgHandler extends msgGeneralHandler_1.default {
+})(crudType = exports.crudType || (exports.crudType = {}));
+class MsgHandler extends generalHandler_1.Message {
     /**
      * Mensaje de error por falta de la propiedad de un Objeto
      * @param {*} IdRequire
@@ -48,23 +49,28 @@ class MsgHandler extends msgGeneralHandler_1.default {
         return new MsgHandler(`No se pudo ${crudType} el ${model}`, null);
     }
     /**
-     * Este método devuelve un mensaje si una actualizacion esta ok o no
-     *FIXME: Se tiene que crear un metodo para Arrays multiples
-     * @param {n,nModified,ok} data
-     * @param {Collecion que se esta utilizando} model
-     * @param {Tipo de Operacion} crud
-     */
+    * @param {n,nModified,ok} data
+    * @param {Collecion que se esta utilizando} model
+    * @param {Tipo de Operacion} crud
+    */
     resultCrud(data, model, crud) {
-        if (!data.hasOwnProperty('n') && !data.hasOwnProperty('nModified') && !data.hasOwnProperty('ok'))
+        if (!data.hasOwnProperty('n') && !data.hasOwnProperty('ok'))
             throw new Error('El formato esperado para el método no es el adecuado');
-        if (data.n == 1 && data.nModified == 1 && data.ok == 1)
+        if (data.n == 1 && (data["nModified"] == 1 || data["nMatched"] == 1 || data["nUpserted"] == 1) && data.ok == 1)
             return new MsgHandler(null, 'Se ha actualizado correctamente');
         else if (data.ok == 1)
-            return this.errorCrud('actualizar');
+            return this.errorCrud(crudType.actualizar);
         else if (data.nModified)
-            return this.cantModified(model, 'actualizar');
-        else if (data.n)
-            return this.cantFind(model, crudType.actualizar);
+            return this.cantModified(model, crud);
+    }
+    resultsCrud(data, model, crud) {
+        for (var action of data) {
+            if (!action.hasOwnProperty('nModified') && !action.hasOwnProperty('nMatched') && !action.hasOwnProperty('nUpserted'))
+                throw new Error('El formato esperado para el método no es el adecuado');
+            if (action.ok == 0)
+                return this.errorCrud(crudType.actualizar);
+        }
+        return new MsgHandler(null, 'Se ha actualizado correctamente');
     }
     successUpdate(_model) {
         if (!_model)
@@ -72,4 +78,4 @@ class MsgHandler extends msgGeneralHandler_1.default {
         return new MsgHandler(`El ${_model} se ha actualizado correctamente`, null);
     }
 }
-exports.msgHandler = new MsgHandler(null, null), exports.enumCrud = crudType;
+exports.msgHandler = new MsgHandler(null, null);

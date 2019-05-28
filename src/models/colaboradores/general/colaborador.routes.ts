@@ -1,8 +1,8 @@
-const express = require('express');
-const colaboradorCtrl = require('./colaborador.controller');
-const colaboradorRouter = express.Router();
-const errHandler = require('../../../middleware/errorHandler');
+import * as express from 'express';
+import colaboradorCtrl from './colaborador.controller';
+import errHandler from '../../../middleware/errorHandler';
 
+const colaboradorRouter = express.Router();
 colaboradorRouter
 .get('/',errHandler(colaboradorCtrl.getObtener))
 .post('/',errHandler(colaboradorCtrl.postAgregar))
@@ -12,4 +12,4 @@ colaboradorRouter
 .put('/:idColaborador/Permiso/:idPermiso/Agregar',errHandler(colaboradorCtrl.putAgregarPermiso))
 .put('/:idColaborador/Permiso/:idPermiso/Eliminar',errHandler(colaboradorCtrl.putEliminarPermiso));
 
-module.exports = colaboradorRouter;
+export {colaboradorRouter}

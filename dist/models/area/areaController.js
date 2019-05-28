@@ -10,9 +10,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const areaModel_1 = require("./areaModel");
 const areaService_1 = require("./areaService");
-const msgHandler_1 = require("../../helpers/msgHandler");
+const msgHandler_1 = require("../../helpers/resultHandler/msgHandler");
 const mongoose_1 = require("mongoose");
-module.exports = {
+exports.default = {
     /**
      * Extrae todas aquellas Areas activas.
      *
@@ -92,7 +92,7 @@ module.exports = {
             return res.status(200).json(msgHandler_1.msgHandler.sendValue(data));
         })
             .catch((err) => {
-            return res.status(400).json(msgHandler_1.msgHandler.resultCrud(err, 'area', msgHandler_1.enumCrud.actualizar));
+            return res.status(400).json(msgHandler_1.msgHandler.resultCrud(err, 'area', msgHandler_1.crudType.actualizar));
         });
     }),
     /**
@@ -116,7 +116,7 @@ module.exports = {
                 Estado: false
             }
         }).then((data) => {
-            return res.status(200).json(msgHandler_1.msgHandler.resultCrud(data, 'area', msgHandler_1.enumCrud.actualizar));
+            return res.status(200).json(msgHandler_1.msgHandler.resultCrud(data, 'area', msgHandler_1.crudType.actualizar));
         }).catch((err) => {
             return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
         });
@@ -138,7 +138,7 @@ module.exports = {
                 Estado: true
             }
         }).then((data) => {
-            return res.json(msgHandler_1.msgHandler.resultCrud(data, 'area', msgHandler_1.enumCrud.actualizar));
+            return res.json(msgHandler_1.msgHandler.resultCrud(data, 'area', msgHandler_1.crudType.actualizar));
         }).catch((err) => {
             return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
         });
