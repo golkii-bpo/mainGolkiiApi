@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const generalHandler_1 = require("./generalHandler");
 ;
+;
 var crudType;
 (function (crudType) {
     crudType[crudType["actualizar"] = 0] = "actualizar";
@@ -20,6 +21,13 @@ class MsgHandler extends generalHandler_1.Message {
     missingBodyProperty(propiedad) {
         return new MsgHandler(`No se encontro la propiedad ${propiedad}. Para poder continuar continuar con el flujo es necesario este dato.`, null);
     }
+    /**
+     * Este método retorna un mensaje para cuando no se encuentra el registro
+     *
+     * @param {String} model
+     * @returns {msgResult}
+     * @memberof MsgHandler
+     */
     missingModelData(model) {
         return new MsgHandler(`El ${model} no se encuentra registrado`, null);
     }

@@ -78,7 +78,7 @@ const permisoSchema = new Schema({
         default: false
     }
 }), UserSchema = new Schema({
-    User: {
+    username: {
         type: String,
         min: 5,
         max: 20,

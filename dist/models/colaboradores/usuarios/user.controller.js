@@ -26,7 +26,7 @@ exports.default = {
             Estado: true
         }, {
             $set: {
-                'User.User': value["User"],
+                'User.username': value["User"],
                 'User.password': value["password"],
                 'User.IsCreated': true
             }
@@ -99,7 +99,7 @@ exports.default = {
         let idColaborador = new objectid_1.default(req.params.idColaborador), data = value;
         yield colaborador_model_1.default
             .updateOne({
-            _id: idColaborador, 'User.User': value["User"]
+            _id: idColaborador, 'User.username': value["username"]
         }, {
             $set: {
                 'User.password': value["NewPassword"],
@@ -113,7 +113,8 @@ exports.default = {
             return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
         });
     }),
+    //TODO: Terminar procedimiento
+    //FIXME: Validar si el usuario tiene permiso para deshabilitar 
     putDisableUser: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        return res.json(null);
     })
 };

@@ -1,6 +1,6 @@
 
 import { model, Schema, SchemaTypes } from 'mongoose';
-
+//FIXME: SE TIENE QUE AGREGAR LOS PERMISOS POR PROCEDIMIENTO ESTO ES UN PROCEDIMIENTO
 const 
     TreeItemSchema = new Schema({
         Idx: {

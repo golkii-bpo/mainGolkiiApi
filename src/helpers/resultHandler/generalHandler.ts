@@ -1,5 +1,7 @@
+import { any } from "joi";
+
 export interface msgResult {
-    error:Object,
+    error:Object;
     value:Object
 }
 export class Message implements msgResult {

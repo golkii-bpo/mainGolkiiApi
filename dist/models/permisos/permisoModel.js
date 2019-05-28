@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
+//FIXME: SE TIENE QUE AGREGAR LOS PERMISOS POR PROCEDIMIENTO ESTO ES UN PROCEDIMIENTO
 const TreeItemSchema = new mongoose_1.Schema({
     Idx: {
         type: mongoose_1.Schema.Types.Number,

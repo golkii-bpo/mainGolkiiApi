@@ -7,6 +7,9 @@ export interface actionData{
     ok:number
 }
 export interface msgResult extends msgResult{};
+export interface msgCustom<T> extends msgResult{
+    value:T
+};
 
 export enum crudType {
     "actualizar",
@@ -29,6 +32,13 @@ class MsgHandler extends Message {
         return new MsgHandler(`No se encontro la propiedad ${propiedad}. Para poder continuar continuar con el flujo es necesario este dato.`,null);
     }
 
+    /**
+     * Este método retorna un mensaje para cuando no se encuentra el registro
+     *
+     * @param {String} model
+     * @returns {msgResult}
+     * @memberof MsgHandler
+     */
     missingModelData(model:String):msgResult{
         return new MsgHandler(`El ${model} no se encuentra registrado`,null);
     }

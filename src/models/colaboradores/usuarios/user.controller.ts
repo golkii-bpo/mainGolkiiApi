@@ -2,7 +2,8 @@ import UsrSrv from './user.services';
 import ColMdl from '../general/colaborador.model';
 import ObjectId from 'mongoose/lib/types/objectid';
 import * as bcrypt from 'bcrypt';
-import {msgHandler,crudType as  enumCrud} from '../../../helpers/resultHandler/msgHandler';
+import {msgHandler,crudType as  enumCrud, msgCustom} from '../../../helpers/resultHandler/msgHandler';
+import { iUser } from './user.interface';
 
 export default {
     postAgregarUsuario: async (req,res) => {
@@ -22,7 +23,7 @@ export default {
             },
             {
                 $set:{
-                    'User.User':value["User"],
+                    'User.username':value["User"],
                     'User.password':value["password"],
                     'User.IsCreated':true
                 }
@@ -37,7 +38,7 @@ export default {
     },
 
     putModUser: async(req,res) =>{
-        let {error,value} = await UsrSrv.valModUsr(req.params.idColaborador,req.body);
+        let {error,value} = <msgCustom<iUser>>await UsrSrv.valModUsr(req.params.idColaborador,req.body);
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
         const 
@@ -123,7 +124,7 @@ export default {
         .updateOne
         (
             {
-                _id:idColaborador,'User.User':value["User"]
+                _id:idColaborador,'User.username':value["username"]
             },
             {
                 $set:{
@@ -140,7 +141,9 @@ export default {
         })
     },
 
+    //TODO: Terminar procedimiento
+    //FIXME: Validar si el usuario tiene permiso para deshabilitar 
     putDisableUser: async(req,res)=>{
-        return res.json(null);
+        
     }
 }
