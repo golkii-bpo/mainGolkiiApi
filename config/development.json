@@ -1,4 +1,4 @@
 {
     "PORT":"3002",
-    "MONGO_URI":"mongodb://192.168.1.243:27017/GolkiiDb"
+    "MONGO_URI":"mongodb://localhost:27017/GolkiiDb"
 }

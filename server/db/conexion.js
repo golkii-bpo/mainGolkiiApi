@@ -12,7 +12,7 @@ const
 const Options = { 
     reconnectTries: Number.MAX_VALUE,
     reconnectInterval: 1500,
-    user: "test",
+    user: "serlopsal",
     pass: "Admin@123"
 }
 
