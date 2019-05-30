@@ -162,7 +162,8 @@ class UserSrv extends general{
             if(pwdReset.error) return msgHandler.sendError(pwdReset.error);
             const value: IPwdChange = <IPwdChange>pwdReset.value;
             let Token:object|string = JWT.verify(value.Token,Sttng.privateKey);
-            // if(Object.is !Token.hasOwnProperty('Coldt')) return msgHandler.sendError("Token no valido");
+            // if(typeof(Token) == Object)
+            if(!Token.hasOwnProperty('Coldt')) return msgHandler.sendError("Token no valido");
             let UserReq = await ColMdl.findOne({_id:Token["Coldt"]})
 
             //Valido que el usuario que esta pidiendo el cambio sea el indicado

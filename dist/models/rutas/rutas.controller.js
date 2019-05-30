@@ -51,6 +51,7 @@ exports.default = {
         yield rutas_model_1.default
             .find()
             .select({ FechaData: false })
+            .sort({ FechaData: -1 })
             .skip(skipData)
             .limit(size)
             .lean(true)
@@ -66,7 +67,7 @@ exports.default = {
      * @returns {error,value}
      */
     getObtenerFecha: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        let page = Number(req.query.page.toString()), size = Number(req.query.size.toString());
+        let page = Number(req.query.page), size = Number(req.query.size);
         page = page ? page : 1;
         /**
          * 1. Si la variable size contiene datos
@@ -87,6 +88,7 @@ exports.default = {
             }
         })
             .select({ FechaData: false })
+            .sort({ FechaData: -1 })
             .skip(skipData)
             .limit(size)
             .lean(true)
@@ -101,7 +103,7 @@ exports.default = {
      * @returns {error,value}
      */
     getObtenerActivos: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        let page = Number(req.query.page.toString()), size = Number(req.query.size.toString());
+        let page = Number(req.query.page), size = Number(req.query.size);
         page = page ? page : 1;
         /**
          * 1. Si la variable size contiene datos
@@ -115,6 +117,7 @@ exports.default = {
         yield rutas_model_1.default
             .find({ Estado: true })
             .select({ FechaData: false })
+            .sort({ FechaData: -1 })
             .skip(skipData)
             .size(size)
             .lean(true)
