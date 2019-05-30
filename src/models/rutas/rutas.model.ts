@@ -24,7 +24,6 @@ const
         },
         Kilometro:{
             type:Number,
-            default:0,
             required:function(){
                 return this.Tipo == 'Gasolina';
             },

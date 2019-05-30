@@ -51,6 +51,7 @@ export default {
         RutasModel
         .find()
         .select({FechaData:false})
+        .sort({FechaData:-1})
         .skip(skipData)
         .limit(size)
         .lean(true)
@@ -98,6 +99,7 @@ export default {
             }
         })
         .select({FechaData:false})
+        .sort({FechaData:-1})
         .skip(skipData)
         .limit(size)
         .lean(true)
@@ -131,6 +133,7 @@ export default {
         RutasModel
         .find({Estado:true})
         .select({FechaData:false})
+        .sort({FechaData:-1})
         .skip(skipData)
         .size(size)
         .lean(true)
