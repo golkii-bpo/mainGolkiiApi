@@ -90,7 +90,7 @@ const
         },
         Estado:{
             type:Boolean,
-            default:Date.now(),
+            default:true,
             required:true
         }
     });
