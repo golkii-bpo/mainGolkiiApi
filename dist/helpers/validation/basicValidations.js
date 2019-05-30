@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const { ObjectId } = require('mongoose/lib/types');
+const mongoose_1 = require("mongoose");
 /**
  * Clase con distintas validaciones que permitiran generalizar las funciones
  *
@@ -14,7 +14,8 @@ class General {
      * @returns Boolean
      */
     validarObjectId(Id) {
-        return ObjectId.isValid(Id);
+        // return ObjectId.isValid(Id);
+        return mongoose_1.Types.ObjectId.isValid(Id);
     }
 }
 exports.default = General;

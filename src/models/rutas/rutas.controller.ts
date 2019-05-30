@@ -4,7 +4,7 @@ import {rutaSrv} from './rutas.services';
 import * as rutasInt from './rutas.interfaces';
 import {msgHandler,crudType as  enumCrud} from '../../helpers/resultHandler/msgHandler';
 import {Rutas as sttng} from '../../settings/settings';
-import userServices from '../colaboradores/usuarios/user.services';
+// import userServices from '../colaboradores/usuarios/user.services';
 
 export default {
 
@@ -90,19 +90,19 @@ export default {
             ff:Date = _ff? new Date(_ff) : new Date();
 
         await 
-            RutasModel
-            .find({
-                FechaSalida:{
-                    $lte:ff,
-                    $gte: fi
-                }
-            })
-            .select({FechaData:false})
-            .skip(skipData)
-            .limit(size)
-            .lean(true)
-            .then((data)=>{return res.json(msgHandler.sendValue(data))})
-            .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))});
+        RutasModel
+        .find({
+            FechaSalida:{
+                $lte:ff,
+                $gte: fi
+            }
+        })
+        .select({FechaData:false})
+        .skip(skipData)
+        .limit(size)
+        .lean(true)
+        .then((data)=>{return res.json(msgHandler.sendValue(data))})
+        .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))});
     },
 
     /**

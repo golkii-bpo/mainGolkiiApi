@@ -1,5 +1,6 @@
 import {Message,msgResult} from './generalHandler';
-import { isRegExp } from 'util';
+import {ValidationError} from 'joi'
+// import {ValidationError} from 'joi-es'
 
 export interface actionData{
     n:number,
@@ -90,6 +91,12 @@ class MsgHandler extends Message {
             if(action.ok==0) return this.errorCrud(crudType.actualizar);
         }
         return new MsgHandler(null,'Se ha actualizado correctamente');
+    }
+
+    errorJoi(data:any):msgResult{
+        if(!data.hasOwnProperty('details')) return new MsgHandler(null,data);
+        if(data.details.length != 0) return new MsgHandler(null,data.details[0].message);
+        return new MsgHandler(null,data.message);
     }
 
     successUpdate(_model):msgResult{

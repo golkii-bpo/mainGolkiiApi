@@ -80,6 +80,13 @@ class MsgHandler extends generalHandler_1.Message {
         }
         return new MsgHandler(null, 'Se ha actualizado correctamente');
     }
+    errorJoi(data) {
+        if (!data.hasOwnProperty('details'))
+            return new MsgHandler(null, data);
+        if (data.details.length != 0)
+            return new MsgHandler(null, data.details[0].message);
+        return new MsgHandler(null, data.message);
+    }
     successUpdate(_model) {
         if (!_model)
             new MsgHandler('Se ha actualizado correctamente', null);

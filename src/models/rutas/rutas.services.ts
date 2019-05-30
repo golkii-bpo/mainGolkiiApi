@@ -1,8 +1,8 @@
 import * as joi from 'joi';
 // import * as joi from 'joi-es';
 import General from '../../helpers/validation/basicValidations';
-import ColMdl from '../colaboradores/general/colaborador.controller'
-import {msgHandler,msgResult} from '../../helpers/resultHandler/msgHandler'
+// import ColMdl from '../colaboradores/general/colaborador.controller'
+import {msgHandler} from '../../helpers/resultHandler/msgHandler'
 
 class RutaService extends General{
     private joiInsumos = joi.object().keys({

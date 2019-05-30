@@ -45,7 +45,8 @@ const InsumoShema = new mongoose_1.Schema({
     Casos: {
         type: [String],
         required: true,
-        min: 1
+        min: 1,
+        max: 50
     },
     Insumos: {
         type: [InsumoShema],

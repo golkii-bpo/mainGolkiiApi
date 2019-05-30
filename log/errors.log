@@ -173,3 +173,21 @@
 {"level":"error"}
 {"level":"error"}
 {"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"message":"Cast to string failed for value \"{ Email: 'jackzeel.garcia@golkiibpo.com' }\" at path \"Email\" for model \"Colaborador\"","name":"CastError","stringValue":"\"{ Email: 'jackzeel.garcia@golkiibpo.com' }\"","kind":"string","value":{"Email":"jackzeel.garcia@golkiibpo.com"},"path":"Email","level":"error"}
+{"message":"Cast to string failed for value \"{ Email: 'jackzeel.garcia@golkiibpo.com' }\" at path \"Email\" for model \"Colaborador\"","name":"CastError","stringValue":"\"{ Email: 'jackzeel.garcia@golkiibpo.com' }\"","kind":"string","value":{"Email":"jackzeel.garcia@golkiibpo.com"},"path":"Email","level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}

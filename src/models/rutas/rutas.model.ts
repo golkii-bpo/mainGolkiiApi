@@ -1,4 +1,5 @@
 import {Schema,model} from 'mongoose';
+import { string } from 'joi';
 
 const 
     InsumoShema = new Schema({
@@ -46,7 +47,8 @@ const
         Casos:{
             type:[String],
             required:true,
-            min:1
+            min:1,
+            max:50
         },
         Insumos: {
             type:[InsumoShema],

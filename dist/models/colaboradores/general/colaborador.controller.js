@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const types_1 = require("mongoose/lib/types");
+const mongoose_1 = require("mongoose");
 const colaborador_services_1 = require("./colaborador.services");
 const colaborador_model_1 = require("./colaborador.model");
 const cargoModel_1 = require("../../cargo/cargoModel");
@@ -47,11 +47,12 @@ exports.default = {
      * @type colaboradorModel
      */
     postAgregar: (req, res) => __awaiter(this, void 0, void 0, function* () {
+        //FIXME: Hace falta validar los cargos que se estan ingresando
         const _data = req.body;
         const { error, value } = yield colaborador_services_1.default.valdarAgregarColaborador(_data);
         if (error)
             return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
-        let Cargos = colaborador_services_1.default.cargosUnicos(value.Cargo).map(_idCargo => { return new types_1.ObjectId(_idCargo); });
+        let Cargos = colaborador_services_1.default.cargosUnicos(value.Cargo).map(_idCargo => { return new mongoose_1.Types.ObjectId(_idCargo); });
         value.Cargo = Cargos.map(_iC => {
             return { IdCargo: _iC, Estado: true };
         });
@@ -73,7 +74,7 @@ exports.default = {
                 }
             ]))].map(item => {
             return {
-                IdPermiso: new types_1.ObjectId(item.IdPermiso.toString()),
+                IdPermiso: new mongoose_1.Types.ObjectId(item.IdPermiso.toString()),
                 IsFrom: 'Cargo'
             };
         });
@@ -97,7 +98,7 @@ exports.default = {
         let { error, value } = colaborador_services_1.default.valModGeneral(req.params.idColaborador, req.body);
         if (error)
             return res.status(400).json(error);
-        const idColaborador = new types_1.ObjectId(req.params.idColaborador);
+        const idColaborador = new mongoose_1.Types.ObjectId(req.params.idColaborador);
         const _log = yield colaborador_model_1.default.findById(idColaborador);
         yield colaborador_model_1.default
             .updateOne({ _id: idColaborador }, { $set: {
@@ -108,7 +109,7 @@ exports.default = {
                 Log: {
                     FechaModificación: Date.now(),
                     Propiedad: 'General',
-                    Data: _log ? _log.General : null
+                    Data: _log ? _log["General"] : null
                 }
             }
         }, {
@@ -127,8 +128,8 @@ exports.default = {
         let { error, value } = colaborador_services_1.default.valAgregarCargo(req.params.idColaborador, req.params.idCargo);
         if (error)
             return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
-        const idColaborador = new types_1.ObjectId(req.params.idColaborador.toString()), _idCargo = new types_1.ObjectId(req.params.idCargo.toString()), Colaborador = yield colaborador_model_1.default.findById(idColaborador).lean(true), _permisosCol = Colaborador.hasOwnProperty('Permisos') ? Colaborador.Permisos.map(item => item.IdPermiso.toString()) : [], _permisos = yield cargoModel_1.default.aggregate([
-            { $match: { _id: new types_1.ObjectId(_idCargo.toString()) } },
+        const idColaborador = new mongoose_1.Types.ObjectId(req.params.idColaborador.toString()), _idCargo = new mongoose_1.Types.ObjectId(req.params.idCargo.toString()), Colaborador = yield colaborador_model_1.default.findById(idColaborador).lean(true), _permisosCol = Colaborador.hasOwnProperty('Permisos') ? Colaborador.Permisos.map(item => item.IdPermiso.toString()) : [], _permisos = yield cargoModel_1.default.aggregate([
+            { $match: { _id: new mongoose_1.Types.ObjectId(_idCargo.toString()) } },
             { $unwind: '$Permisos' },
             { $replaceRoot: { 'newRoot': '$Permisos' } },
             {
@@ -195,9 +196,9 @@ exports.default = {
         let { error, value } = colaborador_services_1.default.valAgregarCargo(req.params.idColaborador, req.params.idCargo);
         if (error)
             return msgHandler_1.msgHandler.sendError(error);
-        let _IdColaborador = new types_1.ObjectId(req.params.idColaborador.toString()), _IdCargo = new types_1.ObjectId(req.params.idCargo.toString());
+        let _IdColaborador = new mongoose_1.Types.ObjectId(req.params.idColaborador.toString()), _IdCargo = new mongoose_1.Types.ObjectId(req.params.idCargo.toString());
         const Colaborador = yield colaborador_model_1.default.findById(_IdColaborador).lean(true), _permisos = (yield cargoModel_1.default.aggregate([
-            { $match: { _id: new types_1.ObjectId(_IdCargo.toString()) } },
+            { $match: { _id: new mongoose_1.Types.ObjectId(_IdCargo.toString()) } },
             { $unwind: '$Permisos' },
             { $replaceRoot: { 'newRoot': '$Permisos' } },
             {
@@ -254,7 +255,7 @@ exports.default = {
         let { error, value } = colaborador_services_1.default.valAgregarCargo(req.params.idColaborador, req.params.idPermiso);
         if (error)
             return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
-        let _idColaborador = new types_1.ObjectId(req.params.idColaborador.toString()), _idPermiso = new types_1.ObjectId(req.params.idPermiso.toString());
+        let _idColaborador = new mongoose_1.Types.ObjectId(req.params.idColaborador.toString()), _idPermiso = new mongoose_1.Types.ObjectId(req.params.idPermiso.toString());
         const Colaborador = yield colaborador_model_1.default.findById(_idColaborador).lean(true);
         yield colaborador_model_1.default
             .updateOne({
@@ -289,7 +290,7 @@ exports.default = {
         let { error, value } = colaborador_services_1.default.valAgregarCargo(req.params.idColaborador, req.params.idPermiso);
         if (error)
             return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
-        const _idColaborador = new types_1.ObjectId(req.params.idColaborador.toString()), _idPermiso = new types_1.ObjectId(req.params.idPermiso.toString()), Colaborador = yield colaborador_model_1.default.findById(_idColaborador).lean(true);
+        const _idColaborador = new mongoose_1.Types.ObjectId(req.params.idColaborador.toString()), _idPermiso = new mongoose_1.Types.ObjectId(req.params.idPermiso.toString()), Colaborador = yield colaborador_model_1.default.findById(_idColaborador).lean(true);
         yield colaborador_model_1.default
             .updateOne({
             _id: _idColaborador,
