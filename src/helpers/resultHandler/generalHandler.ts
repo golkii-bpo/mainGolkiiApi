@@ -35,6 +35,8 @@ export class Message implements msgResult {
      * @returns {error,value}
      */
     sendValue(content:any):msgResult{
-        return new Message(null,content);
+        if(!content.hasOwnProperty('details')) return new Message(null,content);
+        if(content.details.length != 0) return new Message(null,content.details[0].message);
+        else return new Message(null,content);
     }
 } 

@@ -23,7 +23,6 @@ const InsumoShema = new mongoose_1.Schema({
     },
     Kilometro: {
         type: Number,
-        default: 0,
         required: function () {
             return this.Tipo == 'Gasolina';
         },
