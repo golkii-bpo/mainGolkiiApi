@@ -37,7 +37,7 @@ exports.default = {
      * @returns {error,value}
      */
     getObtener: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        let page = Number(req.query.page.toString()), size = Number(req.query.size.toString());
+        let page = Number(req.query.page), size = Number(req.query.size);
         page = page ? page : 1;
         /**
          * 1. Si la variable size contiene datos

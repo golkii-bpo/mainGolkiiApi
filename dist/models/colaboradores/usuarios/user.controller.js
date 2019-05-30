@@ -159,7 +159,7 @@ exports.default = {
             return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
         });
     }),
-    postForggotPwd: (req, res) => __awaiter(this, void 0, void 0, function* () {
+    postLinkResetPwd: (req, res) => __awaiter(this, void 0, void 0, function* () {
         //correo electronico => Body
         //validacion del correo electronico
         const { error, value } = yield user_services_1.default.valPwdReset(req.body);
@@ -170,7 +170,7 @@ exports.default = {
             Coldt: ColDb["_id"],
             Fecha: Date.now()
         }, settings_1.SettingsToken.privateKey, {
-            expiresIn: '20m',
+            expiresIn: '20m'
         }), linkReset = `${settings_1.App.hostUrl()}/account/reset/${Token}`, Recovery = {
             IpSend: req.ip,
             EmailSend: ColDb.General.Email,
@@ -203,6 +203,6 @@ exports.default = {
     }),
     postRestablecerPwd: (req, res) => __awaiter(this, void 0, void 0, function* () {
         const { error, value } = yield user_services_1.default.valRestablecerPwd(req.body);
-        return null;
+        return res.json(msgHandler_1.msgHandler.sendValue(value));
     })
 };

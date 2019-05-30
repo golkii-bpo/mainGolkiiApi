@@ -34,8 +34,8 @@ export default {
      */
     getObtener: async (req,res) => {
         let 
-            page:number = Number(req.query.page.toString()),
-            size:number = Number(req.query.size.toString());
+            page:number = Number(req.query.page),
+            size:number = Number(req.query.size);
         page = page?page:1;
         /**
          * 1. Si la variable size contiene datos
@@ -68,8 +68,8 @@ export default {
      */
     getObtenerFecha: async (req,res) => {
         let 
-            page:number = Number(req.query.page.toString()),
-            size:number = Number(req.query.size.toString());
+            page:number = Number(req.query.page),
+            size:number = Number(req.query.size);
         page = page?page:1;
         /**
          * 1. Si la variable size contiene datos
@@ -114,8 +114,8 @@ export default {
      */
     getObtenerActivos: async (req,res) => {
         let 
-            page:number = Number(req.query.page.toString()),
-            size:number = Number(req.query.size.toString());
+            page:number = Number(req.query.page),
+            size:number = Number(req.query.size);
         page = page?page:1;
         /**
          * 1. Si la variable size contiene datos
