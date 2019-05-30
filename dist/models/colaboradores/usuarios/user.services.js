@@ -175,12 +175,14 @@ class UserSrv extends basicValidations_1.default {
                 if (pwdReset.error)
                     return msgHandler_1.msgHandler.sendError(pwdReset.error);
                 const value = pwdReset.value;
-                const tokenVerification = JWT.verify(value.Token, settings_1.SettingsToken.privateKey);
-                console.log(typeof (tokenVerification));
-                value.TokenDecode = tokenVerification;
+                let Token = JWT.verify(value.Token, settings_1.SettingsToken.privateKey);
+                // if(Object.is !Token.hasOwnProperty('Coldt')) return msgHandler.sendError("Token no valido");
+                let UserReq = yield colaborador_model_1.default.findOne({ _id: Token["Coldt"] });
+                //Valido que el usuario que esta pidiendo el cambio sea el indicado
                 return msgHandler_1.msgHandler.sendValue(value);
             }
             catch (error) {
+                console.log(error);
                 return msgHandler_1.msgHandler.sendError(error);
             }
         });

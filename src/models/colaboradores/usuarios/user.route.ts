@@ -10,7 +10,8 @@ userRouter
 .put('/:idColaborador/usuario/cambio/username',errorHandler(usrCtrl.putModUserName))
 .put('/:idColaborador/usuario/cambio/pwd',errorHandler(usrCtrl.putChangePwd))
 .put('/:idColaborador/usuario/cambio/pwd',errorHandler(usrCtrl.putDisableUser))
-.post('/password/reset',errorHandler(usrCtrl.postForggotPwd))
+.post('/password/link',errorHandler(usrCtrl.postLinkResetPwd))
+.post('/password/reset',errorHandler(usrCtrl.postRestablecerPwd))
 // .post('')
 
 export {userRouter};

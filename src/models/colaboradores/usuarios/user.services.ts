@@ -161,12 +161,15 @@ class UserSrv extends general{
             const pwdReset = joiPwdReset.validate(data);
             if(pwdReset.error) return msgHandler.sendError(pwdReset.error);
             const value: IPwdChange = <IPwdChange>pwdReset.value;
-            const tokenVerification = JWT.verify(value.Token,Sttng.privateKey);
-            console.log(typeof(tokenVerification));
-            value.TokenDecode = tokenVerification;
+            let Token:object|string = JWT.verify(value.Token,Sttng.privateKey);
+            // if(Object.is !Token.hasOwnProperty('Coldt')) return msgHandler.sendError("Token no valido");
+            let UserReq = await ColMdl.findOne({_id:Token["Coldt"]})
+
+            //Valido que el usuario que esta pidiendo el cambio sea el indicado
             return msgHandler.sendValue(value)
 
         } catch (error) {
+            console.log(error);
             return msgHandler.sendError(error);
         }
     }

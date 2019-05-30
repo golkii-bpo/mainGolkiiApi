@@ -195,7 +195,7 @@ export default {
         });
     },
 
-    postForggotPwd: async (req:Request,res:Response): Promise<Response> =>{
+    postLinkResetPwd: async (req:Request,res:Response): Promise<Response> =>{
         //correo electronico => Body
         //validacion del correo electronico
         const {error,value} = <msgCustom<IPwdReset>>await userServices.valPwdReset(req.body);
@@ -209,8 +209,7 @@ export default {
             },
             Sttng.privateKey,
             {
-                expiresIn:'20m',
-
+                expiresIn:'20m'
             }
         ),
         linkReset:string = `${AppSttng.hostUrl()}/account/reset/${Token}`,
@@ -251,7 +250,6 @@ export default {
 
     postRestablecerPwd: async (req:Request, res:Response):Promise<Response> =>{
         const {error,value} = await userServices.valRestablecerPwd(req.body);
-
-        return null;
+        return res.json(msgHandler.sendValue(value));
     }
 }

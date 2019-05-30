@@ -87,7 +87,7 @@ const InsumoShema = new mongoose_1.Schema({
     },
     Estado: {
         type: Boolean,
-        default: Date.now(),
+        default: true,
         required: true
     }
 });
