@@ -12,6 +12,7 @@ const rutas_model_1 = require("./rutas.model");
 const rutas_services_1 = require("./rutas.services");
 const msgHandler_1 = require("../../helpers/resultHandler/msgHandler");
 const settings_1 = require("../../settings/settings");
+// import userServices from '../colaboradores/usuarios/user.services';
 exports.default = {
     /**
      * Obtiene el total de registros ingresados a la base de datos

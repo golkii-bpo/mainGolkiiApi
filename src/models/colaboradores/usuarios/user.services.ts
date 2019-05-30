@@ -1,17 +1,20 @@
 import * as joi from 'joi';
 // import * as joi from 'joi-es';
+import {Types} from 'mongoose';
+import * as JWT from 'jsonwebtoken';
+import {SettingsToken as Sttng}  from '../../../settings/settings';
 import general from '../../../helpers/validation/basicValidations';
 import ColMdl from '../general/colaborador.model';
-import {iUser, iUserName} from './user.interface';
+import {iUser, iUserName, iUserDisable, IPwdReset,IPwdChange} from './user.interface';
 import {msgHandler,crudType as  enumCrud,msgResult, msgCustom} from '../../../helpers/resultHandler/msgHandler';
 import pwdHandler from '../../../security/pwdService';
-import ObjectId from 'mongoose/lib/types/objectid';
 
 //FIXME: Crear un nuevo archivo con todas las interfaces a utilizar
 const
+pwdRegex = new RegExp(/((?=.*[a-z])(?=.*[A-Z])(?=.*\d)).{8,}/),
 joiUser = joi.object().keys({
-    User: joi.string().min(5).max(20),
-    password: joi.string().regex(/((?=.*[a-z])(?=.*[A-Z])(?=.*\d)).{8,}/)
+    username: joi.string().min(5).max(20),
+    password: joi.string().regex(pwdRegex)
 }),
 joiChangeUserName = joi.object().keys({
     OldUser: joi.string().min(5).max(20),
@@ -20,9 +23,22 @@ joiChangeUserName = joi.object().keys({
 joiChangePwd = joi.object().keys({
     username: joi.string().min(5).max(20),
     OldPwd: joi.string(),
-    NewPwd: joi.string().regex(/((?=.*[a-z])(?=.*[A-Z])(?=.*\d)).{8,}/)
+    NewPwd: joi.string().regex(pwdRegex)
+}),
+joiAbleUser = joi.object().keys({
+    username:joi.string()
+}),
+joiDisableUser = joi.object().keys({
+    username:joi.string()
+}),
+joiReset = joi.object().keys({
+    Email:joi.string().email()
+}),
+joiPwdReset = joi.object().keys({
+    Token:joi.string(),
+    Pwd:joi.string().regex(pwdRegex),
+    PwdConfirm: joi.string().regex(pwdRegex)
 })
-
 
 class UserSrv extends general{
     valUserModel(data):msgCustom<iUser>{
@@ -41,11 +57,10 @@ class UserSrv extends general{
 
     async valAgregar(idColaborador,data): Promise<msgResult>{
         if(!this.validarObjectId(idColaborador)) msgHandler.errorIdObject('Id Colaborador');
-
         let {error,value} = this.valUserModel(data);
         if(error) return msgHandler.sendError(error);
 
-        let _r = await this.validarUserName(value.User,null)
+        let _r = await this.validarUserName(value.username,null)
         if(_r.error) return msgHandler.sendError(_r.error);
 
         //Se valida que el usuario existe
@@ -87,19 +102,64 @@ class UserSrv extends general{
         if(!this.validarObjectId(idColaborador)) return msgHandler.errorIdObject('Id Colaborador');
         const {error,value} = joi.validate(data,joiChangePwd);
         if(error) return {error,value:null};
-        const User = await ColMdl.aggregate([{$match:{_id:new ObjectId(idColaborador),'User.User':value.User}},{$replaceRoot :{'newRoot':'$User'}}]);
+        const User = await ColMdl.aggregate([{$match:{_id:new Types.ObjectId(idColaborador),'User.User':value.User}},{$replaceRoot :{'newRoot':'$User'}}]);
         if(!User) return msgHandler.sendError('El usuario no existe');
-        if(!pwdHandler.comparePwd(User.password,value.OldPwd)) return msgHandler.sendError('La contraseña ingresada es incorrecta.');
+        if(!pwdHandler.comparePwd(value.password,value.OldPwd)) return msgHandler.sendError('La contraseña ingresada es incorrecta.');
         value.NewPassword = pwdHandler.encrypPwd(value.NewPwd);
         return msgHandler.sendValue(value);
     }
     
-    async valUser(idColaborador:string,User:string): Promise<msgResult>{
-        var {error} = joi.string().validate(User);
+    async valUserDisable(idColaborador:string,data:Object): Promise<msgResult>{
+        //Se valida si el idColaboador es un ObjectId
+        if(this.validarObjectId(idColaborador)) return msgHandler.errorIdObject('idColaborador');
+        
+        //Se valida el Objeto si corresponde con lo que desamos
+        const {error,value} = joiDisableUser.validate(data);
         if(error) return msgHandler.sendError(error);
-        const userExist = await ColMdl.findOne({'User.User':User}).lean(true);
+        
+        //Validamos si el usuario existe
+        let User = <iUserDisable>value;
+        const userExist = await ColMdl.findOne({'User.username':User.username,'User.Disable':false}).lean(true);
         if(!userExist) return msgHandler.missingModelData("usuario");
-        return msgHandler.sendValue({User});
+
+        //Si todo esta correcto devolvemos el modelo de datos del usuario
+        return msgHandler.sendValue(User);
+    }
+
+    async valUserAble(idColaborador:string,data:Object): Promise<msgResult>{
+        //Se valida si el idColaboador es un ObjectId
+        if(this.validarObjectId(idColaborador)) return msgHandler.errorIdObject('idColaborador');
+        
+        //Se valida el Objeto si corresponde con lo que desamos
+        const {error,value} = joiAbleUser.validate(data);
+        if(error) return msgHandler.sendError(error);
+        
+        //Validamos si el usuario existe
+        let User = <iUserDisable>value;
+        const userExist = await ColMdl.findOne({'User.username':User.username,'User.Disable':false}).lean(true);
+        if(!userExist) return msgHandler.missingModelData("usuario");
+
+        //Si todo esta correcto devolvemos el modelo de datos del usuario
+        return msgHandler.sendValue(User);
+    }
+
+    async valPwdReset(data:Object):Promise<msgResult>{
+        //validacion de modelo de datos recibidos
+        const {error,value} = joiReset.validate(data);
+        if(error) return msgHandler.errorJoi(error);
+        const _value = <IPwdReset>value;
+        //validacion 
+        const User = await ColMdl.findOne({'General.Email':_value.Email}).lean(true);
+        if(!User) return msgHandler.sendError('Lo sentimos el correo electronico ingresado no se encuentra registrado.');
+        
+        return msgHandler.sendValue(_value); 
+    }
+    async valRestablecerPwd(data:Object):Promise<msgResult>{
+        const pwdReset = joiPwdReset.validate(data);
+        if(pwdReset.error) return msgHandler.sendError(pwdReset.error);
+        const value: IPwdChange = <IPwdChange>pwdReset.value;
+        const tokenVerification = JWT.verify(value.Token,Sttng.privateKey);
+        return null
     }
 }
 

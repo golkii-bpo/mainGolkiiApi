@@ -106,8 +106,10 @@ class cargoService extends basicValidations_1.default {
     //FIXME:Se tiene que refactorizar el método;
     validarPermisoSingle(idCargo, Permiso) {
         return __awaiter(this, void 0, void 0, function* () {
+            console.log('No se ha fregado 1');
             if (!this.validarObjectId(idCargo))
                 return msgHandler_1.msgHandler.errorIdObject('Id Cargo');
+            console.log('No se ha fregado 2');
             const _Permiso = lodash.pick(Permiso, ['IdPermiso', 'Estado']);
             let { error, value } = JoiPermisos.validate(_Permiso);
             if (error)

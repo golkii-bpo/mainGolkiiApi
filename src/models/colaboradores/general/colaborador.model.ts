@@ -1,5 +1,4 @@
-const Mongoose = require('mongoose');
-const {Schema,model} = Mongoose;
+import {Schema,model} from 'mongoose';
 
 const 
 permisoSchema = new Schema({
@@ -206,5 +205,4 @@ ColaboradoresSchema.post('save', function(error, doc, next) {
     if(error) next(error);
     next();
 });
-
 export default model('Colaborador',ColaboradoresSchema,'colaboradores');

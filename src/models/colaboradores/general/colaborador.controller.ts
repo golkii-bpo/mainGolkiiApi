@@ -1,5 +1,5 @@
 
-import {ObjectId} from 'mongoose/lib/types';
+import {Types} from 'mongoose';
 import colSrv from './colaborador.services';
 import colMdl from './colaborador.model';
 import cargoModel from '../../cargo/cargoModel';
@@ -41,11 +41,12 @@ export default {
      * @type colaboradorModel
      */
     postAgregar: async (req,res) => {
+        //FIXME: Hace falta validar los cargos que se estan ingresando
         const _data = req.body;
         const {error,value} = await colSrv.valdarAgregarColaborador(_data);
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
-        let Cargos = colSrv.cargosUnicos(value.Cargo).map(_idCargo => {return new ObjectId(_idCargo)});
+        let Cargos = colSrv.cargosUnicos(value.Cargo).map(_idCargo => {return new Types.ObjectId(_idCargo)});
         value.Cargo = Cargos.map(_iC=> {
             return {IdCargo:_iC,Estado:true}
         });
@@ -70,7 +71,7 @@ export default {
             ]))].map(item =>
                 {
                     return {
-                        IdPermiso:new ObjectId(item.IdPermiso.toString()),
+                        IdPermiso:new Types.ObjectId(item.IdPermiso.toString()),
                         IsFrom:'Cargo'
                     }
                 }
@@ -99,7 +100,7 @@ export default {
         if(error) return res.status(400).json(error);
 
         const 
-            idColaborador = new ObjectId(req.params.idColaborador);
+            idColaborador = new Types.ObjectId(req.params.idColaborador);
 
         const _log = await colMdl.findById(idColaborador);
 
@@ -115,7 +116,7 @@ export default {
                     Log: {
                         FechaModificación:Date.now(),
                         Propiedad:'General',
-                        Data: _log? _log.General:null
+                        Data: _log? _log["General"]:null
                     }
                 }
             },{
@@ -138,12 +139,12 @@ export default {
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
         const 
-            idColaborador = new ObjectId(req.params.idColaborador.toString()),
-            _idCargo = new ObjectId(req.params.idCargo.toString()),
+            idColaborador = new Types.ObjectId(req.params.idColaborador.toString()),
+            _idCargo = new Types.ObjectId(req.params.idCargo.toString()),
             Colaborador = await colMdl.findById(idColaborador).lean(true),
             _permisosCol = Colaborador.hasOwnProperty('Permisos')? Colaborador.Permisos.map(item=> item.IdPermiso.toString()): [],
             _permisos = await cargoModel.aggregate([
-                {$match:{_id:new ObjectId(_idCargo.toString())}},
+                {$match:{_id:new Types.ObjectId(_idCargo.toString())}},
                 {$unwind:'$Permisos'},
                 {$replaceRoot :{'newRoot':'$Permisos'}},
                 {
@@ -217,13 +218,13 @@ export default {
         if(error) return msgHandler.sendError(error);
 
         let
-            _IdColaborador = new ObjectId(req.params.idColaborador.toString()),
-            _IdCargo = new ObjectId(req.params.idCargo.toString());
+            _IdColaborador = new Types.ObjectId(req.params.idColaborador.toString()),
+            _IdCargo = new Types.ObjectId(req.params.idCargo.toString());
         
         const
             Colaborador = await colMdl.findById(_IdColaborador).lean(true),
             _permisos = (await cargoModel.aggregate([
-                {$match:{_id:new ObjectId(_IdCargo.toString())}},
+                {$match:{_id:new Types.ObjectId(_IdCargo.toString())}},
                 {$unwind:'$Permisos'},
                 {$replaceRoot :{'newRoot':'$Permisos'}},
                 {
@@ -286,8 +287,8 @@ export default {
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
         let
-            _idColaborador = new ObjectId(req.params.idColaborador.toString()),
-            _idPermiso = new ObjectId(req.params.idPermiso.toString());
+            _idColaborador = new Types.ObjectId(req.params.idColaborador.toString()),
+            _idPermiso = new Types.ObjectId(req.params.idPermiso.toString());
         
         const 
             Colaborador = await colMdl.findById(_idColaborador).lean(true);
@@ -330,8 +331,8 @@ export default {
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
         const
-            _idColaborador = new ObjectId(req.params.idColaborador.toString()),
-            _idPermiso = new ObjectId(req.params.idPermiso.toString()),
+            _idColaborador = new Types.ObjectId(req.params.idColaborador.toString()),
+            _idPermiso = new Types.ObjectId(req.params.idPermiso.toString()),
             Colaborador = await colMdl.findById(_idColaborador).lean(true);
             
         await colMdl

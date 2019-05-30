@@ -92,8 +92,10 @@ class cargoService extends general {
     }
     
     //FIXME:Se tiene que refactorizar el método;
-    async validarPermisoSingle (idCargo:String,Permiso:any) {
+    async validarPermisoSingle (idCargo:string,Permiso:any) {
+        console.log('No se ha fregado 1');        
         if(!this.validarObjectId(idCargo)) return msgHandler.errorIdObject('Id Cargo')
+        console.log('No se ha fregado 2');
         const _Permiso = lodash.pick(Permiso,['IdPermiso','Estado']);
         let {error,value} = JoiPermisos.validate(_Permiso);
         if(error) return msgHandler.sendError(error.details[0].message);

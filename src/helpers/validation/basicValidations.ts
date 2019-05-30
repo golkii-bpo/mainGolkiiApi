@@ -1,4 +1,4 @@
-const {ObjectId} = require('mongoose/lib/types');
+import {Types} from 'mongoose';
 
 /**
  * Clase con distintas validaciones que permitiran generalizar las funciones
@@ -12,8 +12,9 @@ class General {
      * @param {*} Id
      * @returns Boolean
      */
-    validarObjectId(Id:String) {
-        return ObjectId.isValid(Id);
+    validarObjectId(Id:string) {
+        // return ObjectId.isValid(Id);
+        return Types.ObjectId.isValid(Id);
     }
 }
 

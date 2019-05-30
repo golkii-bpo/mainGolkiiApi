@@ -2,10 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const bcrypt = require("bcrypt");
 const Salt = 10;
-class PwdService {
+exports.default = new class PwdService {
     encrypPwd(password) {
-        const pwdSalt = bcrypt.genSaltSync(10), pwdCrypted = bcrypt.hashSync(password, pwdSalt);
-        return pwdCrypted;
+        const pwdSalt = bcrypt.genSaltSync(10);
+        return bcrypt.hashSync(password, pwdSalt);
     }
     comparePwdHashed(NewPwd, OldPwd) {
         return bcrypt.compareSync(NewPwd, OldPwd);
@@ -13,5 +13,4 @@ class PwdService {
     comparePwd(NewPwd, OldPwd) {
         return OldPwd == NewPwd;
     }
-}
-exports.default = new PwdService;
+};

@@ -12,7 +12,7 @@ const cargoModel_1 = require("./cargoModel");
 const cargoService_1 = require("./cargoService");
 const colaborador_model_1 = require("../colaboradores/general/colaborador.model");
 const msgHandler_1 = require("../../helpers/resultHandler/msgHandler");
-const types_1 = require("mongoose/lib/types");
+const mongoose_1 = require("mongoose");
 const transactions_1 = require("../../db/transactions");
 const Task = transactions_1.default.Task();
 exports.default = {
@@ -117,7 +117,7 @@ exports.default = {
     putModificar: (req, res) => __awaiter(this, void 0, void 0, function* () {
         if (!cargoService_1.default.validarObjectId(req.params.idCargo))
             return res.status(400).json(msgHandler_1.msgHandler.errorIdObject('idPermiso'));
-        const idCargo = new types_1.ObjectId(req.params.idCargo), body = req.body;
+        const idCargo = new mongoose_1.Types.ObjectId(req.params.idCargo), body = req.body;
         const { error, value } = yield cargoService_1.default.validarModificar(body);
         if (error)
             res.status(400).json(msgHandler_1.msgHandler.sendError(error));
@@ -147,7 +147,7 @@ exports.default = {
      */
     putAgregarPermisos: (req, res) => __awaiter(this, void 0, void 0, function* () {
         const { error, value } = yield cargoService_1.default.validarPermisoSingle(req.params.idCargo, req.body);
-        const idCargo = new types_1.ObjectId(req.params.idCargo), _permiso = value;
+        const idCargo = new mongoose_1.Types.ObjectId(req.params.idCargo), _permiso = value;
         if (error)
             return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
         yield Task
@@ -163,7 +163,7 @@ exports.default = {
         }, {
             $push: {
                 Permisos: {
-                    IdPermiso: new types_1.ObjectId(_permiso.IdPermiso.toString()),
+                    IdPermiso: new mongoose_1.Types.ObjectId(_permiso.IdPermiso.toString()),
                     IsFrom: 'Cargo'
                 }
             }
@@ -184,11 +184,11 @@ exports.default = {
             return res.status(400).json(msgHandler_1.msgHandler.missingIdProperty('idCargo'));
         if (!cargoService_1.default.validarObjectId(req.params.idPermiso.toString()))
             return res.status(400).json(msgHandler_1.msgHandler.missingIdProperty('idPermiso'));
-        const idCargo = new types_1.ObjectId(req.params.idCargo), idPermiso = new types_1.ObjectId(req.params.idPermiso);
+        const idCargo = new mongoose_1.Types.ObjectId(req.params.idCargo), idPermiso = new mongoose_1.Types.ObjectId(req.params.idPermiso);
         yield Task
             .update(cargoModel_1.default, { '_id': idCargo }, { $pull: { 'Permisos': { 'IdPermiso': idPermiso } } })
             .update(colaborador_model_1.default, {
-            'Cargo.IdCargo': new types_1.ObjectId(idCargo.toString()),
+            'Cargo.IdCargo': new mongoose_1.Types.ObjectId(idCargo.toString()),
             'Cargo.Estado': true,
             'Permisos.IdPermiso': idPermiso
         }, {
@@ -224,7 +224,7 @@ exports.default = {
         //TODO: En vez de eliminar los permisos se pueden desactivar - Pero esto es otro aproach
         const cargoPermisos = [];
         Array.from(yield cargoModel_1.default
-            .find({ _id: new types_1.ObjectId(idCargo) })
+            .find({ _id: new mongoose_1.Types.ObjectId(idCargo) })
             .select({ Permisos: true, _id: false })
             .lean(true))
             .forEach(_data => {
@@ -234,8 +234,8 @@ exports.default = {
                 }
         });
         yield Task
-            .update(cargoModel_1.default, { '_id': new types_1.ObjectId(idCargo.toString()) }, { $set: { Estado: false } })
-            .update(colaborador_model_1.default, { 'Cargo.IdCargo': new types_1.ObjectId(idCargo.toString()) }, {
+            .update(cargoModel_1.default, { '_id': new mongoose_1.Types.ObjectId(idCargo.toString()) }, { $set: { Estado: false } })
+            .update(colaborador_model_1.default, { 'Cargo.IdCargo': new mongoose_1.Types.ObjectId(idCargo.toString()) }, {
             $pull: {
                 'Permisos': {
                     'IdPermiso': {
@@ -270,7 +270,7 @@ exports.default = {
         if (!cargoService_1.default.validarObjectId(idCargo))
             return res.status(400).json(msgHandler_1.msgHandler.errorIdObject('idPermiso'));
         let permisos = [...new Set(yield cargoModel_1.default.aggregate([
-                { $match: { '_id': new types_1.ObjectId(idCargo) } },
+                { $match: { '_id': new mongoose_1.Types.ObjectId(idCargo) } },
                 { $unwind: '$Permisos' },
                 { $replaceRoot: { 'newRoot': '$Permisos' } },
                 {
@@ -281,14 +281,14 @@ exports.default = {
                 { $project: { "IdPermiso": 1, "_id": 0 } }
             ]))].map(item => {
             return {
-                IdPermiso: new types_1.ObjectId(item.IdPermiso.toString()),
+                IdPermiso: new mongoose_1.Types.ObjectId(item.IdPermiso.toString()),
                 IsFrom: 'Cargo'
             };
         });
         yield Task
-            .update(cargoModel_1.default, { '_id': new types_1.ObjectId(idCargo.toString()) }, { $set: { 'Estado': true } })
+            .update(cargoModel_1.default, { '_id': new mongoose_1.Types.ObjectId(idCargo.toString()) }, { $set: { 'Estado': true } })
             .update(colaborador_model_1.default, {
-            'Cargo.IdCargo': new types_1.ObjectId(idCargo),
+            'Cargo.IdCargo': new mongoose_1.Types.ObjectId(idCargo),
             'Cargo.Estado': false
         }, {
             $push: {
