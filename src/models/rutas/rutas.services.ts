@@ -11,11 +11,16 @@ class RutaService extends General{
         Valor: joi.number().required().min(0).max(5000),
         Kilometro: joi.number().min(0).max(2000)
     })
+    private joiDemografia = joi.object().keys({
+        Departamento: joi.string().required(),
+        Municipio: joi.string().required()
+    })
     private joiRuta = joi.object().keys({
         Colaborador: joi.string(),
         Descripcion: joi.string().min(0).max(255),
+        Demografia: this.joiDemografia,
         Casos:  joi.array().items(joi.string()).min(1),
-        Insumos: joi.array().items(this.joiInsumos),
+        Insumos: joi.array().items(this.joiInsumos).min(1),
         FechaSalida: joi.date()
     });
     private joiPostRuta = this.joiRuta;

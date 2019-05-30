@@ -8,6 +8,8 @@ import ColMdl from '../general/colaborador.model';
 import {iUser, iUserName, iUserDisable, IPwdReset,IPwdChange} from './user.interface';
 import {msgHandler,crudType as  enumCrud,msgResult, msgCustom} from '../../../helpers/resultHandler/msgHandler';
 import pwdHandler from '../../../security/pwdService';
+import { Token } from 'nodemailer/lib/xoauth2';
+import { type } from 'os';
 
 //FIXME: Crear un nuevo archivo con todas las interfaces a utilizar
 const
@@ -155,11 +157,18 @@ class UserSrv extends general{
         return msgHandler.sendValue(_value); 
     }
     async valRestablecerPwd(data:Object):Promise<msgResult>{
-        const pwdReset = joiPwdReset.validate(data);
-        if(pwdReset.error) return msgHandler.sendError(pwdReset.error);
-        const value: IPwdChange = <IPwdChange>pwdReset.value;
-        const tokenVerification = JWT.verify(value.Token,Sttng.privateKey);
-        return null
+        try {
+            const pwdReset = joiPwdReset.validate(data);
+            if(pwdReset.error) return msgHandler.sendError(pwdReset.error);
+            const value: IPwdChange = <IPwdChange>pwdReset.value;
+            const tokenVerification = JWT.verify(value.Token,Sttng.privateKey);
+            console.log(typeof(tokenVerification));
+            value.TokenDecode = tokenVerification;
+            return msgHandler.sendValue(value)
+
+        } catch (error) {
+            return msgHandler.sendError(error);
+        }
     }
 }
 

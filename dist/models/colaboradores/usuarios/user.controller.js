@@ -202,7 +202,7 @@ exports.default = {
         });
     }),
     postRestablecerPwd: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        //Model Token,Pwd,PwdConfirms
+        const { error, value } = yield user_services_1.default.valRestablecerPwd(req.body);
         return null;
     })
 };

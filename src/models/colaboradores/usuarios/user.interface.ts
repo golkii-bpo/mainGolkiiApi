@@ -43,6 +43,7 @@ export interface IPwdChange{
     Token:string,
     Pwd:string,
     PwdConfirm:string
+    TokenDecode?:Object,
 }
 
 export interface iUserDisable extends iUserName{}
