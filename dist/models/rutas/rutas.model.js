@@ -30,6 +30,15 @@ const InsumoShema = new mongoose_1.Schema({
         min: 0,
         max: 2000
     }
+}), DemografiaSchema = new mongoose_1.Schema({
+    Departamento: {
+        type: String,
+        required: true
+    },
+    Municipio: {
+        type: String,
+        required: true
+    }
 }), HojaRutaSchema = new mongoose_1.Schema({
     Colaborador: {
         type: mongoose_1.Schema.Types.ObjectId,
@@ -42,6 +51,14 @@ const InsumoShema = new mongoose_1.Schema({
         min: 0,
         max: 255
     },
+    Demografia: {
+        type: DemografiaSchema,
+        required: true,
+        default: {
+            Departamento: 'Managua',
+            Municipio: 'Managua'
+        }
+    },
     Casos: {
         type: [String],
         required: true,
@@ -50,6 +67,7 @@ const InsumoShema = new mongoose_1.Schema({
     },
     Insumos: {
         type: [InsumoShema],
+        min: 1,
         required: true
     },
     FechaSalida: {

@@ -32,6 +32,16 @@ const
             max:2000
         }
     }),
+    DemografiaSchema = new Schema({
+        Departamento:{
+            type:String,
+            required:true
+        },
+        Municipio:{
+            type:String,
+            required:true
+        }
+    }),
     HojaRutaSchema = new Schema({
         Colaborador:{
             type: Schema.Types.ObjectId,
@@ -44,6 +54,14 @@ const
             min: 0,
             max: 255
         },
+        Demografia:{
+            type:DemografiaSchema,
+            required:true,
+            default:{
+                Departamento:'Managua',
+                Municipio:'Managua'
+            }
+        },
         Casos:{
             type:[String],
             required:true,
@@ -52,6 +70,7 @@ const
         },
         Insumos: {
             type:[InsumoShema],
+            min:1,
             required:true
         },
         FechaSalida:{

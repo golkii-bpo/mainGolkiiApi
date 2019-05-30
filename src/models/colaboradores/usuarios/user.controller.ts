@@ -250,8 +250,8 @@ export default {
     },
 
     postRestablecerPwd: async (req:Request, res:Response):Promise<Response> =>{
-        //Model Token,Pwd,PwdConfirms
-        
+        const {error,value} = await userServices.valRestablecerPwd(req.body);
+
         return null;
     }
 }

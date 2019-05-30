@@ -170,12 +170,19 @@ class UserSrv extends basicValidations_1.default {
     }
     valRestablecerPwd(data) {
         return __awaiter(this, void 0, void 0, function* () {
-            const pwdReset = joiPwdReset.validate(data);
-            if (pwdReset.error)
-                return msgHandler_1.msgHandler.sendError(pwdReset.error);
-            const value = pwdReset.value;
-            const tokenVerification = JWT.verify(value.Token, settings_1.SettingsToken.privateKey);
-            return null;
+            try {
+                const pwdReset = joiPwdReset.validate(data);
+                if (pwdReset.error)
+                    return msgHandler_1.msgHandler.sendError(pwdReset.error);
+                const value = pwdReset.value;
+                const tokenVerification = JWT.verify(value.Token, settings_1.SettingsToken.privateKey);
+                console.log(typeof (tokenVerification));
+                value.TokenDecode = tokenVerification;
+                return msgHandler_1.msgHandler.sendValue(value);
+            }
+            catch (error) {
+                return msgHandler_1.msgHandler.sendError(error);
+            }
         });
     }
 }
