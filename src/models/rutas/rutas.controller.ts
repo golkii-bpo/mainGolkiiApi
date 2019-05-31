@@ -52,7 +52,7 @@ export default {
             [
                 {$lookup:{from:'colaboradores',localField:'Colaborador',foreignField:'_id',as:'Colaborador'}},
                 {$unwind:'$Colaborador'},
-                {$project:{'Colaborador':{'User':0,'Perfil':0,'Estado':0,'Cargo':0,'Permisos':0,'General':{'_id':0}}}},
+                {$project:{'Colaborador':{'Log':0,'User':0,'Perfil':0,'Estado':0,'Cargo':0,'Permisos':0,'General':{'_id':0}}}},
                 {$project:{'Colaborador':1,'Casos':1,'Demografia':1}}
             ]
         )
@@ -98,7 +98,7 @@ export default {
             [
                 {$lookup:{from:'colaboradores',localField:'Colaborador',foreignField:'_id',as:'Colaborador'}},
                 {$unwind:'$Colaborador'},
-                {$project:{'Colaborador':{'User':0,'Perfil':0,'Estado':0,'Cargo':0,'Permisos':0,'General':{'_id':0}}}},
+                {$project:{'Colaborador':{'Log':0,'User':0,'Perfil':0,'Estado':0,'Cargo':0,'Permisos':0,'General':{'_id':0}}}},
                 {$project:{'Colaborador':1,'Casos':1,'Demografia':1}}
             ]
         )
@@ -137,7 +137,7 @@ export default {
             [
                 {$lookup:{from:'colaboradores',localField:'Colaborador',foreignField:'_id',as:'Colaborador'}},
                 {$unwind:'$Colaborador'},
-                {$project:{'Colaborador':{'User':0,'Perfil':0,'Estado':0,'Cargo':0,'Permisos':0,'General':{'_id':0}}}},
+                {$project:{'Colaborador':{'Log':0,'User':0,'Perfil':0,'Estado':0,'Cargo':0,'Permisos':0,'General':{'_id':0}}}},
                 {$project:{'Colaborador':1,'Casos':1,'Demografia':1}}
             ]
         )
@@ -167,7 +167,7 @@ export default {
                 {$match:{'_id':req.params.idRuta}},
                 {$lookup:{from:'colaboradores',localField:'Colaborador',foreignField:'_id',as:'Colaborador'}},
                 {$unwind:'$Colaborador'},
-                {$project:{'Colaborador':{'User':0,'Perfil':0,'Estado':0,'Cargo':0,'Permisos':0,'General':{'_id':0}}}}
+                {$project:{'Colaborador':{'Log':0,'User':0,'Perfil':0,'Estado':0,'Cargo':0,'Permisos':0,'General':{'_id':0}}}}
             ]
         )
         .then((data)=>{
