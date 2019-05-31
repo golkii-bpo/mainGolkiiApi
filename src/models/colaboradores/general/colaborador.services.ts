@@ -6,27 +6,22 @@ import {msgHandler} from '../../../helpers/resultHandler/msgHandler';
 import general from '../../../helpers/validation/basicValidations';
 
 
-const JoiPerfil = joi.object().keys({
+const 
+JoiPerfil = joi.object().keys({
     Foto: joi.string(),
     Settings: joi.object().keys({
         DarkMode: joi.boolean(),
         SideBar: joi.boolean()
     })
-})
-
-const JoiGeneral = joi.object().keys({
+}),JoiGeneral = joi.object().keys({
     Nombre: joi.string().required().min(5).max(30),
     Apellido: joi.string().required().min(5).max(30),
     Cedula: joi.string().required().regex(/\d{3}-{0,1}\d{6}-{0,1}\d{4}[A-z]{1}/),
     Email: joi.string().email()
-})
-
-const JoiCargo = joi.object().keys({
+}),JoiCargo = joi.object().keys({
     IdCargo: joi.string(),
     FechaIngreso: joi.date()
-});
-
-const JoiColaborador = joi.object().keys({
+}),JoiColaborador = joi.object().keys({
     General: JoiGeneral,
     Cargo: joi.array().items(JoiCargo).min(1),
     Perfil: JoiPerfil,

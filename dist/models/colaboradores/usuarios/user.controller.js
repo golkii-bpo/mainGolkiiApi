@@ -17,10 +17,10 @@ const mailTemplate_1 = require("../../../helpers/templates/mailTemplate");
 const server_mail_1 = require("../../../mail/server.mail");
 const colaborador_model_1 = require("../general/colaborador.model");
 const user_services_1 = require("./user.services");
-const user_services_2 = require("./user.services");
 exports.default = {
+    //#region Post
     postAgregarUsuario: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        let { error, value } = yield user_services_2.default.valAgregar(req.params.idColaborador, req.body);
+        let { error, value } = yield user_services_1.default.valAgregar(req.params.idColaborador, req.body);
         if (error)
             return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
         const idColaborador = new mongoose_1.Types.ObjectId(req.params.idColaborador), Crypted = pwdService_1.default.encrypPwd(value.password);
@@ -44,8 +44,100 @@ exports.default = {
             return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
         });
     }),
+    postLinkResetPwd: (req, res) => __awaiter(this, void 0, void 0, function* () {
+        //correo electronico => Body
+        //validacion del correo electronico
+        const { error, value } = yield user_services_1.default.valPwdReset(req.body);
+        if (error)
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
+        //obtener el usuario
+        const ColDb = yield colaborador_model_1.default.findOne({ "General.Email": value.Email }).lean(true), Token = JWT.sign({
+            Coldt: ColDb["_id"],
+            Fecha: Date.now()
+        }, settings_1.SettingsToken.privateKey, {
+            expiresIn: '20m'
+        }), linkReset = `${settings_1.App.hostUrl()}/account/reset/${Token}`, Recovery = {
+            IpSend: req.ip,
+            EmailSend: ColDb.General.Email,
+            Solicitud: true,
+            Token: Token
+        };
+        //Todo se guarda en el usuario
+        yield colaborador_model_1.default.updateOne({
+            _id: ColDb._id
+        }, {
+            'User.Recovery': Recovery
+        }).catch((error) => {
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(error.message));
+        });
+        return yield server_mail_1.default.sendMail({
+            from: 'appgolkii@golkiibpo.com',
+            to: ColDb.General.Email,
+            subject: `${ColDb.General.Nombre} aquí tienes el enlace para restablecer tu contraseña!`,
+            html: mailTemplate_1.mailPwdResetTemplate(linkReset)
+        })
+            .then((data) => {
+            return res.json(msgHandler_1.msgHandler.sendValue(data));
+        })
+            .catch((err) => {
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
+        });
+    }),
+    postRestablecerPwd: (req, res) => __awaiter(this, void 0, void 0, function* () {
+        const { error, value } = yield user_services_1.default.valRestablecerPwd(req.body);
+        if (error)
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
+        return yield colaborador_model_1.default.updateOne({
+            _id: value.idColaborador
+        }, {
+            $set: {
+                'User.Recovery': null,
+                'User.password': value.Pwd,
+                'User.FechaModificacion': new Date()
+            }
+        }).then((data) => {
+            return res.json(msgHandler_1.msgHandler.successUpdate(null));
+        }).catch((err) => {
+            res.statusMessage = 'ACTUALIZADO';
+            return res.status(200).json(msgHandler_1.msgHandler.sendError(err));
+        });
+    }),
+    postAuth: (req, res) => __awaiter(this, void 0, void 0, function* () {
+        //validar modelo de datos user y password
+        //realizar validacion si las credenciales son correctas
+        const data = req.body, { error, value } = yield user_services_1.default.valAuth(data);
+        if (error)
+            return res.status(401).json(msgHandler_1.msgHandler.sendError(error));
+        //crear un token
+        console.log(req);
+        let token = JWT.sign({
+            IColMdl: value._id,
+            IpRequest: req.ip
+        }, settings_1.SettingsToken.privateKey), Session = {
+            DateSession: Date.now(),
+            IpSession: req.ip,
+            Token: token,
+            LastUserCall: Date.now()
+        };
+        //Almacenar la session del token con todo lo que piden para la session
+        return yield colaborador_model_1.default
+            .updateOne({
+            'User.username': data.username
+        }, {
+            $set: {
+                'User.Session': Session
+            }
+        })
+            .then()
+            .catch();
+        //Se va a manejar la hora del servidor del api para poder realizar todo correctamente
+        //retornar el token
+        return null;
+    }),
+    //#endregion
+    //#region PUT
     putModUser: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        let { error, value } = yield user_services_2.default.valModUsr(req.params.idColaborador, req.body);
+        let { error, value } = yield user_services_1.default.valModUsr(req.params.idColaborador, req.body);
         if (error)
             return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
         const idColaborador = new mongoose_1.Types.ObjectId(req.params.idColaborador.toString()), data = req.body, pwdCrypted = pwdService_1.default.encrypPwd(value.password);
@@ -81,7 +173,7 @@ exports.default = {
         });
     }),
     putModUserName: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        let { error, value } = yield user_services_2.default.valModUsrName(req.params.idColaborador, req.body);
+        let { error, value } = yield user_services_1.default.valModUsrName(req.params.idColaborador, req.body);
         if (error)
             return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
         const idColaborador = new mongoose_1.Types.ObjectId(req.params.idColaborador);
@@ -99,7 +191,7 @@ exports.default = {
             .catch((err) => { return res.status(400).json(msgHandler_1.msgHandler.sendError(err)); });
     }),
     putChangePwd: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        const { error, value } = yield user_services_2.default.valChangePwd(req.params.idColaborador, req.body);
+        const { error, value } = yield user_services_1.default.valChangePwd(req.params.idColaborador, req.body);
         if (error)
             return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
         let idColaborador = new mongoose_1.Types.ObjectId(req.params.idColaborador), data = value;
@@ -120,7 +212,7 @@ exports.default = {
         });
     }),
     putDisableUser: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        const { error, value } = yield user_services_2.default.valUserDisable(req.params.idColaborador, req.body);
+        const { error, value } = yield user_services_1.default.valUserDisable(req.params.idColaborador, req.body);
         if (error)
             return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
         const idColaborador = new mongoose_1.Types.ObjectId(req.params.idColaborador);
@@ -140,7 +232,7 @@ exports.default = {
         });
     }),
     putAbleUser: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        const { error, value } = yield user_services_2.default.valUserAble(req.params.idColaborador, req.body);
+        const { error, value } = yield user_services_1.default.valUserAble(req.params.idColaborador, req.body);
         if (error)
             return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
         const idColaborador = new mongoose_1.Types.ObjectId(req.params.idColaborador);
@@ -158,51 +250,6 @@ exports.default = {
         }).catch((err) => {
             return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
         });
-    }),
-    postLinkResetPwd: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        //correo electronico => Body
-        //validacion del correo electronico
-        const { error, value } = yield user_services_1.default.valPwdReset(req.body);
-        if (error)
-            return res.status(400).json(msgHandler_1.msgHandler.errorJoi(error));
-        //obtener el usuario
-        const ColDb = yield colaborador_model_1.default.findOne({ "General.Email": value.Email }).lean(true), Token = JWT.sign({
-            Coldt: ColDb["_id"],
-            Fecha: Date.now()
-        }, settings_1.SettingsToken.privateKey, {
-            expiresIn: '20m'
-        }), linkReset = `${settings_1.App.hostUrl()}/account/reset/${Token}`, Recovery = {
-            IpSend: req.ip,
-            EmailSend: ColDb.General.Email,
-            Solicitud: true,
-            Token: Token,
-            Estado: true
-        };
-        //Todo se guarda en el usuario
-        yield colaborador_model_1.default.updateOne({
-            _id: ColDb._id
-        }, {
-            'User.Recovery': Recovery
-        }).catch((error) => {
-            return res.status(400).json(msgHandler_1.msgHandler.sendError(error.message));
-        });
-        //TODO: Link de cancelacion
-        //Enviar mensaje por correo electronico
-        return yield server_mail_1.default.sendMail({
-            from: 'appgolkii@golkiibpo.com',
-            to: ColDb.General.Email,
-            subject: `${ColDb.General.Nombre} aquí tienes el enlace para restablecer tu contraseña!`,
-            html: mailTemplate_1.mailPwdResetTemplate(linkReset, null)
-        })
-            .then((data) => {
-            return res.json(msgHandler_1.msgHandler.sendValue(data));
-        })
-            .catch((err) => {
-            return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
-        });
-    }),
-    postRestablecerPwd: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        const { error, value } = yield user_services_1.default.valRestablecerPwd(req.body);
-        return res.json(msgHandler_1.msgHandler.sendValue(value));
     })
+    //#endregion
 };

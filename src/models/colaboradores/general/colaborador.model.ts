@@ -1,4 +1,5 @@
 import {Schema,model} from 'mongoose';
+import { boolean, object } from 'joi';
 
 const 
 permisoSchema = new Schema({
@@ -68,16 +69,35 @@ RecoverySchema = new Schema({
         index: true,
         match:/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
     },
-    Solicitud:{
-        type:Boolean,
-        default:false
-    },
     Token:{
         type:String
     },
-    Estado:{
+    Solicitud:{
         type:Boolean,
         default:false
+    }
+}),
+SessionSchema = new Schema({
+    DateSession:{
+        type:Date,
+        default: new Date(),
+        required:true
+    },
+    IpSession:{
+        type:String,
+        match:/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
+        required:true
+    },
+    Token:{
+        type:String,
+        match:/^\w+\.\w+.\w+$/,
+        required:true,
+        default:null
+    },
+    LastUserCall:{
+        type:Date,
+        default:new Date(),
+        required:true
     }
 }),
 UserSchema = new Schema({
@@ -96,6 +116,10 @@ UserSchema = new Schema({
             if(this.User != null || this.password != null) return true;
             return false
         }
+    },
+    Session:{
+        type:SessionSchema,
+        default:null
     },
     Recovery:{
         type:RecoverySchema,
@@ -162,11 +186,14 @@ const ColaboradoresSchema = new Schema({
         default:[]
     },
     User: {
+        //TODO: Hace falta agregar el reegenerar token
+        //TODO: Hace falta agregar la lista de dispositivos que estan siendo usados
         type : UserSchema,
         default:{
             User:null,
             password:null,
             IsCreated:false,
+            Session:null,
             Recovery: {
                 IpSend:null,
                 EmailSend:null,

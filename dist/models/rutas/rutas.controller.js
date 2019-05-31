@@ -48,13 +48,16 @@ exports.default = {
          */
         size = size ? size > settings_1.Rutas.maxData ? settings_1.Rutas.maxData : size : settings_1.Rutas.maxData;
         let skipData = (size * (page - 1));
-        yield rutas_model_1.default
-            .find()
-            .select({ FechaData: false })
+        return yield rutas_model_1.default
+            .aggregate([
+            { $lookup: { from: 'colaboradores', localField: 'Colaborador', foreignField: '_id', as: 'Colaborador' } },
+            { $unwind: '$Colaborador' },
+            { $project: { 'Colaborador': { 'User': 0, 'Perfil': 0, 'Estado': 0, 'Cargo': 0, 'Permisos': 0, 'General': { '_id': 0 } } } },
+            { $project: { 'Colaborador': 1, 'Casos': 1, 'Demografia': 1 } }
+        ])
             .sort({ FechaData: -1 })
             .skip(skipData)
             .limit(size)
-            .lean(true)
             .then((data) => { return res.json(msgHandler_1.msgHandler.sendValue(data)); })
             .catch((err) => { ; return res.status(400).json(msgHandler_1.msgHandler.sendError(err)); });
     }),
@@ -80,18 +83,16 @@ exports.default = {
         let skipData = (size * (page - 1));
         let _fi = Number(req.params.fechaInicio.toString()), _ff = Number(req.params.fechaFinal.toString());
         let fi = _fi ? new Date(_fi) : new Date(), ff = _ff ? new Date(_ff) : new Date();
-        yield rutas_model_1.default
-            .find({
-            FechaSalida: {
-                $lte: ff,
-                $gte: fi
-            }
-        })
-            .select({ FechaData: false })
+        return yield rutas_model_1.default
+            .aggregate([
+            { $lookup: { from: 'colaboradores', localField: 'Colaborador', foreignField: '_id', as: 'Colaborador' } },
+            { $unwind: '$Colaborador' },
+            { $project: { 'Colaborador': { 'User': 0, 'Perfil': 0, 'Estado': 0, 'Cargo': 0, 'Permisos': 0, 'General': { '_id': 0 } } } },
+            { $project: { 'Colaborador': 1, 'Casos': 1, 'Demografia': 1 } }
+        ])
             .sort({ FechaData: -1 })
             .skip(skipData)
             .limit(size)
-            .lean(true)
             .then((data) => { return res.json(msgHandler_1.msgHandler.sendValue(data)); })
             .catch((err) => { return res.status(400).json(msgHandler_1.msgHandler.sendError(err)); });
     }),
@@ -114,13 +115,16 @@ exports.default = {
          */
         size = size ? size > settings_1.Rutas.maxData ? settings_1.Rutas.maxData : size : settings_1.Rutas.maxData;
         let skipData = (size * (page - 1));
-        yield rutas_model_1.default
-            .find({ Estado: true })
-            .select({ FechaData: false })
+        return yield rutas_model_1.default
+            .aggregate([
+            { $lookup: { from: 'colaboradores', localField: 'Colaborador', foreignField: '_id', as: 'Colaborador' } },
+            { $unwind: '$Colaborador' },
+            { $project: { 'Colaborador': { 'User': 0, 'Perfil': 0, 'Estado': 0, 'Cargo': 0, 'Permisos': 0, 'General': { '_id': 0 } } } },
+            { $project: { 'Colaborador': 1, 'Casos': 1, 'Demografia': 1 } }
+        ])
             .sort({ FechaData: -1 })
             .skip(skipData)
-            .size(size)
-            .lean(true)
+            .limit(size)
             .then((data) => {
             return res.json(msgHandler_1.msgHandler.sendValue(data));
         })
@@ -137,9 +141,12 @@ exports.default = {
      */
     getObtenerById: (req, res) => __awaiter(this, void 0, void 0, function* () {
         yield rutas_model_1.default
-            .findById(req.params.idRuta.toString())
-            .select({ FechaData: false })
-            .lean(true)
+            .aggregate([
+            { $match: { '_id': req.params.idRuta } },
+            { $lookup: { from: 'colaboradores', localField: 'Colaborador', foreignField: '_id', as: 'Colaborador' } },
+            { $unwind: '$Colaborador' },
+            { $project: { 'Colaborador': { 'User': 0, 'Perfil': 0, 'Estado': 0, 'Cargo': 0, 'Permisos': 0, 'General': { '_id': 0 } } } }
+        ])
             .then((data) => {
             return res.json(msgHandler_1.msgHandler.sendValue(data));
         })

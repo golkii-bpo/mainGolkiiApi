@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const joi = require("joi");
-// import * as joi from 'joi-es';
+// import * as joi from 'joi';
+const joi = require("joi-es");
 const basicValidations_1 = require("../../helpers/validation/basicValidations");
 // import ColMdl from '../colaboradores/general/colaborador.controller'
 const msgHandler_1 = require("../../helpers/resultHandler/msgHandler");

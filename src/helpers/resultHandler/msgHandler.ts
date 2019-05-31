@@ -93,11 +93,13 @@ class MsgHandler extends Message {
         return new MsgHandler(null,'Se ha actualizado correctamente');
     }
 
-    errorJoi(data:any):msgResult{
-        if(!data.hasOwnProperty('details')) return new MsgHandler(null,data);
-        if(data.details.length != 0) return new MsgHandler(null,data.details[0].message);
-        return new MsgHandler(null,data.message);
-    }
+    // errorJoi(data:any):msgResult{
+    //     if(data.hasOwnProperty('joi')){
+    //         if(!Array.isArray(data["details"])) return new Message(data["message"],null);
+    //         if(data["details"].length != 0) return new Message(data["details"][0].message,null);
+    //     }
+    //     return new Message(data["message"],null);
+    // }
 
     successUpdate(_model):msgResult{
         if(!_model) new MsgHandler('Se ha actualizado correctamente',null);
