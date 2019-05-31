@@ -38,6 +38,11 @@ const pwdRegex = new RegExp(/((?=.*[a-z])(?=.*[A-Z])(?=.*\d)).{8,}/), joiUser = 
     Token: joi.string(),
     Pwd: joi.string().regex(pwdRegex),
     PwdConfirm: joi.string().regex(pwdRegex)
+}), joiSession = joi.object().keys({
+    DataSession: joi.date().required(),
+    IpSession: joi.string().regex(/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/).required(),
+    Token: joi.string().regex(/^\w+\.\w+.\w+$/),
+    LastUserCall: joi.date().required()
 });
 class UserSrv extends basicValidations_1.default {
     valUserModel(data) {
@@ -154,12 +159,13 @@ class UserSrv extends basicValidations_1.default {
             return msgHandler_1.msgHandler.sendValue(User);
         });
     }
+    //#region Password Reset
     valPwdReset(data) {
         return __awaiter(this, void 0, void 0, function* () {
             //validacion de modelo de datos recibidos
             const { error, value } = joiReset.validate(data);
             if (error)
-                return msgHandler_1.msgHandler.errorJoi(error);
+                return msgHandler_1.msgHandler.sendError(error);
             const _value = value;
             //validacion 
             const User = yield colaborador_model_1.default.findOne({ 'General.Email': _value.Email }).lean(true);
@@ -176,17 +182,52 @@ class UserSrv extends basicValidations_1.default {
                     return msgHandler_1.msgHandler.sendError(pwdReset.error);
                 const value = pwdReset.value;
                 let Token = JWT.verify(value.Token, settings_1.SettingsToken.privateKey);
-                // if(typeof(Token) == Object)
+                if (typeof (Token) != "object")
+                    return msgHandler_1.msgHandler.sendError(Error("El token no tiene el formato correcto"));
                 if (!Token.hasOwnProperty('Coldt'))
                     return msgHandler_1.msgHandler.sendError("Token no valido");
-                let UserReq = yield colaborador_model_1.default.findOne({ _id: Token["Coldt"] });
-                //Valido que el usuario que esta pidiendo el cambio sea el indicado
+                let UserReq = yield colaborador_model_1.default
+                    .findOne({
+                    _id: Token["Coldt"],
+                    'User.Recovery.Token': value.Token,
+                    'User.Recovery.': null,
+                    'User.Disable': false
+                }).lean(true);
+                if (!UserReq)
+                    return msgHandler_1.msgHandler.sendError("Error. No se ha solicitado un cambio de contraseña");
+                if (value.Pwd != value.PwdConfirm)
+                    return msgHandler_1.msgHandler.sendError("Las contraseñas ingresada no coinciden");
+                //Se estan seteando las variables
+                value.idColaborador = Token["Coldt"];
+                value.Pwd = pwdService_1.default.encrypPwd(value.Pwd);
                 return msgHandler_1.msgHandler.sendValue(value);
             }
             catch (error) {
                 console.log(error);
                 return msgHandler_1.msgHandler.sendError(error);
             }
+        });
+    }
+    //#endregion
+    //#region Auth
+    valAuth(data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { error, value } = joiUser.validate(data);
+            if (error)
+                return msgHandler_1.msgHandler.sendError(error);
+            const Colaborador = yield colaborador_model_1.default
+                .findById({ 'User.username': value.username, 'User.Disable': true })
+                .lean(true);
+            if (!Colaborador)
+                return msgHandler_1.msgHandler.sendError('Usuario incorrecto');
+            const Session = Colaborador.User.Session;
+            let _d;
+            if ((_d = Session ? Session.LastUserCall : null))
+                if ((new Date(_d.getTime() + settings_1.SettingsToken.validTimeToken)).getTime() < Date.now())
+                    return msgHandler_1.msgHandler.sendError('Lo sentimos ya se encuentra una session abierta en el navegador');
+            if (!pwdService_1.default.comparePwdHashed(value.password, Colaborador.User.password))
+                return msgHandler_1.msgHandler.sendError('Contraseña incorrecta');
+            return msgHandler_1.msgHandler.sendValue(Colaborador);
         });
     }
 }

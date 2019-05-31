@@ -5,11 +5,10 @@ import * as JWT from 'jsonwebtoken';
 import {SettingsToken as Sttng}  from '../../../settings/settings';
 import general from '../../../helpers/validation/basicValidations';
 import ColMdl from '../general/colaborador.model';
-import {iUser, iUserName, iUserDisable, IPwdReset,IPwdChange} from './user.interface';
+import {IAuth, iUserName, iUserDisable, IPwdReset,IPwdChange, IUser, ISession} from './user.interface';
 import {msgHandler,crudType as  enumCrud,msgResult, msgCustom} from '../../../helpers/resultHandler/msgHandler';
 import pwdHandler from '../../../security/pwdService';
-import { Token } from 'nodemailer/lib/xoauth2';
-import { type } from 'os';
+import { IColaborador } from '../general/colaborador.interface';
 
 //FIXME: Crear un nuevo archivo con todas las interfaces a utilizar
 const
@@ -40,10 +39,16 @@ joiPwdReset = joi.object().keys({
     Token:joi.string(),
     Pwd:joi.string().regex(pwdRegex),
     PwdConfirm: joi.string().regex(pwdRegex)
+}),
+joiSession = joi.object().keys({
+    DataSession:joi.date().required(),
+    IpSession: joi.string().regex(/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/).required(),
+    Token: joi.string().regex(/^\w+\.\w+.\w+$/),
+    LastUserCall: joi.date().required()
 })
 
 class UserSrv extends general{
-    valUserModel(data):msgCustom<iUser>{
+    valUserModel(data):msgCustom<IAuth>{
         var {error,value} = joi.validate(data,joiUser);
         return {error,value};
     }
@@ -71,7 +76,7 @@ class UserSrv extends general{
         .findOne({_id:idColaborador,'User.IsCreated':false})
         .lean(true);
         if(!ColObj) return msgHandler.missingModelData('colaborador');
-        return <msgCustom<iUser>>msgHandler.sendValue(value);
+        return <msgCustom<IAuth>>msgHandler.sendValue(value);
     }
 
     async valModUsr(idColaborador,data):Promise<msgResult>{
@@ -145,10 +150,12 @@ class UserSrv extends general{
         return msgHandler.sendValue(User);
     }
 
+    //#region Password Reset
+
     async valPwdReset(data:Object):Promise<msgResult>{
         //validacion de modelo de datos recibidos
         const {error,value} = joiReset.validate(data);
-        if(error) return msgHandler.errorJoi(error);
+        if(error) return msgHandler.sendError(error);
         const _value = <IPwdReset>value;
         //validacion 
         const User = await ColMdl.findOne({'General.Email':_value.Email}).lean(true);
@@ -156,24 +163,62 @@ class UserSrv extends general{
         
         return msgHandler.sendValue(_value); 
     }
+
     async valRestablecerPwd(data:Object):Promise<msgResult>{
         try {
             const pwdReset = joiPwdReset.validate(data);
             if(pwdReset.error) return msgHandler.sendError(pwdReset.error);
             const value: IPwdChange = <IPwdChange>pwdReset.value;
             let Token:object|string = JWT.verify(value.Token,Sttng.privateKey);
-            // if(typeof(Token) == Object)
+            if(typeof(Token) != "object") return msgHandler.sendError(Error("El token no tiene el formato correcto"));
             if(!Token.hasOwnProperty('Coldt')) return msgHandler.sendError("Token no valido");
-            let UserReq = await ColMdl.findOne({_id:Token["Coldt"]})
-
-            //Valido que el usuario que esta pidiendo el cambio sea el indicado
-            return msgHandler.sendValue(value)
+            let UserReq = await 
+            ColMdl
+            .findOne(
+                {
+                    _id:Token["Coldt"],
+                    'User.Recovery.Token':value.Token,
+                    'User.Recovery.':null,
+                    'User.Disable': false
+                }
+            ).lean(true);
+            if(!UserReq) return msgHandler.sendError("Error. No se ha solicitado un cambio de contraseña");
+            if(value.Pwd != value.PwdConfirm) return msgHandler.sendError("Las contraseñas ingresada no coinciden");
+            
+            //Se estan seteando las variables
+            value.idColaborador = Token["Coldt"];
+            value.Pwd = pwdHandler.encrypPwd(value.Pwd);
+            
+            return msgHandler.sendValue(value);
 
         } catch (error) {
             console.log(error);
             return msgHandler.sendError(error);
         }
     }
+
+    //#endregion
+
+    //#region Auth
+
+    async valAuth(data:Object):Promise<msgResult>{
+        const {error,value} = <joi.ValidationResult<IAuth>>joiUser.validate(data);
+        if(error) return msgHandler.sendError(error);
+
+        const Colaborador = <IColaborador>await ColMdl
+        .findById({'User.username':value.username,'User.Disable':true})
+        .lean(true);
+        if(!Colaborador) return msgHandler.sendError('Usuario incorrecto');
+        const Session:ISession = Colaborador.User.Session;
+        
+        let _d:Date ;
+        if((_d = Session?Session.LastUserCall:null)) if((new Date(_d.getTime() + Sttng.validTimeToken)).getTime() < Date.now()) return msgHandler.sendError('Lo sentimos ya se encuentra una session abierta en el navegador')
+        if(!pwdHandler.comparePwdHashed(value.password,Colaborador.User.password)) return msgHandler.sendError('Contraseña incorrecta');
+
+        return msgHandler.sendValue(Colaborador);
+    }
+
+    //#endregion
 }
 
 export default new UserSrv;

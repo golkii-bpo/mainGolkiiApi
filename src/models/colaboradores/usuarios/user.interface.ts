@@ -1,16 +1,24 @@
+import { Session } from "inspector";
 
 export interface IRecovery {
     IpSend:string,
     EmailSend:string,
     Solicitud:boolean,
+    Token:string
+}
+
+export interface ISession{
+    DateSession:string,
+    IpSession:string,
     Token:string,
-    Estado:boolean
+    LastUserCall:Date
 }
 
 export interface IUser {
     username:string,
     password:string,
     Recovery:IRecovery,
+    Session?:ISession,
     IsCreated:boolean,
     Disable:boolean,
     FechaModificacion:Date
@@ -20,7 +28,7 @@ export interface iUserName {
     username:string
 }
 
-export interface iUser extends iUserName{
+export interface IAuth extends iUserName{
     password:string
 }
 
@@ -42,7 +50,8 @@ export interface IPwdReset{
 export interface IPwdChange{
     Token:string,
     Pwd:string,
-    PwdConfirm:string
+    PwdConfirm:string,
+    idColaborador?:string
 }
 
 export interface iUserDisable extends iUserName{}

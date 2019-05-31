@@ -26,8 +26,14 @@ class Message {
      * @param {*} _error
      * @returns {error,value}
      */
-    sendError(_error) {
-        return new Message(_error, null);
+    sendError(data) {
+        if (data.hasOwnProperty('joi')) {
+            if (!Array.isArray(data["details"]))
+                return new Message(data["message"], null);
+            if (data["details"].length != 0)
+                return new Message(data["details"][0].message, null);
+        }
+        return new Message(data["message"], null);
     }
     /**
      * Retorna la data en el formato establecido
@@ -35,13 +41,8 @@ class Message {
      * @param {*} content
      * @returns {error,value}
      */
-    sendValue(content) {
-        if (!content.hasOwnProperty('details'))
-            return new Message(null, content);
-        if (content.details.length != 0)
-            return new Message(null, content.details[0].message);
-        else
-            return new Message(null, content);
+    sendValue(data) {
+        return new Message(null, data);
     }
 }
 exports.Message = Message;

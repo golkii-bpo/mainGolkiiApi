@@ -24,8 +24,13 @@ export class Message implements msgResult {
      * @param {*} _error
      * @returns {error,value}
      */
-    sendError(_error:Object):msgResult{
-        return new Message(_error,null);
+    sendError(data:Object):msgResult{
+        if(data.hasOwnProperty('joi')){
+            if(!Array.isArray(data["details"])) return new Message(data["message"],null);
+            if(data["details"].length != 0) return new Message(data["details"][0].message,null);
+        }
+        
+        return new Message(data["message"],null);
     }
 
     /**
@@ -34,9 +39,7 @@ export class Message implements msgResult {
      * @param {*} content
      * @returns {error,value}
      */
-    sendValue(content:any):msgResult{
-        if(!content.hasOwnProperty('details')) return new Message(null,content);
-        if(content.details.length != 0) return new Message(null,content.details[0].message);
-        else return new Message(null,content);
+    sendValue(data:any):msgResult{
+        return new Message(null,data);
     }
 } 

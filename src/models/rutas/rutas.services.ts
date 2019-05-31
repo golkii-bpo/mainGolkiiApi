@@ -1,5 +1,5 @@
-import * as joi from 'joi';
-// import * as joi from 'joi-es';
+// import * as joi from 'joi';
+import * as joi from 'joi-es';
 import General from '../../helpers/validation/basicValidations';
 // import ColMdl from '../colaboradores/general/colaborador.controller'
 import {msgHandler} from '../../helpers/resultHandler/msgHandler'

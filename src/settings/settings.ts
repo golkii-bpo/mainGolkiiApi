@@ -4,7 +4,8 @@ export const Rutas = {
     maxData:1000
 }, 
 SettingsToken = {
-    privateKey:Config["PRIVATEKEY"]
+    privateKey:Config["PRIVATEKEY"],
+    validTimeToken:1800000
 },
 App = {
     host:"http://golkiibpo.com",

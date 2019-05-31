@@ -47,14 +47,18 @@ export default {
         size = size? size>sttng.maxData?sttng.maxData:size:sttng.maxData;
         let skipData:number = (size * ( page - 1));
 
-        await 
-        RutasModel
-        .find()
-        .select({FechaData:false})
+        return await RutasModel
+        .aggregate(
+            [
+                {$lookup:{from:'colaboradores',localField:'Colaborador',foreignField:'_id',as:'Colaborador'}},
+                {$unwind:'$Colaborador'},
+                {$project:{'Colaborador':{'User':0,'Perfil':0,'Estado':0,'Cargo':0,'Permisos':0,'General':{'_id':0}}}},
+                {$project:{'Colaborador':1,'Casos':1,'Demografia':1}}
+            ]
+        )
         .sort({FechaData:-1})
         .skip(skipData)
         .limit(size)
-        .lean(true)
         .then((data)=>{return res.json(msgHandler.sendValue(data))})
         .catch((err)=>{;return res.status(400).json(msgHandler.sendError(err))});
     },
@@ -89,20 +93,18 @@ export default {
         let 
             fi:Date = _fi? new Date(_fi) : new Date(),
             ff:Date = _ff? new Date(_ff) : new Date();
-
-        await 
-        RutasModel
-        .find({
-            FechaSalida:{
-                $lte:ff,
-                $gte: fi
-            }
-        })
-        .select({FechaData:false})
+        return await RutasModel
+        .aggregate(
+            [
+                {$lookup:{from:'colaboradores',localField:'Colaborador',foreignField:'_id',as:'Colaborador'}},
+                {$unwind:'$Colaborador'},
+                {$project:{'Colaborador':{'User':0,'Perfil':0,'Estado':0,'Cargo':0,'Permisos':0,'General':{'_id':0}}}},
+                {$project:{'Colaborador':1,'Casos':1,'Demografia':1}}
+            ]
+        )
         .sort({FechaData:-1})
         .skip(skipData)
         .limit(size)
-        .lean(true)
         .then((data)=>{return res.json(msgHandler.sendValue(data))})
         .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))});
     },
@@ -129,14 +131,19 @@ export default {
         size = size? size>sttng.maxData?sttng.maxData:size:sttng.maxData;
         let skipData:number = (size * ( page - 1));
 
-        await 
+        return await 
         RutasModel
-        .find({Estado:true})
-        .select({FechaData:false})
+        .aggregate(
+            [
+                {$lookup:{from:'colaboradores',localField:'Colaborador',foreignField:'_id',as:'Colaborador'}},
+                {$unwind:'$Colaborador'},
+                {$project:{'Colaborador':{'User':0,'Perfil':0,'Estado':0,'Cargo':0,'Permisos':0,'General':{'_id':0}}}},
+                {$project:{'Colaborador':1,'Casos':1,'Demografia':1}}
+            ]
+        )
         .sort({FechaData:-1})
         .skip(skipData)
-        .size(size)
-        .lean(true)
+        .limit(size)
         .then((data)=>{
             return res.json(msgHandler.sendValue(data));
         })
@@ -155,9 +162,14 @@ export default {
     getObtenerById: async (req,res) => {
         await 
         RutasModel
-        .findById(req.params.idRuta.toString())
-        .select({FechaData:false})
-        .lean(true)
+        .aggregate(
+            [
+                {$match:{'_id':req.params.idRuta}},
+                {$lookup:{from:'colaboradores',localField:'Colaborador',foreignField:'_id',as:'Colaborador'}},
+                {$unwind:'$Colaborador'},
+                {$project:{'Colaborador':{'User':0,'Perfil':0,'Estado':0,'Cargo':0,'Permisos':0,'General':{'_id':0}}}}
+            ]
+        )
         .then((data)=>{
             return res.json(msgHandler.sendValue(data));
         })

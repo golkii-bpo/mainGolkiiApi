@@ -4,7 +4,8 @@ const Config = require("config");
 exports.Rutas = {
     maxData: 1000
 }, exports.SettingsToken = {
-    privateKey: Config["PRIVATEKEY"]
+    privateKey: Config["PRIVATEKEY"],
+    validTimeToken: 1800000
 }, exports.App = {
     host: "http://golkiibpo.com",
     port: 3000,
