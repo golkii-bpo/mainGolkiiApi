@@ -1,6 +1,6 @@
 import * as express from 'express';
 import cargoController from './cargoController';
-import errorHandler from '../../middleware/errorHandler';
+import errorHandler from '../../middleware/Error/errorHandler';
 
 export const cargoRouter = express.Router();
 cargoRouter

@@ -1,6 +1,6 @@
 import * as express from 'express';
 import colaboradorCtrl from './colaborador.controller';
-import errHandler from '../../../middleware/errorHandler';
+import errHandler from '../../../middleware/Error/errorHandler';
 
 const colaboradorRouter = express.Router();
 colaboradorRouter

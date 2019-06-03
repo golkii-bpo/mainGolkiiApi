@@ -1,7 +1,7 @@
 import { any } from "joi";
 
 export interface msgResult {
-    error:Object;
+    error: Object;
     value:Object
 }
 export class Message implements msgResult {
@@ -29,8 +29,9 @@ export class Message implements msgResult {
             if(!Array.isArray(data["details"])) return new Message(data["message"],null);
             if(data["details"].length != 0) return new Message(data["details"][0].message,null);
         }
+        if(data.hasOwnProperty('message')) return new Message(data["message"],null);
         
-        return new Message(data["message"],null);
+        return new Message(data,null);
     }
 
     /**

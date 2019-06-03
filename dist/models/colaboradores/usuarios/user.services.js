@@ -20,7 +20,8 @@ const pwdService_1 = require("../../../security/pwdService");
 //FIXME: Crear un nuevo archivo con todas las interfaces a utilizar
 const pwdRegex = new RegExp(/((?=.*[a-z])(?=.*[A-Z])(?=.*\d)).{8,}/), joiUser = joi.object().keys({
     username: joi.string().min(5).max(20),
-    password: joi.string().regex(pwdRegex)
+    password: joi.string().regex(pwdRegex),
+    forceSession: joi.boolean().optional()
 }), joiChangeUserName = joi.object().keys({
     OldUser: joi.string().min(5).max(20),
     NewUser: joi.string().min(5).max(20)
@@ -215,16 +216,20 @@ class UserSrv extends basicValidations_1.default {
             const { error, value } = joiUser.validate(data);
             if (error)
                 return msgHandler_1.msgHandler.sendError(error);
-            const Colaborador = yield colaborador_model_1.default
-                .findById({ 'User.username': value.username, 'User.Disable': true })
+            let Colaborador = yield colaborador_model_1.default
+                .findOne({ 'User.username': value.username, 'User.Disable': false })
                 .lean(true);
             if (!Colaborador)
                 return msgHandler_1.msgHandler.sendError('Usuario incorrecto');
             const Session = Colaborador.User.Session;
             let _d;
-            if ((_d = Session ? Session.LastUserCall : null))
-                if ((new Date(_d.getTime() + settings_1.SettingsToken.validTimeToken)).getTime() < Date.now())
-                    return msgHandler_1.msgHandler.sendError('Lo sentimos ya se encuentra una session abierta en el navegador');
+            const force = value.forceSession ? true : false;
+            if ((_d = Session ? new Date(Session.LastUserCall) : null) != null && force == false) {
+                let fSession = (new Date(_d.getTime() + settings_1.SettingsToken.validTimeToken)).getTime();
+                if (fSession > Date.now())
+                    console.log('No es valido');
+                return msgHandler_1.msgHandler.sendError({ existSession: true, message: 'Ya existe una session abierta con este usuario' });
+            }
             if (!pwdService_1.default.comparePwdHashed(value.password, Colaborador.User.password))
                 return msgHandler_1.msgHandler.sendError('Contraseña incorrecta');
             return msgHandler_1.msgHandler.sendValue(Colaborador);

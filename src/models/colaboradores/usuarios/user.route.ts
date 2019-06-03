@@ -1,6 +1,6 @@
 import * as express from 'express';
 import usrCtrl from './user.controller';
-import errorHandler from '../../../middleware/errorHandler';
+import errorHandler from '../../../middleware/Error/errorHandler';
 const 
     userRouter = express.Router();
 
@@ -12,6 +12,6 @@ userRouter
 .put('/:idColaborador/usuario/cambio/pwd',errorHandler(usrCtrl.putDisableUser))
 .post('/password/link',errorHandler(usrCtrl.postLinkResetPwd))
 .post('/password/reset',errorHandler(usrCtrl.postRestablecerPwd))
-// .post('')
+.post('/auth',errorHandler(usrCtrl.postAuth));
 
 export {userRouter};

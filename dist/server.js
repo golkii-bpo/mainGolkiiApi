@@ -44,7 +44,7 @@ app.use((error, req, res, next) => {
     if (error && error.hasOwnProperty('errmsg'))
         return res.status(400).json(msgHandler_1.msgHandler.sendError(error.errmsg));
     if (error)
-        return res.status(500).json(msgHandler_1.msgHandler.sendError(error.message));
+        return res.status(500).json(msgHandler_1.msgHandler.sendError(error));
 });
 //inicio del servidor en un puerto
 app.listen(PORT, () => {

@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import {Types} from 'mongoose';
 import {SettingsToken as Sttng,App as AppSttng}  from '../../../settings/settings';
 import * as JWT from 'jsonwebtoken';
-import {msgHandler,crudType as  enumCrud, msgCustom} from '../../../helpers/resultHandler/msgHandler';
+import {msgHandler,crudType as  enumCrud, msgCustom, msgResult} from '../../../helpers/resultHandler/msgHandler';
 import pwdSecurity from '../../../security/pwdService';
 import {mailPwdResetTemplate as mailReset} from '../../../helpers/templates/mailTemplate';
 import Mail from '../../../mail/server.mail';
@@ -123,14 +123,24 @@ export default {
     },
 
     postAuth: async (req:Request,res:Response):Promise<Response> =>{
+        
         //validar modelo de datos user y password
         //realizar validacion si las credenciales son correctas
-        const 
-            data = <IAuth>req.body,
-            {error,value} = <msgCustom<IColaborador>>await userServices.valAuth(data);
-        if(error) return res.status(401).json(msgHandler.sendError(error));
+        //Se va a manejar la hora del servidor del api para poder realizar todo correctamente
+        
+        const data = <IAuth>req.body;
+        const {error,value} = <msgCustom<IColaborador>>await userServices.valAuth(data);
+        if(error){
+            if(error.hasOwnProperty('existSession'))
+            {
+                if(error['existSession'] == true) return res.status(402).json(error['message']);
+            }
+            else{
+                return res.status(401).json(msgHandler.sendError(error));
+            }
+        }
+            
         //crear un token
-        console.log(req);
         let token = JWT.sign(
             {
                 IColMdl:value._id,
@@ -142,9 +152,9 @@ export default {
             IpSession:req.ip,
             Token:token,
             LastUserCall: Date.now()
-        }
-        //Almacenar la session del token con todo lo que piden para la session
-        return await ColMdl
+        };
+
+        const _result:msgResult = await ColMdl
         .updateOne(
             {
                 'User.username': data.username
@@ -154,12 +164,20 @@ export default {
                 }
             }
         )
-        .then()
-        .catch()
-        //Se va a manejar la hora del servidor del api para poder realizar todo correctamente
-        //retornar el token
-        return null;
+        .then((res)=>{
+            return msgHandler.resultCrud(res,'colaborador',enumCrud.actualizar,'Actualizado');
+        })
+        .catch((err)=>{
+            return msgHandler.sendError(err);
+        });
+        if(_result.error) return res.status(401).json(_result.error);
+        const JwtResult = {
+            username:value.User.username,
+            Token:token
+        };
+        return res.json(msgHandler.sendValue(JwtResult));
     },
+
     //#endregion
 
     //#region PUT

@@ -1,6 +1,6 @@
 import * as express from 'express';
 import areaController from './areaController';
-import errorHandler from '../../middleware/errorHandler';
+import errorHandler from '../../middleware/Error/errorHandler';
 
 export const areaRouter = express.Router();
 areaRouter

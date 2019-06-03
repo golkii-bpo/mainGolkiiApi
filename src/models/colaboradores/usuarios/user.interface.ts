@@ -28,8 +28,9 @@ export interface iUserName {
     username:string
 }
 
-export interface IAuth extends iUserName{
-    password:string
+export interface IAuth extends iUserName {
+    password:string,
+    forceSession?:boolean
 }
 
 export interface iChangeUsername{

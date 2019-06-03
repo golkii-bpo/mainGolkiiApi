@@ -1,6 +1,6 @@
 import * as express from 'express';
 import rutasCtrl from './rutas.controller';
-import errorHandler from '../../middleware/errorHandler';
+import errorHandler from '../../middleware/Error/errorHandler';
 
 const rutaRoutes = express.Router();
 
