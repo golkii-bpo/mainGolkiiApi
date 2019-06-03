@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
 const colaborador_controller_1 = require("./colaborador.controller");
-const errorHandler_1 = require("../../../middleware/errorHandler");
+const errorHandler_1 = require("../../../middleware/Error/errorHandler");
 const colaboradorRouter = express.Router();
 exports.colaboradorRouter = colaboradorRouter;
 colaboradorRouter

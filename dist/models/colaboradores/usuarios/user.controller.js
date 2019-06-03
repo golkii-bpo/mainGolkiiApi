@@ -105,11 +105,19 @@ exports.default = {
     postAuth: (req, res) => __awaiter(this, void 0, void 0, function* () {
         //validar modelo de datos user y password
         //realizar validacion si las credenciales son correctas
-        const data = req.body, { error, value } = yield user_services_1.default.valAuth(data);
-        if (error)
-            return res.status(401).json(msgHandler_1.msgHandler.sendError(error));
+        //Se va a manejar la hora del servidor del api para poder realizar todo correctamente
+        const data = req.body;
+        const { error, value } = yield user_services_1.default.valAuth(data);
+        if (error) {
+            if (error.hasOwnProperty('existSession')) {
+                if (error['existSession'] == true)
+                    return res.status(402).json(error['message']);
+            }
+            else {
+                return res.status(401).json(msgHandler_1.msgHandler.sendError(error));
+            }
+        }
         //crear un token
-        console.log(req);
         let token = JWT.sign({
             IColMdl: value._id,
             IpRequest: req.ip
@@ -119,8 +127,7 @@ exports.default = {
             Token: token,
             LastUserCall: Date.now()
         };
-        //Almacenar la session del token con todo lo que piden para la session
-        return yield colaborador_model_1.default
+        const _result = yield colaborador_model_1.default
             .updateOne({
             'User.username': data.username
         }, {
@@ -128,11 +135,19 @@ exports.default = {
                 'User.Session': Session
             }
         })
-            .then()
-            .catch();
-        //Se va a manejar la hora del servidor del api para poder realizar todo correctamente
-        //retornar el token
-        return null;
+            .then((res) => {
+            return msgHandler_1.msgHandler.resultCrud(res, 'colaborador', msgHandler_1.crudType.actualizar, 'Actualizado');
+        })
+            .catch((err) => {
+            return msgHandler_1.msgHandler.sendError(err);
+        });
+        if (_result.error)
+            return res.status(401).json(_result.error);
+        const JwtResult = {
+            username: value.User.username,
+            Token: token
+        };
+        return res.json(msgHandler_1.msgHandler.sendValue(JwtResult));
     }),
     //#endregion
     //#region PUT

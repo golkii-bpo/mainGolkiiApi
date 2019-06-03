@@ -48,7 +48,7 @@ app.use("*",(req,res)=>{
 app.use((error,req,res,next)=>{
     logger.log('error',error);
     if(error && error.hasOwnProperty('errmsg')) return res.status(400).json(msgHandler.sendError(error.errmsg));
-    if(error) return res.status(500).json(msgHandler.sendError(error.message));
+    if(error) return res.status(500).json(msgHandler.sendError(error));
 })
 
 //inicio del servidor en un puerto

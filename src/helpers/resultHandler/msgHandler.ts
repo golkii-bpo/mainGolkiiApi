@@ -79,12 +79,13 @@ class MsgHandler extends Message {
     * @param {Collecion que se esta utilizando} model
     * @param {Tipo de Operacion} crud
     */
-    resultCrud(data:actionData, model:String, crud:crudType):msgResult{
+    resultCrud(data:actionData, model:String, crud:crudType,Message:string=null):msgResult{
         if(!data.hasOwnProperty('n')&&!data.hasOwnProperty('ok')) throw new Error('El formato esperado para el método no es el adecuado');
-        if(data.n==1 && (data["nModified"] == 1 || data["nMatched"] == 1 || data["nUpserted"] == 1) && data.ok ==1) return new MsgHandler(null,'Se ha actualizado correctamente');
+        if(data.n==1 && (data["nModified"] == 1 || data["nMatched"] == 1 || data["nUpserted"] == 1) && data.ok ==1) return new MsgHandler(null,!Message?'Se ha actualizado correctamente':Message);
         else if(data.ok == 1) return this.errorCrud(crudType.actualizar)
         else if(data.nModified) return this.cantModified(model,crud);
     }
+
     resultsCrud(data:Array<actionData>,model:string,crud:crudType):msgResult{
         for(var action of data){
             if(!action.hasOwnProperty('nModified') && !action.hasOwnProperty('nMatched') && !action.hasOwnProperty('nUpserted')) throw new Error('El formato esperado para el método no es el adecuado');
@@ -92,14 +93,6 @@ class MsgHandler extends Message {
         }
         return new MsgHandler(null,'Se ha actualizado correctamente');
     }
-
-    // errorJoi(data:any):msgResult{
-    //     if(data.hasOwnProperty('joi')){
-    //         if(!Array.isArray(data["details"])) return new Message(data["message"],null);
-    //         if(data["details"].length != 0) return new Message(data["details"][0].message,null);
-    //     }
-    //     return new Message(data["message"],null);
-    // }
 
     successUpdate(_model):msgResult{
         if(!_model) new MsgHandler('Se ha actualizado correctamente',null);

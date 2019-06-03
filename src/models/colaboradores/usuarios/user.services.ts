@@ -15,7 +15,8 @@ const
 pwdRegex = new RegExp(/((?=.*[a-z])(?=.*[A-Z])(?=.*\d)).{8,}/),
 joiUser = joi.object().keys({
     username: joi.string().min(5).max(20),
-    password: joi.string().regex(pwdRegex)
+    password: joi.string().regex(pwdRegex),
+    forceSession: joi.boolean().optional()
 }),
 joiChangeUserName = joi.object().keys({
     OldUser: joi.string().min(5).max(20),
@@ -205,16 +206,23 @@ class UserSrv extends general{
         const {error,value} = <joi.ValidationResult<IAuth>>joiUser.validate(data);
         if(error) return msgHandler.sendError(error);
 
-        const Colaborador = <IColaborador>await ColMdl
-        .findById({'User.username':value.username,'User.Disable':true})
+        let Colaborador = <IColaborador> await ColMdl
+        .findOne({'User.username':value.username,'User.Disable':false})
         .lean(true);
+
         if(!Colaborador) return msgHandler.sendError('Usuario incorrecto');
         const Session:ISession = Colaborador.User.Session;
         
-        let _d:Date ;
-        if((_d = Session?Session.LastUserCall:null)) if((new Date(_d.getTime() + Sttng.validTimeToken)).getTime() < Date.now()) return msgHandler.sendError('Lo sentimos ya se encuentra una session abierta en el navegador')
-        if(!pwdHandler.comparePwdHashed(value.password,Colaborador.User.password)) return msgHandler.sendError('Contraseña incorrecta');
+        let _d:Date;
+        const force = value.forceSession? true:false;
 
+        if((_d = Session?new Date(Session.LastUserCall):null)!= null && force == false) {
+            let fSession:number = (new Date(_d.getTime() + Sttng.validTimeToken)).getTime();
+            if(fSession > Date.now()) 
+                console.log('No es valido')
+                return msgHandler.sendError({existSession:true,message:'Ya existe una session abierta con este usuario'})
+        }
+        if(!pwdHandler.comparePwdHashed(value.password,Colaborador.User.password)) return msgHandler.sendError('Contraseña incorrecta');
         return msgHandler.sendValue(Colaborador);
     }
 

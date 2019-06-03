@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
 const areaController_1 = require("./areaController");
-const errorHandler_1 = require("../../middleware/errorHandler");
+const errorHandler_1 = require("../../middleware/Error/errorHandler");
 exports.areaRouter = express.Router();
 exports.areaRouter
     .get('', errorHandler_1.default(areaController_1.default.getObtener))

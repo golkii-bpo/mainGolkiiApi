@@ -1,6 +1,6 @@
 import * as express from 'express';
 import prmCtrl from './permisoController';
-import errorHandler from '../../middleware/errorHandler';
+import errorHandler from '../../middleware/Error/errorHandler';
 
 export const permisosRouter = express.Router();
 

@@ -33,7 +33,9 @@ class Message {
             if (data["details"].length != 0)
                 return new Message(data["details"][0].message, null);
         }
-        return new Message(data["message"], null);
+        if (data.hasOwnProperty('message'))
+            return new Message(data["message"], null);
+        return new Message(data, null);
     }
     /**
      * Retorna la data en el formato establecido

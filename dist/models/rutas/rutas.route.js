@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
 const rutas_controller_1 = require("./rutas.controller");
-const errorHandler_1 = require("../../middleware/errorHandler");
+const errorHandler_1 = require("../../middleware/Error/errorHandler");
 const rutaRoutes = express.Router();
 exports.rutaRoutes = rutaRoutes;
 rutaRoutes
