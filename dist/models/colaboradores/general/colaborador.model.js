@@ -85,14 +85,25 @@ const permisoSchema = new mongoose_1.Schema({
     },
     Token: {
         type: String,
-        match: /^\w+\.\w+.\w+$/,
         required: true,
         default: null
     },
-    LastUserCall: {
-        type: Date,
-        default: new Date(),
+    Auth: {
+        type: String,
         required: true
+    },
+    //Para el Auth tendra que validar 
+    ValidToken: {
+        type: Date,
+        required: true
+    },
+    validAuth: {
+        type: Date,
+        required: true
+    },
+    Disable: {
+        type: Boolean,
+        default: false
     }
 }), UserSchema = new mongoose_1.Schema({
     username: {

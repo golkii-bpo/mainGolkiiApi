@@ -36,7 +36,7 @@ interface ICargo{
 }
 
 export interface IColaborador {
-    _id:String,
+    _id:string,
     General:IGeneral,
     Cargo:ICargo,
     Permisos:ICargo[],

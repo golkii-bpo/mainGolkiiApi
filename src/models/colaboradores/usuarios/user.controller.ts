@@ -8,9 +8,9 @@ import {mailPwdResetTemplate as mailReset} from '../../../helpers/templates/mail
 import Mail from '../../../mail/server.mail';
 import ColMdl from '../general/colaborador.model';
 import userServices from "./user.services";
-import { IAuth, iChangePwd, iChangeUsername, iUserDisable, IPwdReset, IRecovery,IPwdChange} from './user.interface';
+import { IAuth, IChangePwd, IChangeUsername, IUserDisable, IPwdReset, IRecovery,IPwdChange,ITokenData, IRTokenData, ISession} from './user.interface';
 import {IColaborador} from '../general/colaborador.interface';
-import { date } from "joi";
+import Crypt,{ICipher} from '../../../security/cryptoData';
 
 export default {
 
@@ -140,20 +140,41 @@ export default {
             }
         }
             
-        //crear un token
-        let token = JWT.sign(
-            {
-                IColMdl:value._id,
-                IpRequest:req.ip
+        //crear un token de retorno
+        const 
+            refreshToken:string = JWT.sign(
+                {},
+                Sttng.privateRefreshToken
+            ),
+            //Se define el tipo de data que se va a ingresar
+            _dataToken:ITokenData = {
+                Token:refreshToken,
+                IpRequest:req.ip,
             },
-            Sttng.privateKey
-        ), Session = {
-            DateSession:Date.now(),
-            IpSession:req.ip,
-            Token:token,
-            LastUserCall: Date.now()
-        };
-
+            //Se cifra los datos que se va a enviar en el token
+            RToken = Crypt.encrypt(_dataToken),
+            //Se crea el token que se va a enviar
+            token = JWT.sign(
+                {  
+                    IdCol:value._id,
+                    DCT:RToken.Cipher["data"]
+                },
+                Sttng.privateKey,
+                {
+                    expiresIn:'20m'
+                }
+            ),
+            //Se crea el objeto de session que se va ingresar en la base de datos
+            Session:ISession = {
+                DateSession:Date.now(),
+                IpSession:req.ip,
+                Token:refreshToken,
+                Auth: RToken.Auth["data"],
+                ValidToken: new Date(Date.now() + Sttng.validTimeToken),
+                validAuth: new Date(Date.now() + Sttng.validAuth),
+                Disable:false
+            };
+        //Se ingresan los datos en la base de datos
         const _result:msgResult = await ColMdl
         .updateOne(
             {
@@ -170,7 +191,8 @@ export default {
         .catch((err)=>{
             return msgHandler.sendError(err);
         });
-        if(_result.error) return res.status(401).json(_result.error);
+
+        if(_result.error) return res.status(400).json(_result.error);
         const JwtResult = {
             username:value.User.username,
             Token:token
@@ -178,6 +200,71 @@ export default {
         return res.json(msgHandler.sendValue(JwtResult));
     },
 
+    postRefreshToken: async (req:Request,res:Response):Promise<Response> =>{
+
+        let{error,value} = <msgCustom<IRTokenData>>userServices.valRefreshToken(req.body);
+        //Se procede a validar si los datos y el token son correctos
+        if(error) return res.status(400).json(msgHandler.sendError(error));
+        
+        //Validamos si existe una session y el usuario esta correcto
+        const Colaborador = <IColaborador> await ColMdl.find({_id:value.IdCol,'User.Session.Disable':false}).lean(true);
+        if(!Colaborador) return res.status(401).json(msgHandler.sendError("Usuario no posee una sesión activa"));
+        const Session = Colaborador.User.Session || null;
+        if(!Session) return res.status(401).json(msgHandler.sendError('Usuario no ha iniciado sesión'));
+
+        let valSession:msgCustom<ISession> = userServices.valSession(Session)
+        if(!valSession.error) return res.status(401).json(msgHandler.sendError("Usuario no posee una Session valida activa"));
+        
+        //Se valida si el token principal
+        let _Session = valSession.value;
+        if(_Session.validAuth.getTime() < Date.now()) return res.status(401).json("Token Invalalido");
+
+        //Deciframos el Token. Si no posee errores vamos al siguiente Step
+        let DesCipher;
+        if((DesCipher = Crypt.decrypt(value.DCT,Session.Auth)) instanceof Error) return res.status(401).json(msgHandler.sendError("Usuario no posee un token valido"));
+
+        //Validamos si el Refresh Token es valido;
+        const dataDescifrada:ITokenData = <ITokenData>JSON.parse(DesCipher);
+        if(dataDescifrada.Token != Session.Token) return res.status(401).json(msgHandler.sendError("Usuario no posee un token valido"))
+
+        //Creamos un nuevo token y hacemos un updagrade de la informacion de la base de datos
+
+        const _USession:string|Error = await ColMdl
+        .updateOne(
+            {
+                _id: value.IdCol
+            },
+            {
+                'User.Session.ValidToken':new Date(Date.now() + Sttng.validTimeToken),
+                'User.Session.validAuth':new Date(Date.now() + Sttng.validAuth)
+            }
+        ).then((data)=>{
+            //Se valida que se encuentre en el formato correcto con la informacion necesario.
+            if(data.n==1 && (data["nModified"] == 1 || data["nMatched"] == 1 || data["nUpserted"] == 1) && data.ok ==1) return 'Se ha actualizado correctamente';
+            else return Error("Ah ocurrido al momento de actualizar la información");
+        }).catch((error)=>{
+            if(error instanceof Error) return <Error>error;
+            return new Error(error);
+        })
+        //Se valida que la información se pudo ingresar correctamente
+        if(_USession instanceof Error) return res.status(400).json(msgHandler.sendError(error))
+        const token = JWT.sign(
+            {  
+                IdCol:value.IdCol,
+                DCT:value.DCT
+            },
+            Sttng.privateKey,
+            {
+                expiresIn:'20m'
+            }
+        )
+        return res.json(msgHandler.sendValue(token));
+    },
+
+    postLogOut: async(req:Request,res:Response):Promise<Response> =>{
+        
+        return null;
+    },
     //#endregion
 
     //#region PUT
@@ -227,7 +314,7 @@ export default {
     },
 
     putModUserName: async(req:Request,res:Response):Promise<Response> => {
-        let {error,value} = <msgCustom<iChangeUsername>>await userServices.valModUsrName(req.params.idColaborador,req.body);
+        let {error,value} = <msgCustom<IChangeUsername>>await userServices.valModUsrName(req.params.idColaborador,req.body);
         if(error) return res.status(400).json(msgHandler.sendError(error));
         
         const idColaborador = new Types.ObjectId(req.params.idColaborador);
@@ -251,7 +338,7 @@ export default {
     },
 
     putChangePwd: async(req:Request,res:Response):Promise<Response>=>{
-        const {error,value} = <msgCustom<iChangePwd>>await userServices.valChangePwd(req.params.idColaborador,req.body);
+        const {error,value} = <msgCustom<IChangePwd>>await userServices.valChangePwd(req.params.idColaborador,req.body);
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
         let 
@@ -281,7 +368,7 @@ export default {
     },
 
     putDisableUser: async(req:Request,res:Response):Promise<Response>=>{
-        const {error,value} = <msgCustom<iUserDisable>>await userServices.valUserDisable(req.params.idColaborador,req.body);
+        const {error,value} = <msgCustom<IUserDisable>>await userServices.valUserDisable(req.params.idColaborador,req.body);
         if(error) return res.status(400).json(msgHandler.sendError(error));
         const idColaborador = new Types.ObjectId(req.params.idColaborador);
         
@@ -306,7 +393,7 @@ export default {
     },
 
     putAbleUser: async(req:Request,res:Response):Promise<Response>=>{
-        const {error,value} = <msgCustom<iUserDisable>>await userServices.valUserAble(req.params.idColaborador,req.body);
+        const {error,value} = <msgCustom<IUserDisable>>await userServices.valUserAble(req.params.idColaborador,req.body);
         if(error) return res.status(400).json(msgHandler.sendError(error));
         const idColaborador = new Types.ObjectId(req.params.idColaborador);
         

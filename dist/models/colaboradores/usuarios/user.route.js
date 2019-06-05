@@ -13,4 +13,5 @@ userRouter
     .put('/:idColaborador/usuario/cambio/pwd', errorHandler_1.default(user_controller_1.default.putDisableUser))
     .post('/password/link', errorHandler_1.default(user_controller_1.default.postLinkResetPwd))
     .post('/password/reset', errorHandler_1.default(user_controller_1.default.postRestablecerPwd))
-    .post('/auth', errorHandler_1.default(user_controller_1.default.postAuth));
+    .post('/auth', errorHandler_1.default(user_controller_1.default.postAuth))
+    .post('/auth/refresh', errorHandler_1.default(user_controller_1.default.postRefreshToken));

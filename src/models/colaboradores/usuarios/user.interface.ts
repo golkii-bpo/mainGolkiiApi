@@ -6,14 +6,15 @@ export interface IRecovery {
     Solicitud:boolean,
     Token:string
 }
-
 export interface ISession{
-    DateSession:string,
+    DateSession:number,
     IpSession:string,
     Token:string,
-    LastUserCall:Date
+    Auth:string,
+    ValidToken:Date,
+    validAuth:Date,
+    Disable:boolean
 }
-
 export interface IUser {
     username:string,
     password:string,
@@ -23,36 +24,39 @@ export interface IUser {
     Disable:boolean,
     FechaModificacion:Date
 }
-
-export interface iUserName {
+export interface IUserName {
     username:string
 }
-
-export interface IAuth extends iUserName {
+export interface IUserDisable extends IUserName{}
+export interface IAuth extends IUserName {
     password:string,
     forceSession?:boolean
 }
-
-export interface iChangeUsername{
+export interface IChangeUsername {
     OldUser:string,
     NewUser:string
 }
-
-export interface iChangePwd{
+export interface IChangePwd{
     username:string,
     OldPwd:string,
     NewPwd:string
 }
-
-export interface IPwdReset{
-    Email:string
-}
-
+export interface IPwdReset{Email:string}
 export interface IPwdChange{
     Token:string,
     Pwd:string,
     PwdConfirm:string,
     idColaborador?:string
 }
-
-export interface iUserDisable extends iUserName{}
+export interface IToken extends Object {
+    Token:string
+}
+export interface ITokenData extends IToken {
+    IpRequest:string
+}
+export interface IRTokenData extends Object{
+    IdCol:string,
+    DCT:string,
+    iat?:number,
+    exp?:number
+}

@@ -17,7 +17,6 @@ const basicValidations_1 = require("../../../helpers/validation/basicValidations
 const colaborador_model_1 = require("../general/colaborador.model");
 const msgHandler_1 = require("../../../helpers/resultHandler/msgHandler");
 const pwdService_1 = require("../../../security/pwdService");
-//FIXME: Crear un nuevo archivo con todas las interfaces a utilizar
 const pwdRegex = new RegExp(/((?=.*[a-z])(?=.*[A-Z])(?=.*\d)).{8,}/), joiUser = joi.object().keys({
     username: joi.string().min(5).max(20),
     password: joi.string().regex(pwdRegex),
@@ -43,7 +42,15 @@ const pwdRegex = new RegExp(/((?=.*[a-z])(?=.*[A-Z])(?=.*\d)).{8,}/), joiUser = 
     DataSession: joi.date().required(),
     IpSession: joi.string().regex(/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/).required(),
     Token: joi.string().regex(/^\w+\.\w+.\w+$/),
+    Auth: joi.string().required(),
     LastUserCall: joi.date().required()
+}), joiToken = joi.object().keys({
+    Token: joi.string().regex(/^\w+\.\w+.\w+$/).required()
+}), joiRefreshToken = joi.object().keys({
+    IdCol: joi.string(),
+    DCT: joi.string().regex(/^\w+\.\w+.\w+$/),
+    iat: joi.number().optional(),
+    exp: joi.number().optional()
 });
 class UserSrv extends basicValidations_1.default {
     valUserModel(data) {
@@ -213,6 +220,7 @@ class UserSrv extends basicValidations_1.default {
     //#region Auth
     valAuth(data) {
         return __awaiter(this, void 0, void 0, function* () {
+            //FIXME: Hay varis cosas que pertenecen al controllador
             const { error, value } = joiUser.validate(data);
             if (error)
                 return msgHandler_1.msgHandler.sendError(error);
@@ -221,19 +229,67 @@ class UserSrv extends basicValidations_1.default {
                 .lean(true);
             if (!Colaborador)
                 return msgHandler_1.msgHandler.sendError('Usuario incorrecto');
-            const Session = Colaborador.User.Session;
-            let _d;
-            const force = value.forceSession ? true : false;
-            if ((_d = Session ? new Date(Session.LastUserCall) : null) != null && force == false) {
-                let fSession = (new Date(_d.getTime() + settings_1.SettingsToken.validTimeToken)).getTime();
-                if (fSession > Date.now())
-                    console.log('No es valido');
-                return msgHandler_1.msgHandler.sendError({ existSession: true, message: 'Ya existe una session abierta con este usuario' });
+            const dataSession = Colaborador.User.Session || null;
+            const force = value.forceSession || true;
+            if (dataSession && !force) {
+                let { error, value } = this.valSession(dataSession);
+                if (error)
+                    return msgHandler_1.msgHandler.sendError(error);
+                let Session = value;
+                if (Session.ValidToken.getTime() >= Date.now())
+                    return msgHandler_1.msgHandler.sendError({ existSession: true, message: 'Ya existe una session abierta con este usuario' });
             }
             if (!pwdService_1.default.comparePwdHashed(value.password, Colaborador.User.password))
                 return msgHandler_1.msgHandler.sendError('Contraseña incorrecta');
             return msgHandler_1.msgHandler.sendValue(Colaborador);
         });
+    }
+    valSession(Session) {
+        const { error, value } = joi.validate(joiSession, Session);
+        if (error)
+            return msgHandler_1.msgHandler.sendError(error);
+        return msgHandler_1.msgHandler.sendValue(value);
+    }
+    valTokenWithOutExp(Token) {
+        try {
+            return JWT.verify(Token, settings_1.SettingsToken.privateKey, { ignoreExpiration: true });
+        }
+        catch (error) {
+            return error;
+        }
+    }
+    valToken(Token, Password) {
+        try {
+            if (Password != null) {
+                return JWT.verify(Token, settings_1.SettingsToken.privateKey);
+            }
+            else {
+                return JWT.verify(Token, Password);
+            }
+        }
+        catch (error) {
+            return error;
+        }
+    }
+    valRefreshToken(data) {
+        try {
+            var dataToken = joiToken.validate(data);
+            if (dataToken.error)
+                return msgHandler_1.msgHandler.sendError(dataToken.error);
+            //Se valida si el Token es valido
+            const mainToken = this.valTokenWithOutExp(dataToken.value.Token);
+            if (mainToken instanceof Error)
+                return msgHandler_1.msgHandler.sendError('Token incorrecto');
+            //Se valida que traiga el formato correcto
+            var { error, value } = joiRefreshToken.validate(mainToken);
+            if (error)
+                return msgHandler_1.msgHandler.sendError(error);
+            return msgHandler_1.msgHandler.sendValue(value);
+        }
+        catch (error) {
+            return msgHandler_1.msgHandler.sendError(error);
+        }
+        return null;
     }
 }
 exports.default = new UserSrv;

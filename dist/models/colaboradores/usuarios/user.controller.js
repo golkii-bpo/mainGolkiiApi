@@ -17,6 +17,7 @@ const mailTemplate_1 = require("../../../helpers/templates/mailTemplate");
 const server_mail_1 = require("../../../mail/server.mail");
 const colaborador_model_1 = require("../general/colaborador.model");
 const user_services_1 = require("./user.services");
+const cryptoData_1 = require("../../../security/cryptoData");
 exports.default = {
     //#region Post
     postAgregarUsuario: (req, res) => __awaiter(this, void 0, void 0, function* () {
@@ -117,16 +118,33 @@ exports.default = {
                 return res.status(401).json(msgHandler_1.msgHandler.sendError(error));
             }
         }
-        //crear un token
-        let token = JWT.sign({
-            IColMdl: value._id,
-            IpRequest: req.ip
-        }, settings_1.SettingsToken.privateKey), Session = {
+        //crear un token de retorno
+        const refreshToken = JWT.sign({}, settings_1.SettingsToken.privateRefreshToken), 
+        //Se define el tipo de data que se va a ingresar
+        _dataToken = {
+            Token: refreshToken,
+            IpRequest: req.ip,
+        }, 
+        //Se cifra los datos que se va a enviar en el token
+        RToken = cryptoData_1.default.encrypt(_dataToken), 
+        //Se crea el token que se va a enviar
+        token = JWT.sign({
+            IdCol: value._id,
+            DCT: RToken.Cipher["data"]
+        }, settings_1.SettingsToken.privateKey, {
+            expiresIn: '20m'
+        }), 
+        //Se crea el objeto de session que se va ingresar en la base de datos
+        Session = {
             DateSession: Date.now(),
             IpSession: req.ip,
-            Token: token,
-            LastUserCall: Date.now()
+            Token: refreshToken,
+            Auth: RToken.Auth["data"],
+            ValidToken: new Date(Date.now() + settings_1.SettingsToken.validTimeToken),
+            validAuth: new Date(Date.now() + settings_1.SettingsToken.validAuth),
+            Disable: false
         };
+        //Se ingresan los datos en la base de datos
         const _result = yield colaborador_model_1.default
             .updateOne({
             'User.username': data.username
@@ -142,12 +160,39 @@ exports.default = {
             return msgHandler_1.msgHandler.sendError(err);
         });
         if (_result.error)
-            return res.status(401).json(_result.error);
+            return res.status(400).json(_result.error);
         const JwtResult = {
             username: value.User.username,
             Token: token
         };
         return res.json(msgHandler_1.msgHandler.sendValue(JwtResult));
+    }),
+    postRefreshToken: (req, res) => __awaiter(this, void 0, void 0, function* () {
+        let { error, value } = user_services_1.default.valRefreshToken(req.body);
+        //Se procede a validar si los datos y el token son correctos
+        if (error)
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
+        //Validamos si existe una session y el usuario esta correcto
+        const Colaborador = yield colaborador_model_1.default.find({ _id: value.IdCol, 'User.Session.Disable': false }).lean(true);
+        if (!Colaborador)
+            return res.status(401).json(msgHandler_1.msgHandler.sendError("Usuario no posee una sesión activa"));
+        const Session = Colaborador.User.Session || null;
+        if (!Session) {
+            var valSession = user_services_1.default.valSession(Session);
+            if (!valSession.error)
+                return res.status(401).json(msgHandler_1.msgHandler.sendError("Usuario no posee una Session valida activa"));
+            //Deciframos el Token. Si no posee errores vamos al siguiente Step
+            let DesCipher;
+            if ((DesCipher = cryptoData_1.default.decrypt(value.DCT, Session.Auth)) instanceof Error)
+                return res.status(401).json(msgHandler_1.msgHandler.sendError("Usuario no posee un token valido"));
+            //Validamos si el Refresh Token es valido;
+            const dataDescifrada = JSON.parse(DesCipher);
+            if (dataDescifrada.Token != Session.Token)
+                return res.status(401).json(msgHandler_1.msgHandler.sendError("Usuario no posee un token valido"));
+        }
+        else {
+            return res.status(401).json(msgHandler_1.msgHandler.sendError('Usuario no ha iniciado sesión'));
+        }
     }),
     //#endregion
     //#region PUT
