@@ -1,4 +1,5 @@
 import {Request,Response} from 'express';
+import {Types} from 'mongoose';
 import RutasModel from './rutas.model';
 import {rutaSrv} from './rutas.services';
 import * as rutasInt from './rutas.interfaces';
@@ -161,11 +162,12 @@ export default {
      * @returns {error,value}
      */
     getObtenerById: async (req:Request,res:Response):Promise<Response> => {
+        console.log(req.params.idRuta);
         return await
         rutasModel
         .aggregate(
             [
-                {$match:{'_id':req.params.idRuta}},
+                {$match:{'_id':new Types.ObjectId(req.params.idRuta)}},
                 {$lookup:{from:'colaboradores',localField:'Colaborador',foreignField:'_id',as:'Colaborador'}},
                 {$unwind:'$Colaborador'},
                 {$project:{'Colaborador':{'Log':0,'User':0,'Perfil':0,'Estado':0,'Cargo':0,'Permisos':0,'General':{'_id':0}}}}
@@ -205,7 +207,7 @@ export default {
         const {error,value } = rutaSrv.valPutModificar(req.params.idRuta,req.body);
         if(error) return res.status(400).json(msgHandler.sendError(error));
         const 
-            idRuta:string =  req.params.idRuta,
+            idRuta:Types.ObjectId =  new Types.ObjectId(req.params.idRuta),
             model:rutasInt.intPutRuta = <rutasInt.intPutRuta>value; 
         
         await 
@@ -250,7 +252,7 @@ export default {
         RutasModel
         .updateOne(
             {
-                _id:idRuta
+                _id:new Types.ObjectId(idRuta)
             },
             {
                 $set:{
@@ -282,7 +284,7 @@ export default {
         RutasModel
         .updateOne(
             {
-                _id:idRuta
+                _id:new Types.ObjectId(idRuta)
             },
             {
                 $set:{

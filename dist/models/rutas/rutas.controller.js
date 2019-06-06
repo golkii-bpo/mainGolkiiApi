@@ -8,6 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const mongoose_1 = require("mongoose");
 const rutas_model_1 = require("./rutas.model");
 const rutas_services_1 = require("./rutas.services");
 const msgHandler_1 = require("../../helpers/resultHandler/msgHandler");
@@ -141,9 +142,10 @@ exports.default = {
      * @returns {error,value}
      */
     getObtenerById: (req, res) => __awaiter(this, void 0, void 0, function* () {
+        console.log(req.params.idRuta);
         return yield rutas_model_2.default
             .aggregate([
-            { $match: { '_id': req.params.idRuta } },
+            { $match: { '_id': new mongoose_1.Types.ObjectId(req.params.idRuta) } },
             { $lookup: { from: 'colaboradores', localField: 'Colaborador', foreignField: '_id', as: 'Colaborador' } },
             { $unwind: '$Colaborador' },
             { $project: { 'Colaborador': { 'Log': 0, 'User': 0, 'Perfil': 0, 'Estado': 0, 'Cargo': 0, 'Permisos': 0, 'General': { '_id': 0 } } } }
@@ -181,7 +183,7 @@ exports.default = {
         const { error, value } = rutas_services_1.rutaSrv.valPutModificar(req.params.idRuta, req.body);
         if (error)
             return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
-        const idRuta = req.params.idRuta, model = value;
+        const idRuta = new mongoose_1.Types.ObjectId(req.params.idRuta), model = value;
         yield rutas_model_1.default.updateOne({
             _id: idRuta
         }, {
@@ -218,7 +220,7 @@ exports.default = {
             return res.status(400).json(msgHandler_1.msgHandler.errorIdObject('Id de Ruta'));
         return yield rutas_model_1.default
             .updateOne({
-            _id: idRuta
+            _id: new mongoose_1.Types.ObjectId(idRuta)
         }, {
             $set: {
                 Estado: true
@@ -248,7 +250,7 @@ exports.default = {
             return res.status(400).json(msgHandler_1.msgHandler.errorIdObject('Id de Ruta'));
         yield rutas_model_1.default
             .updateOne({
-            _id: idRuta
+            _id: new mongoose_1.Types.ObjectId(idRuta)
         }, {
             $set: {
                 Estado: false

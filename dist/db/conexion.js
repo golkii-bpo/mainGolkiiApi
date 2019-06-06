@@ -12,7 +12,9 @@ const Log = Winston.createLogger({
     useCreateIndex: true,
     useNewUrlParser: true,
     reconnectTries: Number.MAX_VALUE,
-    reconnectInterval: 1500
+    reconnectInterval: 1500,
+    user: 'jack',
+    pass: 'Admin@123'
 };
 exports.database = {
     /**
