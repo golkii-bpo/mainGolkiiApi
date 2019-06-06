@@ -8,11 +8,13 @@ const
             new Winston.transports.File({filename:Path.join(__dirname,"../log/db.log")})
         ]
     }),
-    Options = { 
+    Options:db.ConnectionOptions = { 
         useCreateIndex: true,
         useNewUrlParser: true,
         reconnectTries: Number.MAX_VALUE,
-        reconnectInterval: 1500
+        reconnectInterval: 1500,
+        user:'jack',
+        pass:'Admin@123'
     };
 
 export const database = {
