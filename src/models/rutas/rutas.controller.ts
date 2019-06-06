@@ -1,9 +1,10 @@
-
+import {Request,Response} from 'express';
 import RutasModel from './rutas.model';
 import {rutaSrv} from './rutas.services';
 import * as rutasInt from './rutas.interfaces';
 import {msgHandler,crudType as  enumCrud} from '../../helpers/resultHandler/msgHandler';
 import {Rutas as sttng} from '../../settings/settings';
+import rutasModel from './rutas.model';
 // import userServices from '../colaboradores/usuarios/user.services';
 
 export default {
@@ -14,8 +15,8 @@ export default {
      * @param {*} req
      * @param {*} res
      */
-    getModelTotal: async (req,res) => {
-        await 
+    getModelTotal: async (req:Request,res:Response):Promise<Response> => {
+        return await 
         RutasModel
         .find()
         .count()
@@ -32,7 +33,7 @@ export default {
      * @param {*} res
      * @returns {error,value}
      */
-    getObtener: async (req,res) => {
+    getObtener: async (req:Request,res:Response):Promise<Response> => {
         let 
             page:number = Number(req.query.page),
             size:number = Number(req.query.size);
@@ -71,7 +72,7 @@ export default {
      * @param {*} res
      * @returns {error,value}
      */
-    getObtenerFecha: async (req,res) => {
+    getObtenerFecha: async (req:Request,res:Response):Promise<Response> => {
         let 
             page:number = Number(req.query.page),
             size:number = Number(req.query.size);
@@ -116,7 +117,7 @@ export default {
      * @param {*} res
      * @returns {error,value}
      */
-    getObtenerActivos: async (req,res) => {
+    getObtenerActivos: async (req:Request,res:Response):Promise<Response> => {
         let 
             page:number = Number(req.query.page),
             size:number = Number(req.query.size);
@@ -159,9 +160,9 @@ export default {
      * @param {*} res
      * @returns {error,value}
      */
-    getObtenerById: async (req,res) => {
-        await 
-        RutasModel
+    getObtenerById: async (req:Request,res:Response):Promise<Response> => {
+        return await
+        rutasModel
         .aggregate(
             [
                 {$match:{'_id':req.params.idRuta}},
@@ -173,9 +174,9 @@ export default {
         .then((data)=>{
             return res.json(msgHandler.sendValue(data));
         })
-        .catch((err)=>{
-            return res.status(400).json(msgHandler.sendError(err));
-        })
+        .catch((error)=>{
+            return res.status(400).json(msgHandler.sendError(error));
+        });
     },
 
     /**
@@ -185,7 +186,7 @@ export default {
      * @param {*} res
      * @returns {error,value}
      */
-    postAgregar: async (req,res) => {
+    postAgregar: async (req:Request,res:Response):Promise<Response> => {
         const _model = req.body;
         const {error,value} = rutaSrv.valPostAgregar(_model);
         if(error) return res.status(400).json(msgHandler.sendError(error));
@@ -200,9 +201,9 @@ export default {
      * @param {*} res
      * @returns {error,value}
      */
-    putModificar: async (req,res) => {
+    putModificar: async (req:Request,res:Response):Promise<Response> => {
         const {error,value } = rutaSrv.valPutModificar(req.params.idRuta,req.body);
-        if(error) return msgHandler.sendError(error);
+        if(error) return res.status(400).json(msgHandler.sendError(error));
         const 
             idRuta:string =  req.params.idRuta,
             model:rutasInt.intPutRuta = <rutasInt.intPutRuta>value; 
@@ -222,7 +223,9 @@ export default {
             }
         })
         .then((data)=>{
-            return res.json(msgHandler.resultCrud(data,'rutas',enumCrud.actualizar));
+            let {error,value} = msgHandler.resultCrud(data,'rutas',enumCrud.actualizar);
+            if(error) return res.status(400).json(msgHandler.sendError(error));
+            return res.json(msgHandler.sendValue(value));
         })
         .catch((err)=>{
             return res.status(400).json(msgHandler.sendError(err));
@@ -236,13 +239,14 @@ export default {
      * @param {*} res
      * @returns {error,value}
      */
-    putDarAlta: async (req,res) => {
+    putDarAlta: async (req:Request,res:Response):Promise<Response> => {
         //FIXME: Se tiene que modificar el retorno de la informacion.
         const
             idRuta = req.params.idRuta;
         //se realiza la validacion para saber si el idRuta es un ObjectId
         if(!rutaSrv.validarObjectId(idRuta)) return res.status(400).json(msgHandler.errorIdObject('Id de Ruta'));        
-        await
+        
+        return await
         RutasModel
         .updateOne(
             {
@@ -254,7 +258,9 @@ export default {
                 }
             }
         ).then((data)=>{
-            return res.json(msgHandler.resultCrud(data,'rutas',enumCrud.actualizar));
+            let {error,value} = msgHandler.resultCrud(data,'rutas',enumCrud.actualizar);
+            if(error) return res.status(400).json(msgHandler.sendError(error));
+            return res.json(msgHandler.sendValue(value));
         }).catch((err)=> {
             return res.status(400).json(msgHandler.sendError(err));
         })
@@ -267,7 +273,7 @@ export default {
      * @param {*} res
      * @returns {error,value}
      */
-    deleteDarBaja: async (req,res) => {
+    deleteDarBaja: async (req:Request,res:Response):Promise<Response> => {
         //FIXME: Se tiene que modificar el retorno de la informacion.
         const idRuta:string = req.params.idRuta;
         //se realiza la validacion para saber si el idRuta es un ObjectId
@@ -284,7 +290,9 @@ export default {
                 }
             }
         ).then((data)=>{
-            return res.json(msgHandler.resultCrud(data,'rutas',enumCrud.actualizar));
+            let {error,value} = msgHandler.resultCrud(data,'rutas',enumCrud.actualizar);
+            if(error) return res.status(400).json(msgHandler.sendError(error));
+            return res.json(msgHandler.sendValue(value));
         }).catch((err)=> {
             return res.status(400).json(msgHandler.sendError(err));
         })

@@ -1,6 +1,7 @@
 import * as express from 'express';
 import usrCtrl from './user.controller';
 import errorHandler from '../../../middleware/Error/errorHandler';
+import {authToken} from '../../../middleware/Auth/Auth.middleware';
 const 
     userRouter = express.Router();
 
@@ -12,6 +13,7 @@ userRouter
 .put('/:idColaborador/usuario/cambio/pwd',errorHandler(usrCtrl.putDisableUser))
 .post('/password/link',errorHandler(usrCtrl.postLinkResetPwd))
 .post('/password/reset',errorHandler(usrCtrl.postRestablecerPwd))
-.post('/auth',errorHandler(usrCtrl.postAuth));
+.post('/auth',errorHandler(usrCtrl.postAuth))
+.post('/auth/refresh',errorHandler(usrCtrl.postRefreshToken));
 
 export {userRouter};

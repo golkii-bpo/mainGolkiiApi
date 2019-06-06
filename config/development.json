@@ -1,5 +1,7 @@
 {
     "PORT":"8084",
     "MONGO_URI":"mongodb://localhost:27017/GolkiiDb",
-    "PRIVATEKEY":"MDswDQYJKoZIhvcNAQEBBQADKgAwJwIgb7pvoLPCsjyj+NPDjNva0+xsOLGys6X9Y+ztrdDImwkCAwEAAQ=="
+    "PRIVATEKEY":"MDswDQYJKoZIhvcNAQEBBQADKgAwJwIgb7pvoLPCsjyj+NPDjNva0+xsOLGys6X9Y+ztrdDImwkCAwEAAQ==",
+    "REFRESHTOKEN":"MDswDQYJKoZIhvcNAQEBBQADKgAwJwIgb7pvoLPCsjyj+NPDjNva0+xsOLGys6X9Y+ztrdDImwkCAwEAAQ==",
+    "KEYCRYPT":"keykeykeykeykeykeykeykey"
 }

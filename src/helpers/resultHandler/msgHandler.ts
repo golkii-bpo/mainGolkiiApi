@@ -18,6 +18,19 @@ export enum crudType {
     "agregar"
 }
 
+export enum tokenType{
+    "corrupted",
+    "invalid",
+    "expired",
+    "ok",
+    "custom"
+}
+enum flowType{
+    "error",
+    "success",
+    "pending"
+}
+
 class MsgHandler extends Message {
 
     /**
@@ -97,6 +110,28 @@ class MsgHandler extends Message {
     successUpdate(_model):msgResult{
         if(!_model) new MsgHandler('Se ha actualizado correctamente',null);
         return new MsgHandler(`El ${_model} se ha actualizado correctamente`,null);
+    }
+
+    resultToken(TToken:tokenType):msgResult {
+        let retorno:{mensaje:string,type:flowType};
+        switch (TToken) {
+            case tokenType.ok:
+                retorno = {mensaje:"Token valido",type:flowType.success};
+               break;
+            case tokenType.invalid:
+                retorno = {mensaje:"Token no valido.",type:flowType.error};
+               break;
+            case tokenType.expired:
+                retorno = {mensaje:"Token expirado",type:flowType.error};
+                break;
+            case tokenType.corrupted:
+                retorno = {mensaje:"Token corrupto",type:flowType.error};
+                break;
+            default:
+                retorno = {mensaje:"Error",type:flowType.error};
+                break;
+        }
+        return retorno.type == flowType.error? new MsgHandler(retorno.mensaje,null):new MsgHandler(null,retorno.mensaje);
     }
 }
 

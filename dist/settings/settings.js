@@ -5,7 +5,11 @@ exports.Rutas = {
     maxData: 1000
 }, exports.SettingsToken = {
     privateKey: Config["PRIVATEKEY"],
-    validTimeToken: 1800000
+    privateRefreshToken: Config["REFRESHTOKEN"],
+    validTimeToken: 1500000,
+    validAuth: 1260000
+}, exports.SettingsCrypto = {
+    key: Config["KEYCRYPT"]
 }, exports.App = {
     host: "http://golkiibpo.com",
     port: 3000,

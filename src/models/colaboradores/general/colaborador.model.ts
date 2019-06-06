@@ -1,5 +1,5 @@
 import {Schema,model} from 'mongoose';
-import { boolean, object } from 'joi';
+import { boolean, object, number } from 'joi';
 
 const 
 permisoSchema = new Schema({
@@ -61,7 +61,6 @@ GeneralSchema = new Schema({
 RecoverySchema = new Schema({
     IpSend:{
         type:String,
-        match:/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
         default: null
     },
     EmailSend: {
@@ -70,7 +69,8 @@ RecoverySchema = new Schema({
         match:/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
     },
     Token:{
-        type:String
+        type:String,
+        match: /^(\S+(\.|$)){3}/
     },
     Solicitud:{
         type:Boolean,
@@ -85,19 +85,30 @@ SessionSchema = new Schema({
     },
     IpSession:{
         type:String,
-        match:/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
         required:true
     },
     Token:{
         type:String,
-        match:/^\w+\.\w+.\w+$/,
+        match: /^(\S+(\.|$)){3}/,
         required:true,
         default:null
     },
-    LastUserCall:{
-        type:Date,
-        default:new Date(),
+    Auth:{
+        type:[Number],
         required:true
+    },
+    //Para el Auth tendra que validar 
+    ValidToken:{
+        type:Date,
+        required:true
+    },
+    ValidAuth:{
+        type:Date,
+        required:true
+    },
+    Disable:{
+        type:Boolean,
+        default:false
     }
 }),
 UserSchema = new Schema({

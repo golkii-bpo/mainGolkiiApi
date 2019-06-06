@@ -5,7 +5,12 @@ export const Rutas = {
 }, 
 SettingsToken = {
     privateKey:Config["PRIVATEKEY"],
-    validTimeToken:1800000
+    privateRefreshToken:Config["REFRESHTOKEN"],
+    validTimeToken:1500000,
+    validAuth:1260000
+},
+SettingsCrypto = {
+    key:Config["KEYCRYPT"]
 },
 App = {
     host:"http://golkiibpo.com",

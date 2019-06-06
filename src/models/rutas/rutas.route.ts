@@ -1,6 +1,7 @@
 import * as express from 'express';
 import rutasCtrl from './rutas.controller';
 import errorHandler from '../../middleware/Error/errorHandler';
+// import {authToken as middleToken} from '../../middleware/Auth/Auth.middleware';
 
 const rutaRoutes = express.Router();
 
@@ -14,4 +15,4 @@ rutaRoutes
 .put('/:idRuta/Alta',errorHandler(rutasCtrl.putDarAlta))
 .delete('/:idRuta/Baja',errorHandler(rutasCtrl.deleteDarBaja));
 
-export {rutaRoutes}; 
+export {rutaRoutes};

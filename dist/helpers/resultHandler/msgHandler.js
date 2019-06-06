@@ -9,6 +9,20 @@ var crudType;
     crudType[crudType["eliminar"] = 1] = "eliminar";
     crudType[crudType["agregar"] = 2] = "agregar";
 })(crudType = exports.crudType || (exports.crudType = {}));
+var tokenType;
+(function (tokenType) {
+    tokenType[tokenType["corrupted"] = 0] = "corrupted";
+    tokenType[tokenType["invalid"] = 1] = "invalid";
+    tokenType[tokenType["expired"] = 2] = "expired";
+    tokenType[tokenType["ok"] = 3] = "ok";
+    tokenType[tokenType["custom"] = 4] = "custom";
+})(tokenType = exports.tokenType || (exports.tokenType = {}));
+var flowType;
+(function (flowType) {
+    flowType[flowType["error"] = 0] = "error";
+    flowType[flowType["success"] = 1] = "success";
+    flowType[flowType["pending"] = 2] = "pending";
+})(flowType || (flowType = {}));
 class MsgHandler extends generalHandler_1.Message {
     /**
      * Mensaje de error por falta de la propiedad de un Objeto
@@ -84,6 +98,27 @@ class MsgHandler extends generalHandler_1.Message {
         if (!_model)
             new MsgHandler('Se ha actualizado correctamente', null);
         return new MsgHandler(`El ${_model} se ha actualizado correctamente`, null);
+    }
+    resultToken(TToken) {
+        let retorno;
+        switch (TToken) {
+            case tokenType.ok:
+                retorno = { mensaje: "Token valido", type: flowType.success };
+                break;
+            case tokenType.invalid:
+                retorno = { mensaje: "Token no valido.", type: flowType.error };
+                break;
+            case tokenType.expired:
+                retorno = { mensaje: "Token expirado", type: flowType.error };
+                break;
+            case tokenType.corrupted:
+                retorno = { mensaje: "Token corrupto", type: flowType.error };
+                break;
+            default:
+                retorno = { mensaje: "Error", type: flowType.error };
+                break;
+        }
+        return retorno.type == flowType.error ? new MsgHandler(retorno.mensaje, null) : new MsgHandler(null, retorno.mensaje);
     }
 }
 exports.msgHandler = new MsgHandler(null, null);
