@@ -32,26 +32,27 @@ const pwdRegex = new RegExp(/((?=.*[a-z])(?=.*[A-Z])(?=.*\d)).{8,}/), joiUser = 
     username: joi.string()
 }), joiDisableUser = joi.object().keys({
     username: joi.string()
-}), joiReset = joi.object().keys({
+}).unknown(), joiReset = joi.object().keys({
     Email: joi.string().email()
-}), joiPwdReset = joi.object().keys({
+}).unknown(), joiPwdReset = joi.object().keys({
     Token: joi.string(),
     Pwd: joi.string().regex(pwdRegex),
     PwdConfirm: joi.string().regex(pwdRegex)
-}), joiSession = joi.object().keys({
-    DataSession: joi.date().required(),
-    IpSession: joi.string().regex(/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/).required(),
-    Token: joi.string().regex(/^\w+\.\w+.\w+$/),
-    Auth: joi.string().required(),
-    LastUserCall: joi.date().required()
-}), joiToken = joi.object().keys({
-    Token: joi.string().regex(/^\w+\.\w+.\w+$/).required()
-}), joiRefreshToken = joi.object().keys({
+}).unknown(), joiSession = joi.object().keys({
+    DateSession: joi.date().required(),
+    // IpSession: joi.string().regex(/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/).required(),
+    IpSession: joi.string(),
+    Token: joi.string().regex(/^(\S+(\.|$)){3}/),
+    ValidToken: joi.date().required(),
+    ValidAuth: joi.date().required()
+}).unknown(), joiToken = joi.object().keys({
+    Token: joi.string().regex(/^(\S+(\.|$)){3}/).required()
+}), joiAuthToken = joi.object().keys({
     IdCol: joi.string(),
-    DCT: joi.string().regex(/^\w+\.\w+.\w+$/),
+    DCT: joi.string(),
     iat: joi.number().optional(),
     exp: joi.number().optional()
-});
+}), joiRefreshToken = joiAuthToken.append({});
 class UserSrv extends basicValidations_1.default {
     valUserModel(data) {
         var { error, value } = joi.validate(data, joiUser);
@@ -211,7 +212,6 @@ class UserSrv extends basicValidations_1.default {
                 return msgHandler_1.msgHandler.sendValue(value);
             }
             catch (error) {
-                console.log(error);
                 return msgHandler_1.msgHandler.sendError(error);
             }
         });
@@ -224,28 +224,11 @@ class UserSrv extends basicValidations_1.default {
             const { error, value } = joiUser.validate(data);
             if (error)
                 return msgHandler_1.msgHandler.sendError(error);
-            let Colaborador = yield colaborador_model_1.default
-                .findOne({ 'User.username': value.username, 'User.Disable': false })
-                .lean(true);
-            if (!Colaborador)
-                return msgHandler_1.msgHandler.sendError('Usuario incorrecto');
-            const dataSession = Colaborador.User.Session || null;
-            const force = value.forceSession || true;
-            if (dataSession && !force) {
-                let { error, value } = this.valSession(dataSession);
-                if (error)
-                    return msgHandler_1.msgHandler.sendError(error);
-                let Session = value;
-                if (Session.ValidToken.getTime() >= Date.now())
-                    return msgHandler_1.msgHandler.sendError({ existSession: true, message: 'Ya existe una session abierta con este usuario' });
-            }
-            if (!pwdService_1.default.comparePwdHashed(value.password, Colaborador.User.password))
-                return msgHandler_1.msgHandler.sendError('Contraseña incorrecta');
-            return msgHandler_1.msgHandler.sendValue(Colaborador);
+            return msgHandler_1.msgHandler.sendValue(value);
         });
     }
     valSession(Session) {
-        const { error, value } = joi.validate(joiSession, Session);
+        const { error, value } = joiSession.validate(Session);
         if (error)
             return msgHandler_1.msgHandler.sendError(error);
         return msgHandler_1.msgHandler.sendValue(value);
@@ -290,6 +273,32 @@ class UserSrv extends basicValidations_1.default {
             return msgHandler_1.msgHandler.sendError(error);
         }
         return null;
+    }
+    valLogOut(data) {
+        try {
+            var dataToken = joiToken.validate(data);
+            if (dataToken.error)
+                return msgHandler_1.msgHandler.sendError(dataToken.error);
+            //Se valida si el Token es valido
+            const mainToken = this.valTokenWithOutExp(dataToken.value.Token);
+            if (mainToken instanceof Error)
+                return msgHandler_1.msgHandler.sendError('Token incorrecto');
+            //Se valida que traiga el formato correcto
+            var { error, value } = joiRefreshToken.validate(mainToken);
+            if (error)
+                return msgHandler_1.msgHandler.sendError(error);
+            return msgHandler_1.msgHandler.sendValue(value);
+        }
+        catch (error) {
+            return msgHandler_1.msgHandler.sendError(error);
+        }
+        return null;
+    }
+    valMiddleToken(data) {
+        const { error, value } = joiAuthToken.validate(data);
+        if (error)
+            return Error('Token corrupto');
+        return value;
     }
 }
 exports.default = new UserSrv;

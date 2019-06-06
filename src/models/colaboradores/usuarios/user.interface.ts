@@ -10,9 +10,9 @@ export interface ISession{
     DateSession:number,
     IpSession:string,
     Token:string,
-    Auth:string,
+    Auth:number[],
     ValidToken:Date,
-    validAuth:Date,
+    ValidAuth:Date,
     Disable:boolean
 }
 export interface IUser {
@@ -51,12 +51,13 @@ export interface IPwdChange{
 export interface IToken extends Object {
     Token:string
 }
-export interface ITokenData extends IToken {
+export interface ITokenDecipher extends IToken {
     IpRequest:string
 }
-export interface IRTokenData extends Object{
+export interface ITokenData extends Object{
     IdCol:string,
     DCT:string,
     iat?:number,
     exp?:number
 }
+export interface IRTokenData extends ITokenData{}

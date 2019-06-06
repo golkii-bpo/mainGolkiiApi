@@ -5,7 +5,7 @@ import * as JWT from 'jsonwebtoken';
 import {SettingsToken as Sttng}  from '../../../settings/settings';
 import general from '../../../helpers/validation/basicValidations';
 import ColMdl from '../general/colaborador.model';
-import {IAuth, IUserDisable, IPwdReset,IPwdChange, ISession, IRTokenData, IToken} from './user.interface';
+import {IAuth, IUserDisable, IPwdReset,IPwdChange, ISession, IRTokenData, IToken, ITokenData} from './user.interface';
 import {msgHandler,crudType as  enumCrud,msgResult, msgCustom} from '../../../helpers/resultHandler/msgHandler';
 import pwdHandler from '../../../security/pwdService';
 import { IColaborador } from '../general/colaborador.interface';
@@ -31,30 +31,34 @@ joiAbleUser = joi.object().keys({
 }),
 joiDisableUser = joi.object().keys({
     username:joi.string()
-}),
+}).unknown(),
 joiReset = joi.object().keys({
     Email:joi.string().email()
-}),
+}).unknown(),
 joiPwdReset = joi.object().keys({
     Token:joi.string(),
     Pwd:joi.string().regex(pwdRegex),
     PwdConfirm: joi.string().regex(pwdRegex)
-}),
+}).unknown(),
 joiSession = joi.object().keys({
-    DataSession:joi.date().required(),
-    IpSession: joi.string().regex(/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/).required(),
-    Token: joi.string().regex(/^\w+\.\w+.\w+$/),
-    Auth: joi.string().required(),
-    LastUserCall: joi.date().required()
-}),
+    DateSession:joi.date().required(),
+    // IpSession: joi.string().regex(/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/).required(),
+    IpSession: joi.string(),
+    Token: joi.string().regex(/^(\S+(\.|$)){3}/),
+    ValidToken: joi.date().required(),
+    ValidAuth: joi.date().required()
+}).unknown(),
 joiToken = joi.object().keys({
-    Token: joi.string().regex(/^\w+\.\w+.\w+$/).required()
+    Token: joi.string().regex(/^(\S+(\.|$)){3}/).required()
 }),
-joiRefreshToken = joi.object().keys({
+joiAuthToken = joi.object().keys({
     IdCol:joi.string(),
-    DCT:joi.string().regex(/^\w+\.\w+.\w+$/),
+    DCT:joi.string(),
     iat: joi.number().optional(),
     exp: joi.number().optional()
+}),
+joiRefreshToken = joiAuthToken.append({
+
 });
 
 class UserSrv extends general{
@@ -202,7 +206,6 @@ class UserSrv extends general{
             return msgHandler.sendValue(value);
 
         } catch (error) {
-            console.log(error);
             return msgHandler.sendError(error);
         }
     }
@@ -215,26 +218,11 @@ class UserSrv extends general{
         //FIXME: Hay varis cosas que pertenecen al controllador
         const {error,value} = <joi.ValidationResult<IAuth>>joiUser.validate(data);
         if(error) return msgHandler.sendError(error);
-
-        let Colaborador = <IColaborador> await ColMdl
-        .findOne({'User.username':value.username,'User.Disable':false})
-        .lean(true);
-
-        if(!Colaborador) return msgHandler.sendError('Usuario incorrecto');
-        const dataSession = Colaborador.User.Session || null;
-        const force = value.forceSession || true;
-        if(dataSession && !force){
-            let {error,value} = <msgCustom<ISession>>this.valSession(dataSession);
-            if(error) return msgHandler.sendError(error);
-            let Session:ISession = value;
-            if(Session.ValidToken.getTime() >= Date.now()) return msgHandler.sendError({existSession:true,message:'Ya existe una session abierta con este usuario'});
-        }
-        if(!pwdHandler.comparePwdHashed(value.password,Colaborador.User.password)) return msgHandler.sendError('Contraseña incorrecta');
-        return msgHandler.sendValue(Colaborador);
+        return msgHandler.sendValue(value);
     }
 
     valSession(Session:Object):msgCustom<ISession>{
-        const {error,value} = joi.validate(joiSession,Session);
+        const {error,value} = joiSession.validate(Session);
         if(error) return <msgCustom<ISession>> msgHandler.sendError(error);
         return <msgCustom<ISession>> msgHandler.sendValue(value);
     }
@@ -272,6 +260,27 @@ class UserSrv extends general{
             return msgHandler.sendError(error);
         }
         return null;
+    }
+    valLogOut(data:Object):msgCustom<IRTokenData> | msgResult{
+        try {
+            var dataToken = <joi.ValidationResult<IToken>>joiToken.validate(data);
+            if(dataToken.error) return <joi.ValidationResult<IRTokenData>> msgHandler.sendError(dataToken.error);
+            //Se valida si el Token es valido
+            const mainToken = this.valTokenWithOutExp(dataToken.value.Token);
+            if(mainToken instanceof Error) return msgHandler.sendError('Token incorrecto');
+            //Se valida que traiga el formato correcto
+            var {error,value} = <joi.ValidationResult<IRTokenData>> joiRefreshToken.validate(mainToken);
+            if(error) return <joi.ValidationResult<IRTokenData>> msgHandler.sendError(error);
+            return <joi.ValidationResult<IRTokenData>> msgHandler.sendValue(value);
+        } catch (error) {
+            return <joi.ValidationResult<IRTokenData>> msgHandler.sendError(error);
+        }
+        return null;
+    }
+    valMiddleToken(data:object): Error|ITokenData{
+        const {error,value} = <joi.ValidationResult<ITokenData>>joiAuthToken.validate(data);
+        if(error) return Error('Token corrupto');
+        return value;
     }
     //#endregion
 }

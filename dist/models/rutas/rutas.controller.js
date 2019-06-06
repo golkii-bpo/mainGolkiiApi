@@ -12,6 +12,7 @@ const rutas_model_1 = require("./rutas.model");
 const rutas_services_1 = require("./rutas.services");
 const msgHandler_1 = require("../../helpers/resultHandler/msgHandler");
 const settings_1 = require("../../settings/settings");
+const rutas_model_2 = require("./rutas.model");
 // import userServices from '../colaboradores/usuarios/user.services';
 exports.default = {
     /**
@@ -21,7 +22,7 @@ exports.default = {
      * @param {*} res
      */
     getModelTotal: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        yield rutas_model_1.default
+        return yield rutas_model_1.default
             .find()
             .count()
             .lean(true)
@@ -140,7 +141,7 @@ exports.default = {
      * @returns {error,value}
      */
     getObtenerById: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        yield rutas_model_1.default
+        return yield rutas_model_2.default
             .aggregate([
             { $match: { '_id': req.params.idRuta } },
             { $lookup: { from: 'colaboradores', localField: 'Colaborador', foreignField: '_id', as: 'Colaborador' } },
@@ -150,8 +151,8 @@ exports.default = {
             .then((data) => {
             return res.json(msgHandler_1.msgHandler.sendValue(data));
         })
-            .catch((err) => {
-            return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
+            .catch((error) => {
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
         });
     }),
     /**
@@ -179,7 +180,7 @@ exports.default = {
     putModificar: (req, res) => __awaiter(this, void 0, void 0, function* () {
         const { error, value } = rutas_services_1.rutaSrv.valPutModificar(req.params.idRuta, req.body);
         if (error)
-            return msgHandler_1.msgHandler.sendError(error);
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
         const idRuta = req.params.idRuta, model = value;
         yield rutas_model_1.default.updateOne({
             _id: idRuta
@@ -193,7 +194,10 @@ exports.default = {
             }
         })
             .then((data) => {
-            return res.json(msgHandler_1.msgHandler.resultCrud(data, 'rutas', msgHandler_1.crudType.actualizar));
+            let { error, value } = msgHandler_1.msgHandler.resultCrud(data, 'rutas', msgHandler_1.crudType.actualizar);
+            if (error)
+                return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
+            return res.json(msgHandler_1.msgHandler.sendValue(value));
         })
             .catch((err) => {
             return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
@@ -212,7 +216,7 @@ exports.default = {
         //se realiza la validacion para saber si el idRuta es un ObjectId
         if (!rutas_services_1.rutaSrv.validarObjectId(idRuta))
             return res.status(400).json(msgHandler_1.msgHandler.errorIdObject('Id de Ruta'));
-        yield rutas_model_1.default
+        return yield rutas_model_1.default
             .updateOne({
             _id: idRuta
         }, {
@@ -220,7 +224,10 @@ exports.default = {
                 Estado: true
             }
         }).then((data) => {
-            return res.json(msgHandler_1.msgHandler.resultCrud(data, 'rutas', msgHandler_1.crudType.actualizar));
+            let { error, value } = msgHandler_1.msgHandler.resultCrud(data, 'rutas', msgHandler_1.crudType.actualizar);
+            if (error)
+                return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
+            return res.json(msgHandler_1.msgHandler.sendValue(value));
         }).catch((err) => {
             return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
         });
@@ -247,7 +254,10 @@ exports.default = {
                 Estado: false
             }
         }).then((data) => {
-            return res.json(msgHandler_1.msgHandler.resultCrud(data, 'rutas', msgHandler_1.crudType.actualizar));
+            let { error, value } = msgHandler_1.msgHandler.resultCrud(data, 'rutas', msgHandler_1.crudType.actualizar);
+            if (error)
+                return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
+            return res.json(msgHandler_1.msgHandler.sendValue(value));
         }).catch((err) => {
             return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
         });

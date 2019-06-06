@@ -7,16 +7,17 @@ import pwdSecurity from '../../../security/pwdService';
 import {mailPwdResetTemplate as mailReset} from '../../../helpers/templates/mailTemplate';
 import Mail from '../../../mail/server.mail';
 import ColMdl from '../general/colaborador.model';
-import userServices from "./user.services";
-import { IAuth, IChangePwd, IChangeUsername, IUserDisable, IPwdReset, IRecovery,IPwdChange,ITokenData, IRTokenData, ISession} from './user.interface';
+import userSrv from "./user.services";
+import { IAuth, IChangePwd, IChangeUsername, IUserDisable, IPwdReset, IRecovery,IPwdChange,ITokenDecipher, IRTokenData, ISession} from './user.interface';
 import {IColaborador} from '../general/colaborador.interface';
 import Crypt,{ICipher} from '../../../security/cryptoData';
+import pwdHandler from '../../../security/pwdService';
 
 export default {
 
     //#region Post
     postAgregarUsuario: async(req:Request,res:Response):Promise<Response> => {
-        let {error,value} = <msgCustom<IAuth>>await userServices.valAgregar(req.params.idColaborador,req.body);
+        let {error,value} = <msgCustom<IAuth>>await userSrv.valAgregar(req.params.idColaborador,req.body);
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
         const 
@@ -51,7 +52,7 @@ export default {
     postLinkResetPwd: async (req:Request,res:Response): Promise<Response> =>{
         //correo electronico => Body
         //validacion del correo electronico
-        const {error,value} = <msgCustom<IPwdReset>>await userServices.valPwdReset(req.body);
+        const {error,value} = <msgCustom<IPwdReset>>await userSrv.valPwdReset(req.body);
         if(error) return res.status(400).json(msgHandler.sendError(<any>error));
         //obtener el usuario
         const ColDb = <IColaborador>await ColMdl.findOne({"General.Email":value.Email}).lean(true),
@@ -99,7 +100,7 @@ export default {
     },
 
     postRestablecerPwd: async (req:Request, res:Response):Promise<Response> =>{
-        const {error,value} = <msgCustom<IPwdChange>>await userServices.valRestablecerPwd(req.body);
+        const {error,value} = <msgCustom<IPwdChange>>await userSrv.valRestablecerPwd(req.body);
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
         return await
@@ -124,21 +125,29 @@ export default {
 
     postAuth: async (req:Request,res:Response):Promise<Response> =>{
         
-        //validar modelo de datos user y password
-        //realizar validacion si las credenciales son correctas
-        //Se va a manejar la hora del servidor del api para poder realizar todo correctamente
-        
         const data = <IAuth>req.body;
-        const {error,value} = <msgCustom<IColaborador>>await userServices.valAuth(data);
-        if(error){
-            if(error.hasOwnProperty('existSession'))
-            {
-                if(error['existSession'] == true) return res.status(402).json(error['message']);
-            }
-            else{
-                return res.status(401).json(msgHandler.sendError(error));
-            }
+        const {error,value} = <msgCustom<IAuth>>await userSrv.valAuth(data);
+
+        let Colaborador = <IColaborador> await ColMdl
+        .findOne({'User.username':value.username,'User.Disable':false})
+        .lean(true);
+
+        if(!Colaborador) return res.status(401).json(msgHandler.sendError('Usuario no existe'));
+
+        const 
+            dataSession = Colaborador.User.Session || null,
+            force = value.forceSession || false;
+        
+        if(!pwdHandler.comparePwdHashed(value.password,Colaborador.User.password)) return res.status(400).json(msgHandler.sendError('Contraseña incorrecta'));
+            
+        if(dataSession && !force){
+            let {error,value} = <msgCustom<ISession>>userSrv.valSession(dataSession);
+            if(error) return res.status(400).json(msgHandler.sendError(error));
+
+            let Session:ISession = value;
+            if(Session.ValidToken.getTime() >= Date.now()) return res.status(401).json(msgHandler.sendError('Ya existe una session abierta con este usuario'));
         }
+
             
         //crear un token de retorno
         const 
@@ -147,17 +156,17 @@ export default {
                 Sttng.privateRefreshToken
             ),
             //Se define el tipo de data que se va a ingresar
-            _dataToken:ITokenData = {
+            _dataToken:ITokenDecipher = {
                 Token:refreshToken,
                 IpRequest:req.ip,
             },
             //Se cifra los datos que se va a enviar en el token
-            RToken = Crypt.encrypt(_dataToken),
+            {Auth,Cipher} = Crypt.encrypt(_dataToken),
             //Se crea el token que se va a enviar
             token = JWT.sign(
                 {  
-                    IdCol:value._id,
-                    DCT:RToken.Cipher["data"]
+                    IdCol:Colaborador._id,
+                    DCT:Cipher.toString()
                 },
                 Sttng.privateKey,
                 {
@@ -169,11 +178,12 @@ export default {
                 DateSession:Date.now(),
                 IpSession:req.ip,
                 Token:refreshToken,
-                Auth: RToken.Auth["data"],
+                Auth: Auth,
                 ValidToken: new Date(Date.now() + Sttng.validTimeToken),
-                validAuth: new Date(Date.now() + Sttng.validAuth),
+                ValidAuth: new Date(Date.now() + Sttng.validAuth),
                 Disable:false
             };
+
         //Se ingresan los datos en la base de datos
         const _result:msgResult = await ColMdl
         .updateOne(
@@ -194,15 +204,18 @@ export default {
 
         if(_result.error) return res.status(400).json(_result.error);
         const JwtResult = {
-            username:value.User.username,
+            username:Colaborador.User.username,
             Token:token
         };
+
+        // let decrypt = Crypt.decrypt(Array.from(Cipher),Array.from(Auth));
+        // console.log(decrypt);
         return res.json(msgHandler.sendValue(JwtResult));
     },
 
     postRefreshToken: async (req:Request,res:Response):Promise<Response> =>{
 
-        let{error,value} = <msgCustom<IRTokenData>>userServices.valRefreshToken(req.body);
+        let{error,value} = <msgCustom<IRTokenData>>userSrv.valRefreshToken(req.body);
         //Se procede a validar si los datos y el token son correctos
         if(error) return res.status(400).json(msgHandler.sendError(error));
         
@@ -212,19 +225,22 @@ export default {
         const Session = Colaborador.User.Session || null;
         if(!Session) return res.status(401).json(msgHandler.sendError('Usuario no ha iniciado sesión'));
 
-        let valSession:msgCustom<ISession> = userServices.valSession(Session)
+        let valSession:msgCustom<ISession> = userSrv.valSession(Session)
         if(!valSession.error) return res.status(401).json(msgHandler.sendError("Usuario no posee una Session valida activa"));
         
         //Se valida si el token principal
         let _Session = valSession.value;
-        if(_Session.validAuth.getTime() < Date.now()) return res.status(401).json("Token Invalalido");
-
+        if(_Session.ValidAuth.getTime() < Date.now()) return res.status(401).json("Token Invalalido");
         //Deciframos el Token. Si no posee errores vamos al siguiente Step
-        let DesCipher;
-        if((DesCipher = Crypt.decrypt(value.DCT,Session.Auth)) instanceof Error) return res.status(401).json(msgHandler.sendError("Usuario no posee un token valido"));
+        let 
+            DesCipher,
+            DCT = Array.from(value.DCT,(v,k)=>{
+                return Number.parseInt(v);
+            });
+        if((DesCipher = Crypt.decrypt(DCT,Session.Auth)) instanceof Error) return res.status(401).json(msgHandler.sendError("Usuario no posee un token valido"));
 
         //Validamos si el Refresh Token es valido;
-        const dataDescifrada:ITokenData = <ITokenData>JSON.parse(DesCipher);
+        const dataDescifrada:ITokenDecipher = <ITokenDecipher>JSON.parse(DesCipher);
         if(dataDescifrada.Token != Session.Token) return res.status(401).json(msgHandler.sendError("Usuario no posee un token valido"))
 
         //Creamos un nuevo token y hacemos un updagrade de la informacion de la base de datos
@@ -235,8 +251,10 @@ export default {
                 _id: value.IdCol
             },
             {
-                'User.Session.ValidToken':new Date(Date.now() + Sttng.validTimeToken),
-                'User.Session.validAuth':new Date(Date.now() + Sttng.validAuth)
+                $set:{
+                    'User.Session.ValidToken':new Date(Date.now() + Sttng.validTimeToken),
+                    'User.Session.validAuth':new Date(Date.now() + Sttng.validAuth)
+                }
             }
         ).then((data)=>{
             //Se valida que se encuentre en el formato correcto con la informacion necesario.
@@ -262,14 +280,29 @@ export default {
     },
 
     postLogOut: async(req:Request,res:Response):Promise<Response> =>{
-        
-        return null;
+        const {error,value} = <msgCustom<IRTokenData>> userSrv.valLogOut(req.body); 
+        if(error) return res.status(400).json(msgHandler.sendError(error));
+
+        return await ColMdl
+        .updateOne({
+            _id:value.IdCol
+        },{
+            $set:{
+                'User.Session':null
+            }
+        }).then((data)=>{
+            let {error,value} = msgHandler.resultCrud(data,'user',enumCrud.actualizar);
+            if(error) return res.status(400).json(msgHandler.sendError(error));
+            return res.json(msgHandler.sendValue(true));
+        }).catch((error)=>{
+            return res.status(400).json(msgHandler.sendError(error));
+        });
     },
     //#endregion
 
     //#region PUT
     putModUser: async(req:Request,res:Response):Promise<Response> =>{
-        let {error,value} = <msgCustom<IAuth>>await userServices.valModUsr(req.params.idColaborador,req.body);
+        let {error,value} = <msgCustom<IAuth>>await userSrv.valModUsr(req.params.idColaborador,req.body);
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
         const 
@@ -314,7 +347,7 @@ export default {
     },
 
     putModUserName: async(req:Request,res:Response):Promise<Response> => {
-        let {error,value} = <msgCustom<IChangeUsername>>await userServices.valModUsrName(req.params.idColaborador,req.body);
+        let {error,value} = <msgCustom<IChangeUsername>>await userSrv.valModUsrName(req.params.idColaborador,req.body);
         if(error) return res.status(400).json(msgHandler.sendError(error));
         
         const idColaborador = new Types.ObjectId(req.params.idColaborador);
@@ -338,7 +371,7 @@ export default {
     },
 
     putChangePwd: async(req:Request,res:Response):Promise<Response>=>{
-        const {error,value} = <msgCustom<IChangePwd>>await userServices.valChangePwd(req.params.idColaborador,req.body);
+        const {error,value} = <msgCustom<IChangePwd>>await userSrv.valChangePwd(req.params.idColaborador,req.body);
         if(error) return res.status(400).json(msgHandler.sendError(error));
 
         let 
@@ -368,7 +401,7 @@ export default {
     },
 
     putDisableUser: async(req:Request,res:Response):Promise<Response>=>{
-        const {error,value} = <msgCustom<IUserDisable>>await userServices.valUserDisable(req.params.idColaborador,req.body);
+        const {error,value} = <msgCustom<IUserDisable>>await userSrv.valUserDisable(req.params.idColaborador,req.body);
         if(error) return res.status(400).json(msgHandler.sendError(error));
         const idColaborador = new Types.ObjectId(req.params.idColaborador);
         
@@ -393,7 +426,7 @@ export default {
     },
 
     putAbleUser: async(req:Request,res:Response):Promise<Response>=>{
-        const {error,value} = <msgCustom<IUserDisable>>await userServices.valUserAble(req.params.idColaborador,req.body);
+        const {error,value} = <msgCustom<IUserDisable>>await userSrv.valUserAble(req.params.idColaborador,req.body);
         if(error) return res.status(400).json(msgHandler.sendError(error));
         const idColaborador = new Types.ObjectId(req.params.idColaborador);
         

@@ -2,8 +2,8 @@ import * as Crypto from "crypto";
 import {SettingsCrypto as CryptoSttng} from "../settings/settings";
 
 export interface ICipher {
-    Cipher:Object,
-    Auth:Object
+    Cipher:number[],
+    Auth:number[]
 };
 
 interface IDecipher extends ICipher{
@@ -43,15 +43,15 @@ export default new class Safe {
             );
             const ciphertext = cipher.update(ToDataText, 'utf8');
             cipher.final();
-            let Auth = JSON.stringify(cipher.getAuthTag());
-            let Cipher = JSON.stringify(ciphertext);
+            let Auth:number[] = Array.from(cipher.getAuthTag());
+            let Cipher:number[] = Array.from(ciphertext);
             return {Cipher,Auth};
         } catch (exception) {
             throw new Error(exception.message);
         }
     }
 
-    public decrypt(Cipher:string,Auth:string):JSON|Error { 
+    public decrypt(Cipher:number[],Auth:number[]):JSON|Error { 
         const 
             AuthKey = Buffer.from(Auth),
             CipherData = Buffer.from(Cipher),

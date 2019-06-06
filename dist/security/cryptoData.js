@@ -21,8 +21,8 @@ exports.default = new class Safe {
             });
             const ciphertext = cipher.update(ToDataText, 'utf8');
             cipher.final();
-            let Auth = JSON.stringify(cipher.getAuthTag());
-            let Cipher = JSON.stringify(ciphertext);
+            let Auth = Array.from(cipher.getAuthTag());
+            let Cipher = Array.from(ciphertext);
             return { Cipher, Auth };
         }
         catch (exception) {
