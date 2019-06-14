@@ -1,3 +1,4 @@
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -6,12 +7,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-// const Joi = require('joi-es');
-const Joi = require('joi');
-const general = require('../../helpers/generalValidation');
-const areaService = new (require('../../models/area/areaService'))();
-const permisoModel = require('./permisoModel');
-const msgHandler = require('../../helpers/msgHandler');
+Object.defineProperty(exports, "__esModule", { value: true });
+// import * as Joi from 'joi-es';
+const Joi = require("joi");
+const basicValidations_1 = require("../../helpers/validation/basicValidations");
+const permisoModel_1 = require("./permisoModel");
+const msgHandler_1 = require("../../helpers/resultHandler/msgHandler");
+const areaService_1 = require("../../models/area/areaService");
 const JoiTree = Joi.object().keys({
     Idx: Joi.number().integer().required(),
     Item: Joi.string().required()
@@ -27,22 +29,22 @@ const JoiPermiso = Joi.object().keys({
     Estado: Joi.boolean()
 });
 const IsPathUnique = (_Path) => __awaiter(this, void 0, void 0, function* () {
-    const Permisos = (yield permisoModel.findOne({ Path: _Path }));
+    const Permisos = (yield permisoModel_1.default.findOne({ Path: _Path }));
     return Permisos ? false : true;
 });
-class permisoService extends general {
+class permisoService extends basicValidations_1.default {
     validarModelo(_data) {
         return __awaiter(this, void 0, void 0, function* () {
             const { error, value } = Joi.validate(_data, JoiPermiso);
             if (error && error.details)
-                return msgHandler.sendError(error.details[0].message);
-            if (!(yield areaService.validarArea(value.Area)))
-                return msgHandler.sendError('El Area a ingresar no se encuentra registrada en sistema');
+                return msgHandler_1.msgHandler.sendError(error.details[0].message);
+            if (!(yield areaService_1.default.validarArea(value.Area)))
+                return msgHandler_1.msgHandler.sendError('El Area a ingresar no se encuentra registrada en sistema');
             if (!(yield IsPathUnique(value.Path)))
-                return msgHandler.Send().alredyExist('Path');
-            return { value };
+                return msgHandler_1.msgHandler.alredyExist('Path');
+            return { error: null, value };
         });
     }
     ;
 }
-module.exports = new permisoService;
+exports.default = new permisoService;

@@ -15,7 +15,20 @@
             "type": "node",
             "request": "launch",
             "name": "Mac",
-            "program": "${workspaceFolder}/server/app.js"
+            "program": "${workspaceFolder}/dist/server.js"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Build Project",
+            "program": "${workspaceFolder}/src/server.ts",
+            // "preLaunchTask": "npm: build",
+            "sourceMaps": true,
+            "smartStep": true,
+            "internalConsoleOptions": "openOnSessionStart",
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*"
+            ]
         }
     ]
 }

@@ -8,10 +8,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const mongoose_1 = require("mongoose");
 const rutas_model_1 = require("./rutas.model");
 const rutas_services_1 = require("./rutas.services");
-const msgHandler_1 = require("../../helpers/msgHandler");
+const msgHandler_1 = require("../../helpers/resultHandler/msgHandler");
 const settings_1 = require("../../settings/settings");
+const rutas_model_2 = require("./rutas.model");
+// import userServices from '../colaboradores/usuarios/user.services';
 exports.default = {
     /**
      * Obtiene el total de registros ingresados a la base de datos
@@ -20,7 +23,7 @@ exports.default = {
      * @param {*} res
      */
     getModelTotal: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        yield rutas_model_1.default
+        return yield rutas_model_1.default
             .find()
             .count()
             .lean(true)
@@ -36,8 +39,7 @@ exports.default = {
      * @returns {error,value}
      */
     getObtener: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        //FIXME: Cantidad maxima de paginacion
-        let page = Number(req.query.page.toString()), size = Number(req.query.size.toString());
+        let page = Number(req.query.page), size = Number(req.query.size);
         page = page ? page : 1;
         /**
          * 1. Si la variable size contiene datos
@@ -48,12 +50,16 @@ exports.default = {
          */
         size = size ? size > settings_1.Rutas.maxData ? settings_1.Rutas.maxData : size : settings_1.Rutas.maxData;
         let skipData = (size * (page - 1));
-        yield rutas_model_1.default
-            .find()
-            .select({ FechaData: false })
+        return yield rutas_model_1.default
+            .aggregate([
+            { $lookup: { from: 'colaboradores', localField: 'Colaborador', foreignField: '_id', as: 'Colaborador' } },
+            { $unwind: '$Colaborador' },
+            { $project: { 'Colaborador': { 'Log': 0, 'User': 0, 'Perfil': 0, 'Estado': 0, 'Cargo': 0, 'Permisos': 0, 'General': { '_id': 0 } } } },
+            { $project: { 'Colaborador': 1, 'Casos': 1, 'Demografia': 1, 'FechaSalida': 1 } }
+        ])
+            .sort({ FechaData: -1 })
             .skip(skipData)
             .limit(size)
-            .lean(true)
             .then((data) => { return res.json(msgHandler_1.msgHandler.sendValue(data)); })
             .catch((err) => { ; return res.status(400).json(msgHandler_1.msgHandler.sendError(err)); });
     }),
@@ -66,18 +72,29 @@ exports.default = {
      * @returns {error,value}
      */
     getObtenerFecha: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        //FIXME: Cantidad maxima de paginacion
+        let page = Number(req.query.page), size = Number(req.query.size);
+        page = page ? page : 1;
+        /**
+         * 1. Si la variable size contiene datos
+         * 1.2 Entonces valida si no es mayor a la cantidad de datos que puede devolver
+         * 1.2.1 Si la Cantidad es mayor entonces devuelve el numero de datos que se pueden devolver
+         * 1.2.2 Si la cantidad es menor se devuelve el numero que se esta solicitando
+         * 2. Si la variable size no contiene datos se devuelve la cantidad maxima de datos permitada
+         */
+        size = size ? size > settings_1.Rutas.maxData ? settings_1.Rutas.maxData : size : settings_1.Rutas.maxData;
+        let skipData = (size * (page - 1));
         let _fi = Number(req.params.fechaInicio.toString()), _ff = Number(req.params.fechaFinal.toString());
         let fi = _fi ? new Date(_fi) : new Date(), ff = _ff ? new Date(_ff) : new Date();
-        yield rutas_model_1.default
-            .find({
-            FechaSalida: {
-                $lte: ff,
-                $gte: fi
-            }
-        })
-            .select({ FechaData: false })
-            .lean(true)
+        return yield rutas_model_1.default
+            .aggregate([
+            { $lookup: { from: 'colaboradores', localField: 'Colaborador', foreignField: '_id', as: 'Colaborador' } },
+            { $unwind: '$Colaborador' },
+            { $project: { 'Colaborador': { 'Log': 0, 'User': 0, 'Perfil': 0, 'Estado': 0, 'Cargo': 0, 'Permisos': 0, 'General': { '_id': 0 } } } },
+            { $project: { 'Colaborador': 1, 'Casos': 1, 'Demografia': 1, 'FechaSalida': 1 } }
+        ])
+            .sort({ FechaData: -1 })
+            .skip(skipData)
+            .limit(size)
             .then((data) => { return res.json(msgHandler_1.msgHandler.sendValue(data)); })
             .catch((err) => { return res.status(400).json(msgHandler_1.msgHandler.sendError(err)); });
     }),
@@ -89,7 +106,7 @@ exports.default = {
      * @returns {error,value}
      */
     getObtenerActivos: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        let page = Number(req.query.page.toString()), size = Number(req.query.size.toString());
+        let page = Number(req.query.page), size = Number(req.query.size);
         page = page ? page : 1;
         /**
          * 1. Si la variable size contiene datos
@@ -100,12 +117,16 @@ exports.default = {
          */
         size = size ? size > settings_1.Rutas.maxData ? settings_1.Rutas.maxData : size : settings_1.Rutas.maxData;
         let skipData = (size * (page - 1));
-        yield rutas_model_1.default
-            .find({ Estado: true })
-            .select({ FechaData: false })
+        return yield rutas_model_1.default
+            .aggregate([
+            { $lookup: { from: 'colaboradores', localField: 'Colaborador', foreignField: '_id', as: 'Colaborador' } },
+            { $unwind: '$Colaborador' },
+            { $project: { 'Colaborador': { 'Log': 0, 'User': 0, 'Perfil': 0, 'Estado': 0, 'Cargo': 0, 'Permisos': 0, 'General': { '_id': 0 } } } },
+            { $project: { 'Colaborador': 1, 'Casos': 1, 'Demografia': 1, 'FechaSalida': 1 } }
+        ])
+            .sort({ FechaData: -1 })
             .skip(skipData)
-            .size(size)
-            .lean(true)
+            .limit(size)
             .then((data) => {
             return res.json(msgHandler_1.msgHandler.sendValue(data));
         })
@@ -121,11 +142,20 @@ exports.default = {
      * @returns {error,value}
      */
     getObtenerById: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        const idRuta = req.params.idRuta;
-        if (!rutas_services_1.default.validarObjectId(idRuta))
-            return res.status(400).json(msgHandler_1.msgHandler.errorIdObject('Id de Ruta'));
-        const _data = yield rutas_model_1.default.findById(idRuta).select({ FechaData: false }).lean(true);
-        return res.json(msgHandler_1.msgHandler.sendValue(_data));
+        console.log(req.params.idRuta);
+        return yield rutas_model_2.default
+            .aggregate([
+            { $match: { '_id': new mongoose_1.Types.ObjectId(req.params.idRuta) } },
+            { $lookup: { from: 'colaboradores', localField: 'Colaborador', foreignField: '_id', as: 'Colaborador' } },
+            { $unwind: '$Colaborador' },
+            { $project: { 'Colaborador': { 'Log': 0, 'User': 0, 'Perfil': 0, 'Estado': 0, 'Cargo': 0, 'Permisos': 0, 'General': { '_id': 0 } } } }
+        ])
+            .then((data) => {
+            return res.json(msgHandler_1.msgHandler.sendValue(data));
+        })
+            .catch((error) => {
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
+        });
     }),
     /**
      *  Agrega una nueva ruta
@@ -136,7 +166,7 @@ exports.default = {
      */
     postAgregar: (req, res) => __awaiter(this, void 0, void 0, function* () {
         const _model = req.body;
-        const { error, value } = rutas_services_1.default.valAgregar(_model);
+        const { error, value } = rutas_services_1.rutaSrv.valPostAgregar(_model);
         if (error)
             return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
         const _result = yield rutas_model_1.default.create(value);
@@ -150,24 +180,26 @@ exports.default = {
      * @returns {error,value}
      */
     putModificar: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        //FIXME: Se tiene que modificar el retorno de la informacion.
-        const _model = req.model, idRuta = req.params.idRuta;
-        if (!rutas_services_1.default.validarObjectId(idRuta))
-            return res.status(400).json(msgHandler_1.msgHandler.errorIdObject('Id de Ruta'));
+        const { error, value } = rutas_services_1.rutaSrv.valPutModificar(req.params.idRuta, req.body);
+        if (error)
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
+        const idRuta = new mongoose_1.Types.ObjectId(req.params.idRuta), model = value;
         yield rutas_model_1.default.updateOne({
             _id: idRuta
         }, {
             $set: {
-                Colaborador: _model.Colaborador,
-                Descripcion: _model.hasOwnProperty('Descripcion') ? _model.Descripcion : '',
-                Casos: _model.Casos,
-                Kilometraje: _model.Kilometraje,
-                Insumo: _model.Insumo,
-                FechaSalida: _model.FechaSalida
+                Colaborador: model.Colaborador,
+                Descripcion: model.Descripcion,
+                Casos: model.Casos,
+                Insumo: model.Insumos,
+                FechaSalida: model.FechaSalida
             }
         })
             .then((data) => {
-            return res.json(msgHandler_1.msgHandler.resultCrud(data, 'rutas', msgHandler_1.enumCrud.actualizar));
+            let { error, value } = msgHandler_1.msgHandler.resultCrud(data, 'rutas', msgHandler_1.crudType.actualizar);
+            if (error)
+                return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
+            return res.json(msgHandler_1.msgHandler.sendValue(value));
         })
             .catch((err) => {
             return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
@@ -184,17 +216,20 @@ exports.default = {
         //FIXME: Se tiene que modificar el retorno de la informacion.
         const idRuta = req.params.idRuta;
         //se realiza la validacion para saber si el idRuta es un ObjectId
-        if (!rutas_services_1.default.validarObjectId(idRuta))
+        if (!rutas_services_1.rutaSrv.validarObjectId(idRuta))
             return res.status(400).json(msgHandler_1.msgHandler.errorIdObject('Id de Ruta'));
-        yield rutas_model_1.default
+        return yield rutas_model_1.default
             .updateOne({
-            _id: idRuta
+            _id: new mongoose_1.Types.ObjectId(idRuta)
         }, {
             $set: {
                 Estado: true
             }
         }).then((data) => {
-            return res.json(msgHandler_1.msgHandler.resultCrud(data, 'rutas', msgHandler_1.enumCrud.actualizar));
+            let { error, value } = msgHandler_1.msgHandler.resultCrud(data, 'rutas', msgHandler_1.crudType.actualizar);
+            if (error)
+                return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
+            return res.json(msgHandler_1.msgHandler.sendValue(value));
         }).catch((err) => {
             return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
         });
@@ -211,18 +246,20 @@ exports.default = {
         //FIXME: Se tiene que modificar el retorno de la informacion.
         const idRuta = req.params.idRuta;
         //se realiza la validacion para saber si el idRuta es un ObjectId
-        if (!rutas_services_1.default.validarObjectId(idRuta))
+        if (!rutas_services_1.rutaSrv.validarObjectId(idRuta))
             return res.status(400).json(msgHandler_1.msgHandler.errorIdObject('Id de Ruta'));
         yield rutas_model_1.default
             .updateOne({
-            _id: idRuta
+            _id: new mongoose_1.Types.ObjectId(idRuta)
         }, {
             $set: {
                 Estado: false
             }
         }).then((data) => {
-            console.log(data);
-            return res.json(msgHandler_1.msgHandler.resultCrud(data, 'rutas', msgHandler_1.enumCrud.actualizar));
+            let { error, value } = msgHandler_1.msgHandler.resultCrud(data, 'rutas', msgHandler_1.crudType.actualizar);
+            if (error)
+                return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
+            return res.json(msgHandler_1.msgHandler.sendValue(value));
         }).catch((err) => {
             return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
         });

@@ -15,9 +15,9 @@ const logger = Winston.createLogger({
 dotenv.config();
 
 //inicializacion de web api
-import * as mainRoute from './routes/main';
+import {mainRoute} from './routes/main';
 import {database} from './db/conexion';
-import {msgHandler} from './helpers/msgHandler';
+import {msgHandler} from './helpers/resultHandler/msgHandler';
 const app = express();
 
 //inicialización de la base de datos
@@ -48,7 +48,7 @@ app.use("*",(req,res)=>{
 app.use((error,req,res,next)=>{
     logger.log('error',error);
     if(error && error.hasOwnProperty('errmsg')) return res.status(400).json(msgHandler.sendError(error.errmsg));
-    if(error) return res.status(500).json(msgHandler.sendError(error.message));
+    if(error) return res.status(500).json(msgHandler.sendError(error));
 })
 
 //inicio del servidor en un puerto

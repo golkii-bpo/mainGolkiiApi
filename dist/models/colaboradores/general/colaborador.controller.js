@@ -1,3 +1,4 @@
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -6,8 +7,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const objectId = (require('mongoose')).Types.ObjectId, colSrv = require('./colaborador.services'), colMdl = require('./colaborador.model'), cargoModel = require('../../cargo/cargoModel'), msgHandler = require('../../../helpers/msgHandler');
-module.exports = {
+Object.defineProperty(exports, "__esModule", { value: true });
+const mongoose_1 = require("mongoose");
+const colaborador_services_1 = require("./colaborador.services");
+const colaborador_model_1 = require("./colaborador.model");
+const cargoModel_1 = require("../../cargo/cargoModel");
+const msgHandler_1 = require("../../../helpers/resultHandler/msgHandler");
+exports.default = {
     /**
      * Método que nos permite obtener todos los Colaboradores activos
      * de la base de datos
@@ -17,8 +23,8 @@ module.exports = {
      * @returns {}
      */
     getObtener: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        const _result = yield colMdl.find({ Estado: true }).lean(true);
-        return res.json(msgHandler.sendValue(_result));
+        const _result = yield colaborador_model_1.default.find({ Estado: true }).lean(true);
+        return res.json(msgHandler_1.msgHandler.sendValue(_result));
     }),
     /**
      * Método que nos permite obtener todos los Colaboradores
@@ -29,8 +35,8 @@ module.exports = {
      * @returns
      */
     getObtenerAll: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        const _result = yield colMdl.find().lean(true);
-        return res.json(msgHandler.sendValue(_result));
+        const _result = yield colaborador_model_1.default.find().lean(true);
+        return res.json(msgHandler_1.msgHandler.sendValue(_result));
     }),
     /**
      * Agrega un modelo de Colaborador a la base de datos
@@ -41,15 +47,16 @@ module.exports = {
      * @type colaboradorModel
      */
     postAgregar: (req, res) => __awaiter(this, void 0, void 0, function* () {
+        //FIXME: Hace falta validar los cargos que se estan ingresando
         const _data = req.body;
-        const { error, value } = yield colSrv.valdarAgregarColaborador(_data);
+        const { error, value } = yield colaborador_services_1.default.valdarAgregarColaborador(_data);
         if (error)
-            return res.status(400).json(msgHandler.sendError(error));
-        let Cargos = colSrv.cargosUnicos(value.Cargo).map(_idCargo => { return new objectId(_idCargo); });
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
+        let Cargos = colaborador_services_1.default.cargosUnicos(value.Cargo).map(_idCargo => { return new mongoose_1.Types.ObjectId(_idCargo); });
         value.Cargo = Cargos.map(_iC => {
             return { IdCargo: _iC, Estado: true };
         });
-        let permisos = [...new Set(yield cargoModel.aggregate([
+        let permisos = [...new Set(yield cargoModel_1.default.aggregate([
                 { $match: { '_id': { $in: Cargos } }
                 },
                 { $unwind: '$Permisos' },
@@ -67,17 +74,17 @@ module.exports = {
                 }
             ]))].map(item => {
             return {
-                IdPermiso: new ObjectId(item.IdPermiso.toString()),
+                IdPermiso: new mongoose_1.Types.ObjectId(item.IdPermiso.toString()),
                 IsFrom: 'Cargo'
             };
         });
         if (Array.from(permisos).length != 0) {
             value.Permisos = permisos;
         }
-        yield colMdl
+        yield colaborador_model_1.default
             .create(value)
-            .then((data) => { return res.json(msgHandler.sendValue(data)); })
-            .catch((err) => { return res.status(400).json(msgHandler.sendError(err)); });
+            .then((data) => { return res.json(msgHandler_1.msgHandler.sendValue(data)); })
+            .catch((err) => { return res.status(400).json(msgHandler_1.msgHandler.sendError(err)); });
     }),
     /**
      * Permite Modificar los datos generales del colaborador
@@ -88,14 +95,12 @@ module.exports = {
      * @type colaboradorModel
     **/
     putModificarGeneral: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        let { error, value } = colSrv.valModGeneral(req.body);
+        let { error, value } = colaborador_services_1.default.valModGeneral(req.params.idColaborador, req.body);
         if (error)
             return res.status(400).json(error);
-        const idColaborador = new objectId(req.params.idColaborador.toString());
-        const _log = yield colMdl.findById(idColaborador);
-        if (!_log)
-            return res.status(400).send(msgHandler.Send().putEmptyObject('Colaborador'));
-        yield colMdl
+        const idColaborador = new mongoose_1.Types.ObjectId(req.params.idColaborador);
+        const _log = yield colaborador_model_1.default.findById(idColaborador);
+        yield colaborador_model_1.default
             .updateOne({ _id: idColaborador }, { $set: {
                 General: value,
                 FechaModificación: Date.now()
@@ -104,13 +109,13 @@ module.exports = {
                 Log: {
                     FechaModificación: Date.now(),
                     Propiedad: 'General',
-                    Data: _log.General
+                    Data: _log ? _log["General"] : null
                 }
             }
         }, {
             new: true
-        }).then((data) => { return res.json(msgHandler.resultCrud(data)); })
-            .catch((err) => { return res.status(400).json(msgHandler.sendError(err)); });
+        }).then((data) => { return res.json(msgHandler_1.msgHandler.resultCrud(data, 'colaborador', msgHandler_1.crudType.actualizar)); })
+            .catch((err) => { return res.status(400).json(msgHandler_1.msgHandler.sendError(err)); });
     }),
     /**
      * Este método agregar un Cargo a un empleado incluyendo todos los permisos que contiene el cargo
@@ -120,12 +125,11 @@ module.exports = {
      * @returns {error,value}
      */
     putAgregarCargo: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        let { error, value } = valAgregarCargo(req.params.idColaborador, req.params.idCargo);
+        let { error, value } = colaborador_services_1.default.valAgregarCargo(req.params.idColaborador, req.params.idCargo);
         if (error)
-            return res.status(400).json(msgHandler.sendError(error));
-        const idColaborador = new objectId(req.params.idColaborador.toString()), _idCargo = new objectId(req.params.idCargo.toString()), Colaborador = yield colMdl.findById(idColaborador).lean(true), _permisosCol = Colaborador.hasOwnProperty('Permisos') ? Colaborador.Permisos.map(item => item.IdPermiso.toString()) : [];
-        _permisos = yield cargoModel.aggregate([
-            { $match: { _id: new objectId(_idCargo.toString()) } },
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
+        const idColaborador = new mongoose_1.Types.ObjectId(req.params.idColaborador.toString()), _idCargo = new mongoose_1.Types.ObjectId(req.params.idCargo.toString()), Colaborador = yield colaborador_model_1.default.findById(idColaborador).lean(true), _permisosCol = Colaborador.hasOwnProperty('Permisos') ? Colaborador.Permisos.map(item => item.IdPermiso.toString()) : [], _permisos = yield cargoModel_1.default.aggregate([
+            { $match: { _id: new mongoose_1.Types.ObjectId(_idCargo.toString()) } },
             { $unwind: '$Permisos' },
             { $replaceRoot: { 'newRoot': '$Permisos' } },
             {
@@ -155,7 +159,7 @@ module.exports = {
                 }
             }
         ]);
-        colMdl
+        colaborador_model_1.default
             .updateOne({
             _id: idColaborador,
             'Cargo.IdCargo': { $nin: [_idCargo] }
@@ -175,14 +179,7 @@ module.exports = {
             }
         })
             .then((data) => {
-            console.log(data);
-            if (data.n == 0)
-                return res.status(400).json(msgHandler.Send().cantFind('Colaborador', 'Actualizar'));
-            if (data.nModified == 0)
-                return res.status(400).json(msgHandler.Send().cantModified('Colaborador', 'Actualizar'));
-            if (data.ok == 0)
-                return res.status(400).json(msgHandler.sendError('Ah ocurrio un error en la actualización del Colaborador'));
-            return res.json(msgHandler.Send().successUpdate());
+            return res.json(msgHandler_1.msgHandler.resultCrud(data, 'colaborador', msgHandler_1.crudType.actualizar));
         }).catch((err) => {
             return res.status(400).json(err);
         });
@@ -196,12 +193,12 @@ module.exports = {
      * @returns {error,value}
      */
     putEliminarCargo: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        let { error, value } = valAgregarCargo(req.params.idColaborador, req.params.idCargo);
+        let { error, value } = colaborador_services_1.default.valAgregarCargo(req.params.idColaborador, req.params.idCargo);
         if (error)
-            return msgHandler.sendError(error);
-        let _IdColaborador = new objectId(req.params.idColaborador.toString()), _IdCargo = new objectId(req.params.idCargo.toString());
-        const Colaborador = yield colMdl.findById(_IdColaborador).lean(true), _permisos = (yield cargoModel.aggregate([
-            { $match: { _id: new objectId(_IdCargo.toString()) } },
+            return msgHandler_1.msgHandler.sendError(error);
+        let _IdColaborador = new mongoose_1.Types.ObjectId(req.params.idColaborador.toString()), _IdCargo = new mongoose_1.Types.ObjectId(req.params.idCargo.toString());
+        const Colaborador = yield colaborador_model_1.default.findById(_IdColaborador).lean(true), _permisos = (yield cargoModel_1.default.aggregate([
+            { $match: { _id: new mongoose_1.Types.ObjectId(_IdCargo.toString()) } },
             { $unwind: '$Permisos' },
             { $replaceRoot: { 'newRoot': '$Permisos' } },
             {
@@ -222,7 +219,7 @@ module.exports = {
                 }
             }
         ])).map(_permiso => { return _permiso.IdPermiso; });
-        colMdl.updateOne({
+        colaborador_model_1.default.updateOne({
             _id: _IdColaborador,
             'Cargo.IdCargo': { $eq: _IdCargo }
         }, {
@@ -242,13 +239,7 @@ module.exports = {
                 }
             }
         }).then((data) => {
-            if (data.n == 0)
-                return res.status(400).json(msgHandler.Send().cantFind('Colaborador', 'Actualizar'));
-            if (data.nModified == 0)
-                return res.status(400).json(msgHandler.Send().cantModified('Colaborador', 'Actualizar'));
-            if (data.ok == 0)
-                return res.status(400).json(msgHandler.sendError('Ah ocurrio un error en la actualización del Colaborador'));
-            return res.json(msgHandler.Send().successUpdate());
+            return res.json(msgHandler_1.msgHandler.resultCrud(data, 'colaborador', msgHandler_1.crudType.actualizar));
         }).catch((err) => {
             return res.status(400).json(err);
         });
@@ -261,12 +252,12 @@ module.exports = {
      * @returns {error,value}
      */
     putAgregarPermiso: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        let { error, value } = valAgregarCargo(req.params.idColaborador, req.params.idPermiso);
+        let { error, value } = colaborador_services_1.default.valAgregarCargo(req.params.idColaborador, req.params.idPermiso);
         if (error)
-            return res.status(400).json(msgHandler.sendError(error));
-        let _idColaborador = new objectId(req.params.idColaborador.toString()), _idPermiso = new objectId(req.params.idPermiso.toString());
-        const Colaborador = yield colMdl.findById(_idColaborador).lean(true);
-        yield colMdl
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
+        let _idColaborador = new mongoose_1.Types.ObjectId(req.params.idColaborador.toString()), _idPermiso = new mongoose_1.Types.ObjectId(req.params.idPermiso.toString());
+        const Colaborador = yield colaborador_model_1.default.findById(_idColaborador).lean(true);
+        yield colaborador_model_1.default
             .updateOne({
             _id: _idColaborador,
             'Permisos.IdPermiso': { $ne: _idPermiso }
@@ -282,9 +273,9 @@ module.exports = {
                 }
             }
         }).then((data) => {
-            return res.json(msgHandler.sendValue(data));
+            return res.json(msgHandler_1.msgHandler.sendValue(data));
         }).catch((err) => {
-            return res.status(400).json(msgHandler.sendError(err));
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(err));
         });
     }),
     //TODO: Llenar Documentacion
@@ -296,12 +287,11 @@ module.exports = {
      * @returns {error,value}
      */
     putEliminarPermiso: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        let { error, value } = valAgregarCargo(req.params.idColaborador, req.params.idPermiso);
+        let { error, value } = colaborador_services_1.default.valAgregarCargo(req.params.idColaborador, req.params.idPermiso);
         if (error)
-            return res.status(400).json(msgHandler.sendError(error));
-        const _idColaborador = new objectId(req.params.idColaborador.toString()), _idPermiso = new objectId(req.params.idPermiso.toString());
-        Colaborador = yield colMdl.findById(_idColaborador).lean(true);
-        yield colMdl
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
+        const _idColaborador = new mongoose_1.Types.ObjectId(req.params.idColaborador.toString()), _idPermiso = new mongoose_1.Types.ObjectId(req.params.idPermiso.toString()), Colaborador = yield colaborador_model_1.default.findById(_idColaborador).lean(true);
+        yield colaborador_model_1.default
             .updateOne({
             _id: _idColaborador,
             'Permisos.IdPermiso': { $eq: _idPermiso }

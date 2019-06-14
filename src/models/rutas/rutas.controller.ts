@@ -1,10 +1,12 @@
-
-import Rutas from './rutas.model';
-import rutaSrv from './rutas.services';
-import {ObjectId} from 'mongoose/lib/types';
-import {msgHandler,enumCrud} from '../../helpers/msgHandler';
+import {Request,Response} from 'express';
+import {Types} from 'mongoose';
+import RutasModel from './rutas.model';
+import {rutaSrv} from './rutas.services';
+import * as rutasInt from './rutas.interfaces';
+import {msgHandler,crudType as  enumCrud} from '../../helpers/resultHandler/msgHandler';
 import {Rutas as sttng} from '../../settings/settings';
-
+import rutasModel from './rutas.model';
+// import userServices from '../colaboradores/usuarios/user.services';
 
 export default {
 
@@ -14,14 +16,14 @@ export default {
      * @param {*} req
      * @param {*} res
      */
-    getModelTotal: async (req,res) => {
-        await 
-            Rutas
-            .find()
-            .count()
-            .lean(true)
-            .then((data)=> {return res.json(msgHandler.sendValue(data))})
-            .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))});
+    getModelTotal: async (req:Request,res:Response):Promise<Response> => {
+        return await 
+        RutasModel
+        .find()
+        .count()
+        .lean(true)
+        .then((data)=> {return res.json(msgHandler.sendValue(data))})
+        .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))});
     },
 
     /**
@@ -32,11 +34,10 @@ export default {
      * @param {*} res
      * @returns {error,value}
      */
-    getObtener: async (req,res) => {
-        //FIXME: Cantidad maxima de paginacion
+    getObtener: async (req:Request,res:Response):Promise<Response> => {
         let 
-            page:number = Number(req.query.page.toString()),
-            size:number = Number(req.query.size.toString());
+            page:number = Number(req.query.page),
+            size:number = Number(req.query.size);
         page = page?page:1;
         /**
          * 1. Si la variable size contiene datos
@@ -48,15 +49,20 @@ export default {
         size = size? size>sttng.maxData?sttng.maxData:size:sttng.maxData;
         let skipData:number = (size * ( page - 1));
 
-        await 
-            Rutas
-            .find()
-            .select({FechaData:false})
-            .skip(skipData)
-            .limit(size)
-            .lean(true)
-            .then((data)=>{return res.json(msgHandler.sendValue(data))})
-            .catch((err)=>{;return res.status(400).json(msgHandler.sendError(err))});
+        return await RutasModel
+        .aggregate(
+            [
+                {$lookup:{from:'colaboradores',localField:'Colaborador',foreignField:'_id',as:'Colaborador'}},
+                {$unwind:'$Colaborador'},
+                {$project:{'Colaborador':{'Log':0,'User':0,'Perfil':0,'Estado':0,'Cargo':0,'Permisos':0,'General':{'_id':0}}}},
+                {$project:{'Colaborador':1,'Casos':1,'Demografia':1,'FechaSalida':1}}
+            ]
+        )
+        .sort({FechaData:-1})
+        .skip(skipData)
+        .limit(size)
+        .then((data)=>{return res.json(msgHandler.sendValue(data))})
+        .catch((err)=>{;return res.status(400).json(msgHandler.sendError(err))});
     },
 
     /**
@@ -67,42 +73,10 @@ export default {
      * @param {*} res
      * @returns {error,value}
      */
-    getObtenerFecha: async (req,res) => {
-        //FIXME: Cantidad maxima de paginacion
+    getObtenerFecha: async (req:Request,res:Response):Promise<Response> => {
         let 
-            _fi:number = Number(req.params.fechaInicio.toString()),
-            _ff:number = Number(req.params.fechaFinal.toString());
-
-        let 
-            fi:Date = _fi? new Date(_fi) : new Date(),
-            ff:Date = _ff? new Date(_ff) : new Date();
-
-        await 
-            Rutas
-            .find({
-                FechaSalida:{
-                    $lte:ff,
-                    $gte: fi
-                }
-            })
-            .select({FechaData:false})
-            .lean(true)
-            .then((data)=>{return res.json(msgHandler.sendValue(data))})
-            .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))});
-    },
-
-
-    /**
-     * Obtiene todas las rutas
-     *
-     * @param {*} req
-     * @param {*} res
-     * @returns {error,value}
-     */
-    getObtenerActivos: async (req,res) => {
-        let 
-            page:number = Number(req.query.page.toString()),
-            size:number = Number(req.query.size.toString());
+            page:number = Number(req.query.page),
+            size:number = Number(req.query.size);
         page = page?page:1;
         /**
          * 1. Si la variable size contiene datos
@@ -114,13 +88,64 @@ export default {
         size = size? size>sttng.maxData?sttng.maxData:size:sttng.maxData;
         let skipData:number = (size * ( page - 1));
 
-        await 
-        Rutas
-        .find({Estado:true})
-        .select({FechaData:false})
+        let 
+            _fi:number = Number(req.params.fechaInicio.toString()),
+            _ff:number = Number(req.params.fechaFinal.toString());
+
+        let 
+            fi:Date = _fi? new Date(_fi) : new Date(),
+            ff:Date = _ff? new Date(_ff) : new Date();
+        return await RutasModel
+        .aggregate(
+            [
+                {$lookup:{from:'colaboradores',localField:'Colaborador',foreignField:'_id',as:'Colaborador'}},
+                {$unwind:'$Colaborador'},
+                {$project:{'Colaborador':{'Log':0,'User':0,'Perfil':0,'Estado':0,'Cargo':0,'Permisos':0,'General':{'_id':0}}}},
+                {$project:{'Colaborador':1,'Casos':1,'Demografia':1,'FechaSalida':1}}
+            ]
+        )
+        .sort({FechaData:-1})
         .skip(skipData)
-        .size(size)
-        .lean(true)
+        .limit(size)
+        .then((data)=>{return res.json(msgHandler.sendValue(data))})
+        .catch((err)=>{return res.status(400).json(msgHandler.sendError(err))});
+    },
+
+    /**
+     * Obtiene todas las rutas
+     *
+     * @param {*} req
+     * @param {*} res
+     * @returns {error,value}
+     */
+    getObtenerActivos: async (req:Request,res:Response):Promise<Response> => {
+        let 
+            page:number = Number(req.query.page),
+            size:number = Number(req.query.size);
+        page = page?page:1;
+        /**
+         * 1. Si la variable size contiene datos
+         * 1.2 Entonces valida si no es mayor a la cantidad de datos que puede devolver
+         * 1.2.1 Si la Cantidad es mayor entonces devuelve el numero de datos que se pueden devolver
+         * 1.2.2 Si la cantidad es menor se devuelve el numero que se esta solicitando
+         * 2. Si la variable size no contiene datos se devuelve la cantidad maxima de datos permitada
+         */
+        size = size? size>sttng.maxData?sttng.maxData:size:sttng.maxData;
+        let skipData:number = (size * ( page - 1));
+
+        return await 
+        RutasModel
+        .aggregate(
+            [
+                {$lookup:{from:'colaboradores',localField:'Colaborador',foreignField:'_id',as:'Colaborador'}},
+                {$unwind:'$Colaborador'},
+                {$project:{'Colaborador':{'Log':0,'User':0,'Perfil':0,'Estado':0,'Cargo':0,'Permisos':0,'General':{'_id':0}}}},
+                {$project:{'Colaborador':1,'Casos':1,'Demografia':1,'FechaSalida':1}}
+            ]
+        )
+        .sort({FechaData:-1})
+        .skip(skipData)
+        .limit(size)
         .then((data)=>{
             return res.json(msgHandler.sendValue(data));
         })
@@ -136,11 +161,24 @@ export default {
      * @param {*} res
      * @returns {error,value}
      */
-    getObtenerById: async (req,res) => {
-        const idRuta = req.params.idRuta;
-        if(!rutaSrv.validarObjectId(idRuta)) return res.status(400).json(msgHandler.errorIdObject('Id de Ruta'));
-        const _data = await Rutas.findById(idRuta).select({FechaData:false}).lean(true);
-        return res.json(msgHandler.sendValue(_data));
+    getObtenerById: async (req:Request,res:Response):Promise<Response> => {
+        console.log(req.params.idRuta);
+        return await
+        rutasModel
+        .aggregate(
+            [
+                {$match:{'_id':new Types.ObjectId(req.params.idRuta)}},
+                {$lookup:{from:'colaboradores',localField:'Colaborador',foreignField:'_id',as:'Colaborador'}},
+                {$unwind:'$Colaborador'},
+                {$project:{'Colaborador':{'Log':0,'User':0,'Perfil':0,'Estado':0,'Cargo':0,'Permisos':0,'General':{'_id':0}}}}
+            ]
+        )
+        .then((data)=>{
+            return res.json(msgHandler.sendValue(data));
+        })
+        .catch((error)=>{
+            return res.status(400).json(msgHandler.sendError(error));
+        });
     },
 
     /**
@@ -150,11 +188,11 @@ export default {
      * @param {*} res
      * @returns {error,value}
      */
-    postAgregar: async (req,res) => {
+    postAgregar: async (req:Request,res:Response):Promise<Response> => {
         const _model = req.body;
-        const {error,value}=rutaSrv.valAgregar(_model);
+        const {error,value} = rutaSrv.valPostAgregar(_model);
         if(error) return res.status(400).json(msgHandler.sendError(error));
-        const _result = await Rutas.create(value);
+        const _result = await RutasModel.create(value);
         return res.json(msgHandler.sendError(_result));
     },
 
@@ -165,30 +203,31 @@ export default {
      * @param {*} res
      * @returns {error,value}
      */
-    putModificar: async (req,res) => {
-        //FIXME: Se tiene que modificar el retorno de la informacion.
+    putModificar: async (req:Request,res:Response):Promise<Response> => {
+        const {error,value } = rutaSrv.valPutModificar(req.params.idRuta,req.body);
+        if(error) return res.status(400).json(msgHandler.sendError(error));
         const 
-            _model = req.model,
-            idRuta = req.params.idRuta;
-        if(!rutaSrv.validarObjectId(idRuta)) return res.status(400).json(msgHandler.errorIdObject('Id de Ruta'));
+            idRuta:Types.ObjectId =  new Types.ObjectId(req.params.idRuta),
+            model:rutasInt.intPutRuta = <rutasInt.intPutRuta>value; 
         
         await 
-        Rutas.updateOne(
+        RutasModel.updateOne(
         {
             _id:idRuta
         },
         {
             $set:{
-                Colaborador:_model.Colaborador,
-                Descripcion:_model.hasOwnProperty('Descripcion')?_model.Descripcion:'',
-                Casos: _model.Casos,
-                Kilometraje: _model.Kilometraje,
-                Insumo: _model.Insumo,
-                FechaSalida: _model.FechaSalida
+                Colaborador:model.Colaborador,
+                Descripcion:model.Descripcion,
+                Casos: model.Casos,
+                Insumo: model.Insumos,
+                FechaSalida: model.FechaSalida
             }
         })
         .then((data)=>{
-            return res.json(msgHandler.resultCrud(data,'rutas',enumCrud.actualizar));
+            let {error,value} = msgHandler.resultCrud(data,'rutas',enumCrud.actualizar);
+            if(error) return res.status(400).json(msgHandler.sendError(error));
+            return res.json(msgHandler.sendValue(value));
         })
         .catch((err)=>{
             return res.status(400).json(msgHandler.sendError(err));
@@ -202,17 +241,18 @@ export default {
      * @param {*} res
      * @returns {error,value}
      */
-    putDarAlta: async (req,res) => {
+    putDarAlta: async (req:Request,res:Response):Promise<Response> => {
         //FIXME: Se tiene que modificar el retorno de la informacion.
         const
             idRuta = req.params.idRuta;
         //se realiza la validacion para saber si el idRuta es un ObjectId
         if(!rutaSrv.validarObjectId(idRuta)) return res.status(400).json(msgHandler.errorIdObject('Id de Ruta'));        
-        await
-        Rutas
+        
+        return await
+        RutasModel
         .updateOne(
             {
-                _id:idRuta
+                _id:new Types.ObjectId(idRuta)
             },
             {
                 $set:{
@@ -220,7 +260,9 @@ export default {
                 }
             }
         ).then((data)=>{
-            return res.json(msgHandler.resultCrud(data,'rutas',enumCrud.actualizar));
+            let {error,value} = msgHandler.resultCrud(data,'rutas',enumCrud.actualizar);
+            if(error) return res.status(400).json(msgHandler.sendError(error));
+            return res.json(msgHandler.sendValue(value));
         }).catch((err)=> {
             return res.status(400).json(msgHandler.sendError(err));
         })
@@ -233,17 +275,16 @@ export default {
      * @param {*} res
      * @returns {error,value}
      */
-    deleteDarBaja: async (req,res) => {
+    deleteDarBaja: async (req:Request,res:Response):Promise<Response> => {
         //FIXME: Se tiene que modificar el retorno de la informacion.
-        const
-            idRuta = req.params.idRuta;
+        const idRuta:string = req.params.idRuta;
         //se realiza la validacion para saber si el idRuta es un ObjectId
         if(!rutaSrv.validarObjectId(idRuta)) return res.status(400).json(msgHandler.errorIdObject('Id de Ruta'));        
         await
-        Rutas
+        RutasModel
         .updateOne(
             {
-                _id:idRuta
+                _id:new Types.ObjectId(idRuta)
             },
             {
                 $set:{
@@ -251,8 +292,9 @@ export default {
                 }
             }
         ).then((data)=>{
-            console.log(data);
-            return res.json(msgHandler.resultCrud(data,'rutas',enumCrud.actualizar));
+            let {error,value} = msgHandler.resultCrud(data,'rutas',enumCrud.actualizar);
+            if(error) return res.status(400).json(msgHandler.sendError(error));
+            return res.json(msgHandler.sendValue(value));
         }).catch((err)=> {
             return res.status(400).json(msgHandler.sendError(err));
         })

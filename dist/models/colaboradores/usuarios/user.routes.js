@@ -1,8 +1,14 @@
-const express = require('express'), usrCtrl = require('./user.controller'), errorHandler = require('../../../middleware/errorHandler'), useRouter = express.Router();
-useRouter
-    .post('/:idColaborador/agregar/', errorHandler(usrCtrl.postAgregarUsuario))
-    .put('/:idColaborador/modificar', errorHandler(usrCtrl.putModUser))
-    .put('/:idColaborador/usuario/cambio/username', errorHandler(usrCtrl.putModUserName))
-    .put('/:idColaborador/usuario/cambio/pwd', errorHandler(usrCtrl.putChangePwd))
-    .put('/:idColaborador/usuario/cambio/pwd', errorHandler(usrCtrl.putDisableUser));
-module.exports = useRouter;
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express = require("express");
+const user_controller_1 = require("./user.controller");
+const errorHandler_1 = require("../../../middleware/errorHandler");
+const userRouter = express.Router();
+exports.userRouter = userRouter;
+userRouter
+    .post('/:idColaborador/agregar/', errorHandler_1.default(user_controller_1.default.postAgregarUsuario))
+    .put('/:idColaborador/modificar', errorHandler_1.default(user_controller_1.default.putModUser))
+    .put('/:idColaborador/usuario/cambio/username', errorHandler_1.default(user_controller_1.default.putModUserName))
+    .put('/:idColaborador/usuario/cambio/pwd', errorHandler_1.default(user_controller_1.default.putChangePwd))
+    .put('/:idColaborador/usuario/cambio/pwd', errorHandler_1.default(user_controller_1.default.putDisableUser))
+    .post('/envio', errorHandler_1.default(user_controller_1.default.putForggotPwd));

@@ -1,3 +1,4 @@
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -6,21 +7,26 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const ObjectId = (require('mongoose')).Types.ObjectId, permisoMdl = require('./permisoModel'), colMdl = require('../colaboradores/general/colaborador.model'), cargoMdl = require('../cargo/cargoModel'), permisoSrv = require('./permisoServices'), msgHandler = require('../../helpers/msgHandler'), Task = (require('../../db/transactions')).Task();
-// let 
-//     Task = new Fawn.Task();
-module.exports = {
-    /**
-     *  Método que devuelve todos los permisos activos
-     *
-     * @param {*} req
-     * @param {*} res
-     * @returns Array<permisoModel>
-     */
+Object.defineProperty(exports, "__esModule", { value: true });
+const mongoose_1 = require("mongoose");
+const permisoModel_1 = require("./permisoModel");
+const colaborador_model_1 = require("../colaboradores/general/colaborador.model");
+const cargoModel_1 = require("../cargo/cargoModel");
+const permisoServices_1 = require("./permisoServices");
+const msgHandler_1 = require("../../helpers/resultHandler/msgHandler");
+const transactions_1 = require("../../db/transactions");
+const Task = transactions_1.default.Task();
+exports.default = {
+    // /**
+    //  *  Método que devuelve todos los permisos activos
+    //  *
+    //  * @param {*} req
+    //  * @param {*} res
+    //  * @returns Array<permisoModel>
+    //  */
     getBuscar: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        yield permisoMdl
-            .find({ Estado: true })
-            .select({
+        yield permisoModel_1.default
+            .find({ Estado: true }).select({
             Descripcion: true,
             Area: true,
             Tree: true,
@@ -29,8 +35,8 @@ module.exports = {
             Titulo: true
         })
             .lean(true)
-            .then((data) => { return res.json(msgHandler.sendValue(data)); })
-            .catch((err) => { return res.status(400).json(msgHandler.sendError(err)); });
+            .then((data) => { return res.json(msgHandler_1.msgHandler.sendValue(data)); })
+            .catch((err) => { return res.status(400).json(msgHandler_1.msgHandler.sendError(err)); });
     }),
     /**
      * Devuelve todos los permisos
@@ -40,11 +46,11 @@ module.exports = {
      * @returns Array<permisoModel>
      */
     getBuscarAll: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        yield permisoMdl
+        yield permisoModel_1.default
             .find()
             .lean(true)
-            .then((data) => { return res.json(msgHandler.sendValue(data)); })
-            .catch((err) => { return res.status(400).json(msgHandler.sendError(err)); });
+            .then((data) => { return res.json(msgHandler_1.msgHandler.sendValue(data)); })
+            .catch((err) => { return res.status(400).json(msgHandler_1.msgHandler.sendError(err)); });
     }),
     /**
      * Metodo que permíte buscar un permiso por su Id
@@ -54,9 +60,8 @@ module.exports = {
      * @returns permisoModel
      */
     getBuscarById: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        const id = req.params.idPermiso;
-        yield permisoMdl
-            .find({ _id: id, Estado: true })
+        yield permisoModel_1.default
+            .find({ _id: req.params.idPermiso, Estado: true })
             .select({
             Descripcion: true,
             Area: true,
@@ -64,8 +69,8 @@ module.exports = {
             Path: true
         })
             .lean(true)
-            .then((data) => { return res.json(msgHandler.sendValue(data)); })
-            .catch((err) => { return res.status(400).json(msgHandler.sendError(err)); });
+            .then((data) => { return res.json(msgHandler_1.msgHandler.sendValue(data)); })
+            .catch((err) => { return res.status(400).json(msgHandler_1.msgHandler.sendError(err)); });
     }),
     /**
      * Método que agrega un permiso a la base de datos
@@ -75,12 +80,12 @@ module.exports = {
      * @returns permisoModel
      */
     postAgregar: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        const { error, value } = yield permisoSrv.validarModelo(req.body);
+        const { error, value } = yield permisoServices_1.default.validarModelo(req.body);
         if (error)
-            return res.status(400).json(msgHandler.sendError(error));
-        yield permisoMdl
+            return res.status(400).json(msgHandler_1.msgHandler.sendError(error));
+        yield permisoModel_1.default
             .create(value)
-            .then((data) => { return res.json(msgHandler.sendValue(data)); })
+            .then((data) => { return res.json(msgHandler_1.msgHandler.sendValue(data)); })
             .catch((err) => { return res.status(400).sendError(err); });
     }),
     /**
@@ -92,27 +97,28 @@ module.exports = {
      */
     putModificar: (req, res) => __awaiter(this, void 0, void 0, function* () {
         if (!req.params.hasOwnProperty('idPermiso'))
-            return res.status(400).json(msgHandler.sendError('La propiedad idPermiso no ha sido especificada'));
+            return res.status(400).json(msgHandler_1.msgHandler.sendError('La propiedad idPermiso no ha sido especificada'));
         const _idPermiso = req.params.idPermiso;
-        if (!permisoSrv.validarObjectId(_idPermiso))
-            return res.status(400).json(msgHandler.sendError('El id ingresado no cumple con el formato requerido'));
-        const { error, value } = yield permisoSrv.validarModelo(req.body);
+        if (!permisoServices_1.default.validarObjectId(_idPermiso))
+            return res.status(400).json(msgHandler_1.msgHandler.sendError('El id ingresado no cumple con el formato requerido'));
+        const { error, value } = yield permisoServices_1.default.validarModelo(req.body);
         if (error)
-            return res.status(400).json(msgHandler.sendValue(error));
-        yield permisoMdl
-            .updateOne({ id: _idPermiso }, {
+            return res.status(400).json(msgHandler_1.msgHandler.sendValue(error));
+        yield permisoModel_1.default
+            .updateOne({
+            id: _idPermiso
+        }, {
             $set: {
                 Titulo: value.Titulo,
                 Descripcion: value.Descripcion,
                 Area: value.Area,
-                Titulo: value.Titulo,
                 Tree: value.Tree,
                 Path: value.Path,
                 FechaModificacion: Date.now()
             }
         })
-            .then((data) => { return res.json(msgHandler.resultCrud(data, 'Permiso', 'Actualizar')); })
-            .catch((err) => { return res.status(400).json(msgHandler.sendError(err)); });
+            .then((data) => { return res.json(msgHandler_1.msgHandler.resultCrud(data, 'Permiso', msgHandler_1.crudType.actualizar)); })
+            .catch((err) => { return res.status(400).json(msgHandler_1.msgHandler.sendError(err)); });
     }),
     /**
      *
@@ -124,15 +130,15 @@ module.exports = {
      */
     putDarBaja: (req, res) => __awaiter(this, void 0, void 0, function* () {
         if (!req.params.hasOwnProperty('idPermiso'))
-            return res.status(400).json(msgHandler.sendError('La propiedad idPermiso no ha sido especificada'));
+            return res.status(400).json(msgHandler_1.msgHandler.sendError('La propiedad idPermiso no ha sido especificada'));
         const _idPermiso = req.params.idPermiso;
-        if (!permisoSrv.validarObjectId(_idPermiso))
-            return res.status(400).json(msgHandler.sendError('El id ingresado no cumple con el formato requerido'));
-        const Permiso = yield permisoMdl.findOne({ _id: _idPermiso });
+        if (!permisoServices_1.default.validarObjectId(_idPermiso))
+            return res.status(400).json(msgHandler_1.msgHandler.sendError('El id ingresado no cumple con el formato requerido'));
+        const Permiso = yield permisoModel_1.default.findOne({ _id: _idPermiso });
         Permiso.set({
             Estado: false
         });
-        yield permisoMdl
+        yield permisoModel_1.default
             .updateOne({
             _id: _idPermiso
         }, {
@@ -140,7 +146,7 @@ module.exports = {
                 Estado: false
             }
         })
-            .then((data) => { return res.json(msgHandler.resultCrud(data, 'Permiso', 'Actualizar')); })
+            .then((data) => { return res.json(msgHandler_1.msgHandler.resultCrud(data, 'Permiso', msgHandler_1.crudType.actualizar)); })
             .catch((err) => { return res.status(400).sendError(err); });
     }),
     /**
@@ -152,18 +158,18 @@ module.exports = {
      */
     putDarAlta: (req, res) => __awaiter(this, void 0, void 0, function* () {
         if (!req.params.hasOwnProperty('idPermiso'))
-            return res.status(400).json(msgHandler.sendError('La propiedad idPermiso no ha sido especificada'));
+            return res.status(400).json(msgHandler_1.msgHandler.sendError('La propiedad idPermiso no ha sido especificada'));
         const id = req.params.idPermiso;
-        if (!permisoSrv.validarObjectId(id))
-            return res.status(400).json(msgHandler.sendError('El id ingresado no cumple con el formato requerido'));
-        yield permisoMdl
+        if (!permisoServices_1.default.validarObjectId(id))
+            return res.status(400).json(msgHandler_1.msgHandler.sendError('El id ingresado no cumple con el formato requerido'));
+        yield permisoModel_1.default
             .updateOne({ _id: id }, {
             $set: {
                 Estado: true
             }
         })
-            .then((data) => { return res.json(msgHandler.resultCrud(data, 'Permisos', 'Actualizar')); })
-            .catch((err) => { return res.status(400).json(msgHandler.sendError(err)); });
+            .then((data) => { return res.json(msgHandler_1.msgHandler.resultCrud(data, 'Permisos', msgHandler_1.crudType.actualizar)); })
+            .catch((err) => { return res.status(400).json(msgHandler_1.msgHandler.sendError(err)); });
     }),
     /**
      * Procedimiento que permite dar de baja a un Permiso
@@ -173,16 +179,15 @@ module.exports = {
      * @returns
      */
     delPermiso: (req, res) => __awaiter(this, void 0, void 0, function* () {
-        if (!permisoSrv.validarObjectId(req.params.idPermiso))
-            return res.status(400).json(msgHandler.errorIdObject('IdPermiso'));
-        const _idPermiso = new ObjectId(req.params.idPermiso);
-        Task
-            .remove(permisoMdl, { _id: _idPermiso })
-            .update(colMdl, { 'Permisos.IdPermiso': { $eq: _idPermiso } }, { $pull: { Permisos: { IdPermiso: _idPermiso } } })
-            .update(cargoMdl, { 'Permisos.IdPermiso': { $eq: _idPermiso } }, { $pull: { Permisos: { IdPermiso: _idPermiso } } });
-        Task
+        if (!permisoServices_1.default.validarObjectId(req.params.idPermiso))
+            return res.status(400).json(msgHandler_1.msgHandler.errorIdObject('IdPermiso'));
+        const _idPermiso = new mongoose_1.Types.ObjectId(req.params.idPermiso);
+        yield Task
+            .remove(permisoModel_1.default, { _id: _idPermiso })
+            .update(colaborador_model_1.default, { 'Permisos.IdPermiso': { $eq: _idPermiso } }, { $pull: { Permisos: { IdPermiso: _idPermiso } } })
+            .update(cargoModel_1.default, { 'Permisos.IdPermiso': { $eq: _idPermiso } }, { $pull: { Permisos: { IdPermiso: _idPermiso } } })
             .run({ useMongoose: true })
-            .then((data) => { return res.json(msgHandler.sendValue(data)); })
-            .catch((err) => { return res.status(400).json(msgHandler.sendError(err)); });
+            .then((data) => { return res.json(msgHandler_1.msgHandler.sendValue(data)); })
+            .catch((err) => { return res.status(400).json(msgHandler_1.msgHandler.sendError(err)); });
     })
 };

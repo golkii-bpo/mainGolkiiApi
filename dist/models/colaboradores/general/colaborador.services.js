@@ -1,3 +1,4 @@
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -6,34 +7,34 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const joi = require('joi'), 
-// const joi = require('joi-es');
-colModel = require('./colaborador.model'), cargoSrv = require('../../cargo/cargoService'), msgHandler = require('../../../helpers/msgHandler'), general = require('../../../helpers/generalValidation');
-joi.objectId = require('joi-objectid')(joi);
+Object.defineProperty(exports, "__esModule", { value: true });
+const joi = require("joi");
+// import * as joi from 'joi-es';
+const colaborador_model_1 = require("./colaborador.model");
+const cargoService_1 = require("../../cargo/cargoService");
+const msgHandler_1 = require("../../../helpers/resultHandler/msgHandler");
+const basicValidations_1 = require("../../../helpers/validation/basicValidations");
 const JoiPerfil = joi.object().keys({
     Foto: joi.string(),
     Settings: joi.object().keys({
         DarkMode: joi.boolean(),
         SideBar: joi.boolean()
     })
-});
-const JoiGeneral = joi.object().keys({
-    Nombre: joi.string().required(5).max(30),
-    Apellido: joi.string().required(5).max(30),
+}), JoiGeneral = joi.object().keys({
+    Nombre: joi.string().required().min(5).max(30),
+    Apellido: joi.string().required().min(5).max(30),
     Cedula: joi.string().required().regex(/\d{3}-{0,1}\d{6}-{0,1}\d{4}[A-z]{1}/),
     Email: joi.string().email()
-});
-const JoiCargo = joi.object().keys({
-    IdCargo: joi.objectId(),
+}), JoiCargo = joi.object().keys({
+    IdCargo: joi.string(),
     FechaIngreso: joi.date()
-});
-const JoiColaborador = joi.object().keys({
+}), JoiColaborador = joi.object().keys({
     General: JoiGeneral,
     Cargo: joi.array().items(JoiCargo).min(1),
     Perfil: JoiPerfil,
     Estado: joi.boolean()
 });
-class colaboradorService extends general {
+class colaboradorService extends basicValidations_1.default {
     /**
      * Método que permite validar el modelo de datos para un Colaborador
      *
@@ -46,56 +47,56 @@ class colaboradorService extends general {
             const { error, value } = joi.validate(data, JoiColaborador);
             if (error)
                 return { error };
-            if (!(yield cargoSrv.validarCargos(value.Cargo)))
-                return msgHandler.Send().doNotExist('Cargo');
+            if (!(yield cargoService_1.default.validarCargos(value.Cargo)))
+                return msgHandler_1.msgHandler.doNotExist('Cargo');
             if (data.hasOwnProperty('User'))
-                return msgHandler.sendError('Error. No se puede crear un Usuario sin antes haber creado un Colaborador');
-            let uniCedula = yield colModel.findOne({ 'General.Cedula': value.General.Cedula }).lean(true);
+                return msgHandler_1.msgHandler.sendError('Error. No se puede crear un Usuario sin antes haber creado un Colaborador');
+            let uniCedula = yield colaborador_model_1.default.findOne({ 'General.Cedula': value.General.Cedula }).lean(true);
             if (uniCedula)
-                return msgHandler.sendError('La cedula ingresada ya se encuentra registrada');
+                return msgHandler_1.msgHandler.sendError('La cedula ingresada ya se encuentra registrada');
             return { error: null, value };
         });
     }
     validarGeneral(data) {
         const { error, value } = joi.validate(data, JoiGeneral);
         if (error)
-            return { error };
-        return { value };
+            return msgHandler_1.msgHandler.sendError(error);
+        return { error, value };
     }
     valModGeneral(idColaborador, data) {
         if (!this.validarObjectId(idColaborador))
-            return msgHandler.errorIdObject('Id Colaborador');
+            return msgHandler_1.msgHandler.errorIdObject('Id Colaborador');
         let { error, value } = this.validarGeneral(data);
         if (error)
-            return { error };
+            return msgHandler_1.msgHandler.sendError(error);
     }
     valAgregarCargo(idColaborador, idCargo) {
         if (!this.validarObjectId(idColaborador))
-            return msgHandler.errorIdObject('Id Colaborador');
+            return msgHandler_1.msgHandler.errorIdObject('Id Colaborador');
         if (!this.validarObjectId(idCargo))
-            return msgHandler.errorIdObject('Id Cargo');
-        return msgHandler.sendValue(true);
+            return msgHandler_1.msgHandler.errorIdObject('Id Cargo');
+        return msgHandler_1.msgHandler.sendValue(true);
     }
     valEliminarCargo(idColaborador, idCargo) {
         if (!this.validarObjectId(idColaborador))
-            return msgHandler.errorIdObject('Id Colaborador');
+            return msgHandler_1.msgHandler.errorIdObject('Id Colaborador');
         if (!this.validarObjectId(idCargo))
-            return msgHandler.errorIdObject('Id Cargo');
-        return msgHandler.sendValue(true);
+            return msgHandler_1.msgHandler.errorIdObject('Id Cargo');
+        return msgHandler_1.msgHandler.sendValue(true);
     }
     valAgregarPermiso(idColaborador, idPermiso) {
         if (!this.validarObjectId(idColaborador))
-            return msgHandler.errorIdObject('Id Colaborador');
+            return msgHandler_1.msgHandler.errorIdObject('Id Colaborador');
         if (!this.validarObjectId(idPermiso))
-            return msgHandler.errorIdObject('Id Permiso');
-        return msgHandler.sendValue(true);
+            return msgHandler_1.msgHandler.errorIdObject('Id Permiso');
+        return msgHandler_1.msgHandler.sendValue(true);
     }
     valEliminarPermiso(idColaborador, idPermiso) {
         if (!this.validarObjectId(idColaborador))
-            return msgHandler.errorIdObject('Id Colaborador');
+            return msgHandler_1.msgHandler.errorIdObject('Id Colaborador');
         if (!this.validarObjectId(idPermiso))
-            return msgHandler.errorIdObject('Id Permiso');
-        return msgHandler.sendValue(true);
+            return msgHandler_1.msgHandler.errorIdObject('Id Permiso');
+        return msgHandler_1.msgHandler.sendValue(true);
     }
     cargosUnicos(data) {
         const _Cargos = [];
@@ -124,4 +125,4 @@ class colaboradorService extends general {
     }
 }
 ;
-module.exports = new colaboradorService;
+exports.default = new colaboradorService;

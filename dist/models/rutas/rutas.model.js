@@ -5,8 +5,38 @@ const InsumoShema = new mongoose_1.Schema({
     Tipo: {
         type: String,
         required: true,
-        enum: ['Gasolina', 'Pasaje'],
-        default: 'Gasolina'
+        enum: ['Gasolina', 'Transporte', 'Alimento']
+    },
+    Observacion: {
+        type: String,
+        required: function () {
+            return this.Tipo != 'Alimento';
+        },
+        min: 10,
+        max: 50
+    },
+    Valor: {
+        type: Number,
+        required: true,
+        min: 0,
+        max: 5000
+    },
+    Kilometro: {
+        type: Number,
+        required: function () {
+            return this.Tipo == 'Gasolina';
+        },
+        min: 0,
+        max: 2000
+    }
+}), DemografiaSchema = new mongoose_1.Schema({
+    Departamento: {
+        type: String,
+        required: true
+    },
+    Municipio: {
+        type: String,
+        required: true
     }
 }), HojaRutaSchema = new mongoose_1.Schema({
     Colaborador: {
@@ -20,41 +50,43 @@ const InsumoShema = new mongoose_1.Schema({
         min: 0,
         max: 255
     },
+    Demografia: {
+        type: DemografiaSchema,
+        required: true,
+        default: {
+            Departamento: 'Managua',
+            Municipio: 'Managua'
+        }
+    },
     Casos: {
         type: [String],
         required: true,
-        min: 1
+        min: 1,
+        max: 50
     },
-    Kilometraje: {
-        type: mongoose_1.Schema.Types.Number,
-        default: 0,
-        required: true,
-        min: 0,
-        max: 2000
-    },
-    Insumo: {
-        type: String,
-        required: true,
-        enum: ['Gasolina', 'Pasaje']
+    Insumos: {
+        type: [InsumoShema],
+        min: 1,
+        required: true
     },
     FechaSalida: {
-        type: mongoose_1.Schema.Types.Date,
-        default: Date.now(),
+        type: Date,
+        default: new Date(),
         required: true,
         validate: {
             validator: function (fecha) {
-                return Date.now() >= fecha;
+                return new Date() >= fecha;
             },
             message: 'La fecha tiene que ser menor a la fecha y hora actual actual'
         }
     },
     FechaData: {
-        type: mongoose_1.Schema.Types.Date,
+        type: Date,
         default: Date.now()
     },
     Estado: {
-        type: mongoose_1.Schema.Types.Boolean,
-        default: Date.now(),
+        type: Boolean,
+        default: true,
         required: true
     }
 });

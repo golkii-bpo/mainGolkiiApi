@@ -1,9 +1,9 @@
 import areaModel from './areaModel';
 import areaService from './areaService';
-import {msgHandler,enumCrud} from '../../helpers/msgHandler';
+import {msgHandler,crudType as  enumCrud} from '../../helpers/resultHandler/msgHandler';
 import {Types} from 'mongoose';
 
-module.exports = {
+export default {
     
     /**
      * Extrae todas aquellas Areas activas.

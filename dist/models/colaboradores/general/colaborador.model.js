@@ -1,10 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const Mongoose = require('mongoose');
-const { Schema, model } = Mongoose;
-const permisoSchema = new Schema({
+const mongoose_1 = require("mongoose");
+const permisoSchema = new mongoose_1.Schema({
     IdPermiso: {
-        type: Schema.Types.ObjectId,
+        type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Permisos'
     },
     IsFrom: {
@@ -16,11 +15,11 @@ const permisoSchema = new Schema({
         type: Date,
         default: Date.now()
     }
-}), PerfilSchema = new Schema({
+}), PerfilSchema = new mongoose_1.Schema({
     Foto: {
         type: String
     },
-    Settings: new Schema({
+    Settings: new mongoose_1.Schema({
         DarkMode: {
             type: Boolean,
             default: false
@@ -30,7 +29,7 @@ const permisoSchema = new Schema({
             default: false
         }
     })
-}), GeneralSchema = new Schema({
+}), GeneralSchema = new mongoose_1.Schema({
     Nombre: {
         type: String,
         required: true,
@@ -55,10 +54,9 @@ const permisoSchema = new Schema({
         index: true,
         match: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
     }
-}), RecoverySchema = new Schema({
+}), RecoverySchema = new mongoose_1.Schema({
     IpSend: {
         type: String,
-        match: /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
         default: null
     },
     EmailSend: {
@@ -66,19 +64,49 @@ const permisoSchema = new Schema({
         index: true,
         match: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
     },
+    Token: {
+        type: String,
+        match: /^(\S+(\.|$)){3}/
+    },
     Solicitud: {
         type: Boolean,
         default: false
+    }
+}), SessionSchema = new mongoose_1.Schema({
+    DateSession: {
+        type: Date,
+        default: new Date(),
+        required: true
+    },
+    IpSession: {
+        type: String,
+        required: true
     },
     Token: {
-        type: String
+        type: String,
+        match: /^(\S+(\.|$)){3}/,
+        required: true,
+        default: null
     },
-    Estado: {
+    Auth: {
+        type: [Number],
+        required: true
+    },
+    //Para el Auth tendra que validar 
+    ValidToken: {
+        type: Date,
+        required: true
+    },
+    ValidAuth: {
+        type: Date,
+        required: true
+    },
+    Disable: {
         type: Boolean,
         default: false
     }
-}), UserSchema = new Schema({
-    User: {
+}), UserSchema = new mongoose_1.Schema({
+    username: {
         type: String,
         min: 5,
         max: 20,
@@ -95,6 +123,10 @@ const permisoSchema = new Schema({
                 return true;
             return false;
         }
+    },
+    Session: {
+        type: SessionSchema,
+        default: null
     },
     Recovery: {
         type: RecoverySchema,
@@ -113,7 +145,7 @@ const permisoSchema = new Schema({
         default: Date.now()
     }
 });
-const LogSchema = new Schema({
+const LogSchema = new mongoose_1.Schema({
     FechaModificacion: {
         type: Date,
         default: Date.now()
@@ -128,9 +160,9 @@ const LogSchema = new Schema({
         required: true
     }
 });
-const CargoSchema = new Schema({
+const CargoSchema = new mongoose_1.Schema({
     IdCargo: {
-        type: Schema.Types.ObjectId,
+        type: mongoose_1.Schema.Types.ObjectId,
         ref: 'cargos'
     },
     Estado: {
@@ -143,7 +175,7 @@ const CargoSchema = new Schema({
     }
 });
 //Main Schema
-const ColaboradoresSchema = new Schema({
+const ColaboradoresSchema = new mongoose_1.Schema({
     General: {
         type: GeneralSchema,
         required: true,
@@ -158,11 +190,14 @@ const ColaboradoresSchema = new Schema({
         default: []
     },
     User: {
+        //TODO: Hace falta agregar el reegenerar token
+        //TODO: Hace falta agregar la lista de dispositivos que estan siendo usados
         type: UserSchema,
         default: {
             User: null,
             password: null,
             IsCreated: false,
+            Session: null,
             Recovery: {
                 IpSend: null,
                 EmailSend: null,
@@ -203,4 +238,4 @@ ColaboradoresSchema.post('save', function (error, doc, next) {
         next(error);
     next();
 });
-exports.default = model('Colaborador', ColaboradoresSchema, 'colaboradores');
+exports.default = mongoose_1.model('Colaborador', ColaboradoresSchema, 'colaboradores');

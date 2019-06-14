@@ -12,7 +12,9 @@ const Log = Winston.createLogger({
     useCreateIndex: true,
     useNewUrlParser: true,
     reconnectTries: Number.MAX_VALUE,
-    reconnectInterval: 1500
+    reconnectInterval: 1500,
+    user: 'jack',
+    pass: 'Admin@123'
 };
 exports.database = {
     /**
@@ -23,7 +25,7 @@ exports.database = {
     connect: (MongoUri, env) => {
         db.connect(MongoUri, Options);
         db.connection.on('connected', () => {
-            console.log('Base de datos: ' + chalk_1.default(chalk_1.default.black('Conectada')));
+            console.log('Base de datos: ' + chalk_1.default.bgGreen(chalk_1.default.black(' Conectada ')));
         });
         db.connection.on('disconnected', (err) => {
             if (env == 'development') {
