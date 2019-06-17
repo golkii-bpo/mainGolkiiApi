@@ -80,7 +80,7 @@ const
                 validator: function(fecha){
                     return new Date()>= fecha;
                 },
-                message:'La fecha tiene que ser menor a la fecha y hora actual actual'
+                msg:'La fecha tiene que ser menor a la fecha y hora actual actual'
             }
         },
         FechaData:{
