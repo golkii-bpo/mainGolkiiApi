@@ -1,4 +1,4 @@
-import * as dotenv from "dotenv";
+import * as dotenv from 'dotenv';
 import * as express from 'express';
 import * as config from "config";
 import * as path from "path";
