@@ -1,5 +1,4 @@
 import {Schema,model} from 'mongoose';
-import { string } from 'joi';
 
 const 
     InsumoShema = new Schema({
