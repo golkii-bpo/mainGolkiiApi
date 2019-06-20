@@ -1,5 +1,4 @@
 import {Schema,model} from 'mongoose';
-import { string } from 'joi';
 
 const 
     InsumoShema = new Schema({
@@ -80,7 +79,7 @@ const
                 validator: function(fecha){
                     return new Date()>= fecha;
                 },
-                message:'La fecha tiene que ser menor a la fecha y hora actual actual'
+                msg:'La fecha tiene que ser menor a la fecha y hora actual actual'
             }
         },
         FechaData:{

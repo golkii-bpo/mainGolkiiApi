@@ -26,7 +26,7 @@ const AreaSchema = new mongoose_1.Schema({
             validator: function (v) {
                 return v >= this.FechaIngreso;
             },
-            message: `La fecha de modificación no puede ser menor a ${this.FechaIngreso}`
+            msg: `La fecha de modificación no puede ser menor a ${this.FechaIngreso}`
         }
     },
     Estado: {
