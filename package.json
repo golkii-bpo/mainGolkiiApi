@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/golkii-bpo/golkii-api#readme",
   "dependencies": {
-    "bcrypt": "^3.0.5",
+    "bcrypt": "^5.0.0",
     "chalk": "^2.4.2",
     "config": "^3.1.0",
     "dotenv": "^7.0.0",
