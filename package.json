@@ -30,7 +30,7 @@
     "joi": "^14.3.1",
     "joi-es": "^11.3.0",
     "joi-objectid": "^2.0.0",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "lodash": "^4.17.11",
     "mongoose": "^5.5.1",
     "morgan": "^1.9.1",
